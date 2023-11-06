@@ -9,7 +9,12 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-
+import pyqtgraph as pg
+import numpy as np
+import itertools
+import math
+import colorsys
+from scipy.spatial.distance import _distance_wrap
 
 class Ui_MainWindow(object):
     ##here we're setting up the whole GUI
@@ -144,6 +149,10 @@ class Ui_MainWindow(object):
         self.tileButton = QtWidgets.QPushButton(self.parameterArea)
         self.tileButton.setObjectName("pushButton")
         self.verticalLayout_3.addWidget(self.tileButton)
+
+        
+
+
         ##add a final spacer 
         spacerItem7 = QtWidgets.QSpacerItem(20, 210, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
         self.verticalLayout_3.addItem(spacerItem7)
@@ -227,12 +236,87 @@ class Ui_MainWindow(object):
         self.shiftSelect.setItemText(2, _translate("MainWindow", "Random"))
         self.shiftSelect.setItemText(3, _translate("MainWindow", "Custom"))
         self.advancedButton.setText(_translate("MainWindow", "Advanced..."))
-        self.pushButton.setText(_translate("MainWindow", "Tile!"))
+        self.tileButton.setText(_translate("MainWindow", "Tile!"))
         self.gridView.setText(_translate("MainWindow", "Grid view"))
         self.editStyle.setText(_translate("MainWindow", "Edit style..."))
         self.saveAs.setText(_translate("MainWindow", "Save as..."))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.menuTools.setTitle(_translate("MainWindow", "Tools"))
+
+    def pushTileButton(self):
+        
+        p1 = int(self.vectorNumInput.text())
+        p2 = 1#((np.sqrt(3)+1)/2) 
+        p3 = 0
+        p4 = ((np.sqrt(5)+1)/2)
+        p5 = int(self.gridNumInput.text())
+        p6 = 'random'
+        self.tiling = TileMaker(p1,p2,p3,p4,p5,p6)#((np.sqrt(5)+1)/2)
+        # points, areas, p_points = self.tiling.points, self.tiling.areas, self.tiling.p_points
+
+        vec_item = vectorPlot(p1)
+        # self.tiling = TileMaker(self.grids, tile_vectors)
+        
+        self.areas = self.tiling.areas
+        self.areas = np.round(self.areas,3)
+        self.unq = np.unique(self.areas)
+        # if the area is a whole number then it breaks here
+        # # #replace the unique area sizes with a 'key'
+        for a in range(len(self.unq)):
+
+            self.areas[self.areas == self.unq[a]] = a
+
+        self.areas = self.areas.astype(int)
+
+        color = []
+        h = np.random.rand(1)[0]
+        for a in range(len(self.unq)):
+            h += 0.618
+            h %= 1
+
+            (r, g, b) = colorsys.hsv_to_rgb(h, 0.4, 0.8)
+            color.append((float(r*255), float(g*255), float(b*255)))
+
+        color = np.array(color)[self.areas]
+
+
+        item = tilePlot(self.tiling, color)
+
+        if self.plotted == 1:
+            self.tilePlotArea.clear()
+            self.tilePlotArea.enableAutoRange()
+        
+        self.tilePlotArea.addItem(item)
+        self.graphicsView.clear()
+        self.graphicsView.enableAutoRange()
+        self.graphicsView.addItem(vec_item)   
+        self.plotted = 1
+
+    def pushEditStyleButton(self):
+        if self.plotted == 0:
+            return
+        else:
+            self.tilePlotArea.clear()
+            color = []
+            h = np.random.rand(1)
+            for a in range(len(self.unq)):
+                h += 0.618
+                h %= 1
+
+                (r, g, b) = colorsys.hsv_to_rgb(h, 0.4, 0.8)
+                color.append((float(r*255), float(g*255), float(b*255)))
+
+            color = np.array(color)[self.areas]
+            item = tilePlot(self.tiling, color)
+            self.tilePlotArea.addItem(item) 
+    
+    def pushVectorNumButton(self):
+        # if self.plotted == 0:
+        fold = int(self.vectorNumInput.text())
+        vec_item = vectorPlot(fold)
+        self.graphicsView.clear()
+        self.graphicsView.addItem(vec_item)   
+        return
 
 if __name__ == "__main__":
     import sys
@@ -245,11 +329,416 @@ if __name__ == "__main__":
     ##such as setting up the mainwindow!
     ui.setupUi(MainWindow)
 
-
-
     # item = vectorPlot(int(ui.vectorNumInput.text()))
     # ui.graphicsView.addItem(item)
     # graphicsView.addItem(item)
     ##finally, show the app, and wait for the user to close
     MainWindow.show()
     sys.exit(app.exec_())
+
+
+
+
+
+class TileMaker:
+    def __init__(self, fold, tau, ang, omega, grid_len, shift_type, shift_const = None):
+
+        theta = 2*np.pi/fold
+        grid_vectors = []
+        tile_vectors = []
+
+        if fold == 4:
+            for i in range(int(fold)):
+                if (i)<2:
+                    grid_vectors.append((np.cos(theta*i), np.sin(theta*i)))
+                    tile_vectors.append((np.cos(theta*i), np.sin(theta*i)))
+
+                else:
+                    grid_vectors.append((omega*np.cos(ang+theta*i), omega*np.sin(ang+theta*i)))
+                    tile_vectors.append(((1/tau)*np.cos(ang+theta*i), (1/tau)*np.sin(ang+theta*i)))
+        else:
+            for i in range(int(fold)):
+                if (i)%2:
+                    grid_vectors.append((np.cos(theta*i), np.sin(theta*i)))
+                    tile_vectors.append((np.cos(theta*i), np.sin(theta*i)))
+
+                else:
+                    grid_vectors.append((omega*np.cos(ang+theta*i), omega*np.sin(ang+theta*i)))
+                    tile_vectors.append(((1/tau)*np.cos(ang+theta*i), (1/tau)*np.sin(ang+theta*i)))
+
+
+        ang = [math.atan2(x[1],x[0]) for x in grid_vectors]
+        val = (np.round(ang,2)+0 >= 0).sum()
+        ang = [(x+2*np.pi if np.round(x,2) < 0 else x) for x in ang]
+        arg = np.argsort(ang)
+
+        grid_vectors = np.array(grid_vectors)[arg]
+        tile_vectors = np.array(tile_vectors)[arg]
+        if shift_type == 'special':
+            shifts = [1/(fold/2),-1/(fold/2)]*fold
+
+        if shift_type == 'random':
+            shifts = np.random.rand(fold)
+
+        if shift_type == 'zero':
+            shifts = [0]*fold
+        if shift_type == 'constant':
+            if shift_const != None:
+                shifts = [shift_const]*fold
+            else:
+                shifts = [np.random.rand()]*fold
+        
+        line_len = 100
+
+        grid = Grids(grid_vectors, line_len, grid_len, shifts, val)
+        gen = self.make_tile(grid, tile_vectors)
+        self.points = gen[0]
+        self.areas = gen[1]
+        self.p_points = gen[2]
+
+    def intersect(self, A, B, C, D):
+        t = ((A[0]-C[0])*(C[1]-D[1])-(A[1]-C[1])*(C[0]-D[0]))/((A[0]-B[0])*(C[1]-D[1])-(A[1]-B[1])*(C[0]-D[0]))
+        u = ((A[0]-C[0])*(A[1]-B[1])-(A[1]-C[1])*(A[0]-B[0]))/((A[0]-B[0])*(C[1]-D[1])-(A[1]-B[1])*(C[0]-D[0]))
+
+        if (t <= 1) & (t >= 0) & (u <= 1) & (u >= 0):
+            return np.asarray([[A[0]+t*(B[0]-A[0]), A[1]+t*(B[1]-A[1])]])
+
+    def cdist(self, XA, XB, dm):
+        cdist_fn = getattr(_distance_wrap, "cdist_euclidean_double_wrap")
+        cdist_fn(XA, XB, dm)
+        return dm
+
+    def collinear(self, comb_list, vectors):
+        indexes = []
+
+        for a in range(len(comb_list)):
+            if np.cross(vectors[comb_list[a][0]], vectors[comb_list[a][1]]) == 0:
+                indexes.append(a)
+        self.del_list(comb_list, indexes)
+        return comb_list
+
+    def clockwise(self, coords):
+        pp = (list(zip(coords[:,0], coords[:,1])))
+        cent = (sum([p[0] for p in pp]) / len(pp), sum([p[1] for p in pp]) / len(pp))
+        pp.sort(key=lambda p: math.atan2(p[1]-cent[1], p[0]-cent[0]))
+        return pp
+
+    def del_list(self, _list, indexes):
+        for index in sorted(indexes, reverse=True):
+            del _list[index]
+        return _list
+
+    def area(self, p):
+        return 0.5 * abs(sum(x0 * y1 - x1 * y0 for ((x0, y0), (x1, y1)) in self.segments(p)))
+
+    def polygon_area(self, x, y):
+        correction = x[-1] * y[0] - y[-1] * x[0]
+        main_area = np.dot(x[:-1], y[1:]) - np.dot(y[:-1], x[1:])
+        return 0.5 * np.abs(main_area + correction)
+
+    def segments(self, p):
+        return zip(p, p[1:] + [p[0]])
+
+    def perp_vec(self, v):
+        return (v[1], -v[0])
+
+    def cyclic(self, size):
+        j, j_step = 0, 0
+        i, i_step = 1, 1
+
+        store = []
+        for a in range(size):
+            idx = list(range(j, i))
+            
+            store.append(idx)
+
+            if a + 1 == size / 2:
+                i_step = 0
+                j_step = 1
+            i += i_step
+            j += j_step
+        return store
+
+    def n_gon(self, index_set, grid1_idx, grid2_idx, j, k, grid, list2, val):
+        indices = grid.index[0]
+        angles = [grid.angles[grid1_idx], grid.angles[grid2_idx]]
+        vectors = [grid.grid_vectors[grid1_idx], grid.grid_vectors[grid2_idx]]
+        factor = []
+
+        all_grids = [grid1_idx, grid2_idx]
+
+        if grid1_idx >= val:
+            index_set[grid1_idx] = indices[j]
+            angles[0] = angles[0] + math.pi
+            vectors[0] = (-1 * vectors[0][0], -1 * vectors[0][1])
+            factor.append(-1)
+        else:
+            index_set[grid1_idx] = indices[j - 1]
+            factor.append(1)
+
+        if grid2_idx >= val:
+            index_set[grid2_idx] = indices[k]
+            angles[1] = angles[1] + math.pi
+            vectors[1] = (-1 * vectors[1][0], -1 * vectors[1][1])
+            factor.append(-1)
+        else:
+            index_set[grid2_idx] = indices[k - 1]
+            factor.append(1)
+
+        construct = self.cyclic((2 + len(list2)) * 2)
+
+        for i in range(len(list2)):
+            grid_choice = list2[i][0]
+            all_grids.append(grid_choice)
+            if grid_choice >= val:
+                index_set[grid_choice] = indices[max(list2[i][1], list2[i][2])]
+                angles.append(grid.angles[grid_choice] + math.pi)
+                vectors.append((-grid.grid_vectors[grid_choice][0], -grid.grid_vectors[grid_choice][1]))
+                factor.append(-1)
+            else:
+                index_set[grid_choice] = indices[min(list2[i][1], list2[i][2])]
+                angles.append(grid.angles[grid_choice])
+                vectors.append(grid.grid_vectors[grid_choice])
+                factor.append(1)
+
+        origin = index_set.copy()
+        clocksort = [(x + 2 * np.pi if x < 0 else x) for x in angles]
+        ang_sort = np.argsort(angles)
+        all_grids = np.array(all_grids)
+        all_grids = all_grids[ang_sort]
+        factor = np.array(factor)
+        factor = factor[ang_sort]
+        store = []
+        store.append(origin)
+
+        for i in range(len(construct) - 1):
+            extend = origin.copy()
+            for j in range(len(construct[i])):
+                extend[all_grids[construct[i][j]]] = extend[all_grids[construct[i][j]]] + factor[construct[i][j]]
+            store.append(extend)
+
+        return store
+
+    def make_tile(self, grid, tile_vectors):
+        dm = np.empty((1, grid.grid_len), dtype=np.double)
+        dimension = len(grid.grid_vectors)
+        ind_mult = [[1, 0], [1, 1], [0, 1]]
+        vec_no = list(range(dimension))
+        radius = np.ceil(grid.grid_len / 3)
+        val = grid.val
+        combs = self.collinear(list(itertools.combinations(list(range(dimension)), 2)), grid.grid_vectors)
+        store = []
+        p_store = []
+        indices = [0] * dimension
+
+        for i in range(len(combs)):
+            grid1_idx = combs[i][0]
+            grid2_idx = combs[i][1]
+            vec_query = self.del_list(vec_no.copy(), [grid1_idx, grid2_idx])
+
+            for j in range(1, grid.grid_len):
+                for k in range(1, grid.grid_len):
+                    count = 0
+                    interx = self.intersect(grid.grids[grid1_idx][0][j], grid.grids[grid1_idx][1][j], grid.grids[grid2_idx][0][k], grid.grids[grid2_idx][1][k])
+                    if interx is None:
+                        continue
+                    if interx[0][0]**2 + interx[0][1]**2 > radius**2:
+                        continue
+                    tile = []
+                    poly = []
+                    index_set = indices.copy()
+                    index_set[grid1_idx] = grid.index[grid1_idx][j]
+                    index_set[grid2_idx] = grid.index[grid2_idx][k]
+                    poly.append(grid1_idx)
+                    poly.append(grid2_idx)
+                    list2 = []
+                    for l in range(len(vec_query)):
+                        grid_choice = vec_query[l]
+                        dist = self.cdist(interx, grid.midpoints[grid_choice], dm)[0]
+                        dist_idx = dist.argsort()
+                        dist_sort = dist[dist_idx]
+                        if dist_sort[1] - dist_sort[0] < 0.000001:
+                            count = count + 1
+                            poly.append(grid_choice)
+                            list2.append((grid_choice, dist_idx[0], dist_idx[1]))
+                        else:
+                            index_set[grid_choice] = grid.index[grid_choice][dist_idx[0]]
+                    if count == 0:
+                        tile.append(index_set)
+                        for a in range(3):
+                            tile_vert = index_set.copy()
+                            tile_vert[grid1_idx] = index_set[grid1_idx] - ind_mult[a][0]
+                            tile_vert[grid2_idx] = index_set[grid2_idx] - ind_mult[a][1]
+                            tile.append(tile_vert)
+                        store.append(tile)
+                    elif count > 0:
+                        tile = self.n_gon(index_set, grid1_idx, grid2_idx, j, k, grid, list2, val)
+                        p_store.append(tile)
+
+        if len(store) > 0:
+            store = np.dot(store, tile_vectors)
+        p_store = self.f(p_store, np.nan, dimension)
+        p_store = np.dot(p_store, tile_vectors)
+        p_store = [x[~np.isnan(x).all(axis=1)] for x in p_store]
+
+        tile_area = []
+        for a in range(len(p_store)):
+            if len(p_store[a]) > 0:
+                tile_area.append(self.polygon_area(p_store[a][:, 0], p_store[a][:, 1]))
+
+        for a in range(len(store)):
+            tile_area.append(self.polygon_area(store[a][:, 0], store[a][:, 1]))
+
+        return store, tile_area, p_store
+
+    def f(self, l, v, dimension):
+        x = (2 + dimension) * 2
+        return [(a + [[v] * dimension] * (x - len(a))) for a in l + [[]] * (x - len(l))]
+
+
+class Grids:
+    def __init__(self, vectors, line_len, grid_len, shifts, val):
+        gen = self.line_generator(vectors, line_len, grid_len, shifts)
+        self.grids = gen[0]
+        self.index = gen[1]
+        self.midpoints = gen[2]
+        self.grid_vectors = vectors
+        self.idx_min = np.min(self.index)
+        self.idx_max = np.max(self.index)
+        self.line_len = line_len
+        self.grid_len = grid_len*2
+        self.shifts = shifts
+        self.val = val
+        self.angles = [math.atan2(x[1],x[0]) for x in vectors]
+        
+
+    def perp_vec(self, v):
+        #Returns the perpendicular vector
+        return (v[1], -v[0])
+
+    def line_generator(self, vectors, line_len, grid_len, shifts):
+        store = []
+        indices = []
+        idx = list(range(-grid_len,grid_len))
+        grid_len *= 2
+        midpoints = []
+
+        for a in range(len(vectors)):
+            #take the vectors you want to use for grids 
+            vec = vectors[a]
+            #make perp to generate the actual line
+            pvec = self.perp_vec(vec)
+
+            #shift the sets of lines so that they're centered around zero
+
+            centx = ((grid_len/2)*(vec[0]))
+            centy = ((grid_len/2)*(vec[1]))
+
+            #generate end points made by vectors, shifted by shifts (and centre), with line length defined by perp        
+            end_p1 = [(((x+shifts[a])*vec[0]-centx + pvec[0]*line_len), ((x+shifts[a])*vec[1]-centy + pvec[1]*line_len)) for x in range(grid_len)]
+            mid_p  = np.array([(end_p1[x][0] + vec[0]/2,end_p1[x][1]+ vec[1]/2) for x in range(grid_len)])
+            end_p2 = [(((x+shifts[a])*vec[0]-centx - pvec[0]*line_len), ((x+shifts[a])*vec[1]-centy - pvec[1]*line_len)) for x in range(grid_len)]
+
+            
+            store.append([end_p1, end_p2])
+            indices.append([idx[x] for x in range(grid_len)])
+
+            midpoints.append(mid_p)
+        return store, indices, midpoints
+
+class tilePlot(pg.GraphicsObject):
+    def __init__(self, tiling, color):
+        pg.GraphicsObject.__init__(self)
+
+        self.generatePicture(tiling, color)
+    
+    def generatePicture(self, tiling, color):
+        ## pre-computing a QPicture object allows paint() to run much more quickly, 
+        ## rather than re-drawing the shapes every time.
+        self.picture = QtGui.QPicture()
+        p = QtGui.QPainter(self.picture)
+        p.setRenderHint(QtGui.QPainter.Antialiasing)
+        p.setPen(pg.mkPen('k', width = 2))
+
+        ##grab out tiles
+        tiles = tiling.points
+        ngons = tiling.p_points
+        ##because of the way I've calculated the areas, we need to seperate our colours out like this
+        ##hopefully in the future I can change this
+        if len(tiles) == len(color):
+            tile_color = color
+            ngon_color = []
+        else:
+            tile_color = color[len(ngons):]        
+            ngon_color = color[:len(ngons)]
+
+        ##draw our tiles and n-gons, if they exist
+        if len(ngon_color) != 0:
+            for i in range(len(ngons)):
+                polygon = QtGui.QPolygonF()
+                ngon = ngons[i]
+                p.setBrush(pg.mkBrush(ngon_color[i]))
+                
+                for j in range(len(ngon)):
+                    x = ngon[j][0]
+                    y = ngon[j][1]
+                    polygon.append(QtCore.QPointF(x, y)) 
+                p.drawPolygon(polygon)
+
+        if len(tile_color) != 0:
+            for i in range(len(tiles)):
+                polygon = QtGui.QPolygonF()
+                tile = tiles[i]
+                p.setBrush(pg.mkBrush(tile_color[i]))
+                for j in range(len(tile)):
+                    x = tile[j][0]
+                    y = tile[j][1]
+                    polygon.append(QtCore.QPointF(x, y)) 
+                p.drawPolygon(polygon)  
+        p.end()
+
+    
+    def paint(self, p, *args):
+        p.drawPicture(0, 0, self.picture)
+       
+    
+    def boundingRect(self):
+        ## boundingRect _must_ indicate the entire area that will be drawn on
+        ## or else we will get artifacts and possibly crashing.
+        ## (in this case, QPicture does all the work of computing the bouning rect for us)
+        return QtCore.QRectF(self.picture.boundingRect())
+
+class vectorPlot(pg.GraphicsObject):
+
+    #take in an argument of scale here, which is a list of scales according to the vector scale
+    def __init__(self, fold):
+
+        pg.GraphicsObject.__init__(self)
+
+        theta = 2*np.pi/fold
+        vectors = []
+        if fold > 2:
+            for i in range(int(fold)):
+                vectors.append((30*np.cos(theta*i), 30*np.sin(theta*i)))
+        else:
+            vectors.append((1, 0))
+            vectors.append((0, 2))
+
+        self.generatePicture(vectors)
+    
+    def generatePicture(self, vectors):
+        ## pre-computing a QPicture object allows paint() to run much more quickly, 
+        ## rather than re-drawing the shapes every time.
+        self.picture = QtGui.QPicture()
+        p = QtGui.QPainter(self.picture)
+        p.setRenderHint(QtGui.QPainter.Antialiasing)
+        p.setPen(pg.mkPen('k', width = 2))
+        for i in range(len(vectors)):
+            p.drawLine(0,0,vectors[i][0],vectors[i][1])
+
+    
+    def paint(self, p, *args):
+        p.drawPicture(0, 0, self.picture)       
+    
+    def boundingRect(self):
+        return QtCore.QRectF(self.picture.boundingRect())
