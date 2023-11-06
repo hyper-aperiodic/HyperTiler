@@ -171,7 +171,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QSpinBox" name="spinBox"/>
+               <widget class="QSpinBox" name="symmetryValue"/>
               </item>
               <item>
                <spacer name="horizontalSpacer_2">
@@ -201,7 +201,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QSpinBox" name="sizeBox_2"/>
+               <widget class="QSpinBox" name="sizeValue"/>
               </item>
               <item>
                <spacer name="horizontalSpacer_3">
@@ -305,7 +305,7 @@
         </layout>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton">
+        <widget class="QPushButton" name="tileButton">
          <property name="text">
           <string>Tile!</string>
          </property>

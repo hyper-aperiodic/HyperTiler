@@ -12,28 +12,38 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 class Ui_MainWindow(object):
+    ##here we're setting up the whole GUI
     def setupUi(self, MainWindow):
-        ##here we're setting up the whole GUI
+        ##first we set the size of the main window, which is fixed - picked these for aesthetics and to allow square windows
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1050, 800)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        ##don't allow stretching (for now) - potential to add this once you've figured out what you're doing
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(MainWindow.sizePolicy().hasHeightForWidth())
         MainWindow.setSizePolicy(sizePolicy)
         MainWindow.setMinimumSize(QtCore.QSize(1050, 800))
         MainWindow.setMaximumSize(QtCore.QSize(1050, 800))
+
+        ##add our main widget to the main window
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
+        ##set up our horizontal layout (to split the window into the 2 sections)
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.centralwidget)
         self.horizontalLayout.setObjectName("horizontalLayout")
+        ##add our parameter section to the layout, style it, and name it
         self.parameterArea = QtWidgets.QFrame(self.centralwidget)
         self.parameterArea.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.parameterArea.setFrameShadow(QtWidgets.QFrame.Raised)
         self.parameterArea.setObjectName("parameterArea")
+
+        ##split the parameter section into 2 vertical sections, set the margins
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.parameterArea)
         self.verticalLayout_3.setContentsMargins(-1, 10, -1, -1)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
+
+        ##create our graphics view for the vectors, set the parameters and sizes, and add its name before adding it to our first vertical layout
         self.vectorPlot = QtWidgets.QGraphicsView(self.parameterArea)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -44,8 +54,12 @@ class Ui_MainWindow(object):
         self.vectorPlot.setMaximumSize(QtCore.QSize(288, 288))
         self.vectorPlot.setObjectName("vectorPlot")
         self.verticalLayout_3.addWidget(self.vectorPlot)
+
+        ##add a spacer to neaten things up between the vector plot area and the tiling parameter section
         spacerItem = QtWidgets.QSpacerItem(20, 10, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
         self.verticalLayout_3.addItem(spacerItem)
+
+        ##add our tiling parameter group to our parameter box, set the margins and name
         self.tilingParameters = QtWidgets.QVBoxLayout()
         self.tilingParameters.setObjectName("tilingParameters")
         self.parameterGroup = QtWidgets.QGroupBox(self.parameterArea)
@@ -53,6 +67,8 @@ class Ui_MainWindow(object):
         self.verticalLayout_4 = QtWidgets.QVBoxLayout(self.parameterGroup)
         self.verticalLayout_4.setContentsMargins(-1, -1, -1, 0)
         self.verticalLayout_4.setObjectName("verticalLayout_4")
+
+        ##add our presets, labels and selections for parameters
         self.presetBox = QtWidgets.QHBoxLayout()
         self.presetBox.setObjectName("presetBox")
         self.presetLabel = QtWidgets.QLabel(self.parameterGroup)
@@ -69,29 +85,33 @@ class Ui_MainWindow(object):
         self.presetBox.addItem(spacerItem1)
         self.verticalLayout_4.addLayout(self.presetBox)
         spacerItem2 = QtWidgets.QSpacerItem(20, 5, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
+        
+        ##add our parameters neatly - first, symmetry
         self.verticalLayout_4.addItem(spacerItem2)
         self.symmetryBox = QtWidgets.QHBoxLayout()
         self.symmetryBox.setObjectName("symmetryBox")
         self.symmetryLabel = QtWidgets.QLabel(self.parameterGroup)
         self.symmetryLabel.setObjectName("symmetryLabel")
         self.symmetryBox.addWidget(self.symmetryLabel)
-        self.spinBox = QtWidgets.QSpinBox(self.parameterGroup)
-        self.spinBox.setObjectName("spinBox")
-        self.symmetryBox.addWidget(self.spinBox)
+        self.symmetryValue = QtWidgets.QSpinBox(self.parameterGroup)
+        self.symmetryValue.setObjectName("symmetryValue")
+        self.symmetryBox.addWidget(self.symmetryValue)
         spacerItem3 = QtWidgets.QSpacerItem(130, 20, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
         self.symmetryBox.addItem(spacerItem3)
         self.verticalLayout_4.addLayout(self.symmetryBox)
+        ##then, adding the patch size
         self.sizeBox = QtWidgets.QHBoxLayout()
         self.sizeBox.setObjectName("sizeBox")
         self.sizeLabel = QtWidgets.QLabel(self.parameterGroup)
         self.sizeLabel.setObjectName("sizeLabel")
         self.sizeBox.addWidget(self.sizeLabel)
-        self.sizeBox_2 = QtWidgets.QSpinBox(self.parameterGroup)
-        self.sizeBox_2.setObjectName("sizeBox_2")
-        self.sizeBox.addWidget(self.sizeBox_2)
+        self.sizeValue = QtWidgets.QSpinBox(self.parameterGroup)
+        self.sizeValue.setObjectName("sizeValue")
+        self.sizeBox.addWidget(self.sizeValue)
         spacerItem4 = QtWidgets.QSpacerItem(130, 20, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
         self.sizeBox.addItem(spacerItem4)
         self.verticalLayout_4.addLayout(self.sizeBox)
+        ##finally our grid shift selection
         self.gridShiftBox = QtWidgets.QHBoxLayout()
         self.gridShiftBox.setObjectName("gridShiftBox")
         self.shiftLabel = QtWidgets.QLabel(self.parameterGroup)
@@ -107,6 +127,8 @@ class Ui_MainWindow(object):
         spacerItem5 = QtWidgets.QSpacerItem(130, 20, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
         self.gridShiftBox.addItem(spacerItem5)
         self.verticalLayout_4.addLayout(self.gridShiftBox)
+
+        ##add a spacer so there's a nice gap between parameters and the advanced button, then add the advanced button
         spacerItem6 = QtWidgets.QSpacerItem(20, 10, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
         self.verticalLayout_4.addItem(spacerItem6)
         self.advancedBox = QtWidgets.QHBoxLayout()
@@ -116,12 +138,18 @@ class Ui_MainWindow(object):
         self.advancedBox.addWidget(self.advancedButton)
         self.verticalLayout_4.addLayout(self.advancedBox)
         self.tilingParameters.addWidget(self.parameterGroup)
+
+        ##finally add the tile button
         self.verticalLayout_3.addLayout(self.tilingParameters)
-        self.pushButton = QtWidgets.QPushButton(self.parameterArea)
-        self.pushButton.setObjectName("pushButton")
-        self.verticalLayout_3.addWidget(self.pushButton)
+        self.tileButton = QtWidgets.QPushButton(self.parameterArea)
+        self.tileButton.setObjectName("pushButton")
+        self.verticalLayout_3.addWidget(self.tileButton)
+        ##add a final spacer 
         spacerItem7 = QtWidgets.QSpacerItem(20, 210, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
         self.verticalLayout_3.addItem(spacerItem7)
+
+
+        ##now to the plotting area. add the horizontal layout, style it, name it        
         self.horizontalLayout.addWidget(self.parameterArea)
         self.plotArea = QtWidgets.QFrame(self.centralwidget)
         self.plotArea.setFrameShape(QtWidgets.QFrame.StyledPanel)
@@ -140,6 +168,8 @@ class Ui_MainWindow(object):
         self.tilingPlot.setMaximumSize(QtCore.QSize(700, 700))
         self.tilingPlot.setObjectName("tilingPlot")
         self.verticalLayout.addWidget(self.tilingPlot)
+
+        ##add our buttons for plotting, editing colour, and saving
         self.plotButtons = QtWidgets.QHBoxLayout()
         self.plotButtons.setSpacing(6)
         self.plotButtons.setObjectName("plotButtons")
@@ -160,6 +190,8 @@ class Ui_MainWindow(object):
         self.horizontalLayout.addWidget(self.plotArea)
         self.horizontalLayout.setStretch(0, 3)
         self.horizontalLayout.setStretch(1, 7)
+
+        ##go back to our centralwidget, add out menu bar and associated menus
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1050, 21))
@@ -172,10 +204,13 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuTools.menuAction())
 
+        ##finally call our function which adds our text to the various objects we need
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
+
+        ##relabel all our stuff
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.parameterGroup.setTitle(_translate("MainWindow", "Tiling parameters"))
@@ -201,12 +236,20 @@ class Ui_MainWindow(object):
 
 if __name__ == "__main__":
     import sys
+    ##start the app
     app = QtWidgets.QApplication(sys.argv)
+    ##call our starting function
     MainWindow = QtWidgets.QMainWindow()
+    #define our variable ui so we can add to things if necessary
     ui = Ui_MainWindow()
+    ##such as setting up the mainwindow!
     ui.setupUi(MainWindow)
+
+
+
     # item = vectorPlot(int(ui.vectorNumInput.text()))
     # ui.graphicsView.addItem(item)
     # graphicsView.addItem(item)
+    ##finally, show the app, and wait for the user to close
     MainWindow.show()
     sys.exit(app.exec_())
