@@ -49,7 +49,18 @@ class Ui_MainWindow(object):
         self.verticalLayout_3.setObjectName("verticalLayout_3")
 
         ##create our graphics view for the vectors, set the parameters and sizes, and add its name before adding it to our first vertical layout
-        self.vectorPlot = QtWidgets.QGraphicsView(self.parameterArea)
+        # self.vectorPlot = QtWidgets.QGraphicsView(self.parameterArea)
+        # sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        # sizePolicy.setHorizontalStretch(0)
+        # sizePolicy.setVerticalStretch(0)
+        # sizePolicy.setHeightForWidth(self.vectorPlot.sizePolicy().hasHeightForWidth())
+        # self.vectorPlot.setSizePolicy(sizePolicy)
+        # self.vectorPlot.setMinimumSize(QtCore.QSize(288, 288))
+        # self.vectorPlot.setMaximumSize(QtCore.QSize(288, 288))
+        # self.vectorPlot.setObjectName("vectorPlot")
+        # self.verticalLayout_3.addWidget(self.vectorPlot)
+        self.vectorPlot = pg.PlotWidget(self.parameterArea)
+        self.vectorPlot.setObjectName("vectorPlot")
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -59,6 +70,15 @@ class Ui_MainWindow(object):
         self.vectorPlot.setMaximumSize(QtCore.QSize(288, 288))
         self.vectorPlot.setObjectName("vectorPlot")
         self.verticalLayout_3.addWidget(self.vectorPlot)
+
+        self.vectorPlot.setBackground('w')
+        # self.vectorPlot.setLimits(xMin = -5)
+        # self.vectorPlot.setLimits(xMax = 105)
+        # self.vectorPlot.setLimits(yMin = -5)
+        # self.vectorPlot.setLimits(yMax = 105)
+        self.vectorPlot.getPlotItem().hideAxis('bottom')
+        self.vectorPlot.getPlotItem().hideAxis('left')
+        self.vectorPlot.hideButtons()
 
         ##add a spacer to neaten things up between the vector plot area and the tiling parameter section
         spacerItem = QtWidgets.QSpacerItem(20, 10, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
@@ -149,8 +169,7 @@ class Ui_MainWindow(object):
         self.tileButton = QtWidgets.QPushButton(self.parameterArea)
         self.tileButton.setObjectName("pushButton")
         self.verticalLayout_3.addWidget(self.tileButton)
-
-        
+        self.tileButton.clicked.connect(self.pushTileButton)
 
 
         ##add a final spacer 
@@ -167,7 +186,24 @@ class Ui_MainWindow(object):
         self.verticalLayout = QtWidgets.QVBoxLayout(self.plotArea)
         self.verticalLayout.setContentsMargins(7, 0, -1, 0)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.tilingPlot = QtWidgets.QGraphicsView(self.plotArea)
+
+        ##this is the thing we actually plot to - it's auto generated, but i think we have to change it
+        # self.tilingPlot = QtWidgets.QGraphicsView(self.plotArea)
+        # sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        # sizePolicy.setHorizontalStretch(0)
+        # sizePolicy.setVerticalStretch(0)
+        # sizePolicy.setHeightForWidth(self.tilingPlot.sizePolicy().hasHeightForWidth())
+        # self.tilingPlot.setSizePolicy(sizePolicy)
+        # self.tilingPlot.setMinimumSize(QtCore.QSize(700, 700))
+        # self.tilingPlot.setMaximumSize(QtCore.QSize(700, 700))
+        # self.tilingPlot.setObjectName("tilingPlot")
+        # self.verticalLayout.addWidget(self.tilingPlot)
+
+
+        ## to this:
+        self.tilingPlot = pg.PlotWidget(self.plotArea)
+        self.tilingPlot.setObjectName("tilingPlot")
+        self.verticalLayout.addWidget(self.tilingPlot)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -175,8 +211,13 @@ class Ui_MainWindow(object):
         self.tilingPlot.setSizePolicy(sizePolicy)
         self.tilingPlot.setMinimumSize(QtCore.QSize(700, 700))
         self.tilingPlot.setMaximumSize(QtCore.QSize(700, 700))
-        self.tilingPlot.setObjectName("tilingPlot")
-        self.verticalLayout.addWidget(self.tilingPlot)
+        self.tilingPlot.setBackground('w')
+        self.tilingPlot.getPlotItem().hideAxis('bottom')
+        self.tilingPlot.getPlotItem().hideAxis('left')
+        self.tilingPlot.hideButtons()
+
+
+
 
         ##add our buttons for plotting, editing colour, and saving
         self.plotButtons = QtWidgets.QHBoxLayout()
@@ -217,6 +258,8 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
+        self.plotted = 0
+
     def retranslateUi(self, MainWindow):
 
         ##relabel all our stuff
@@ -245,17 +288,20 @@ class Ui_MainWindow(object):
 
     def pushTileButton(self):
         
-        p1 = int(self.vectorNumInput.text())
+        p1 = int(self.symmetryValue.text())
         p2 = 1#((np.sqrt(3)+1)/2) 
         p3 = 0
         p4 = ((np.sqrt(5)+1)/2)
-        p5 = int(self.gridNumInput.text())
+        p5 = 15#int(self.gridNumInput.text())
         p6 = 'random'
         self.tiling = TileMaker(p1,p2,p3,p4,p5,p6)#((np.sqrt(5)+1)/2)
-        # points, areas, p_points = self.tiling.points, self.tiling.areas, self.tiling.p_points
+        # TODO: add parameters which describe the min and max areas properly
+        self.tilingPlot.setLimits(xMin = -20)
+        self.tilingPlot.setLimits(xMax = 20)
+        self.tilingPlot.setLimits(yMin = -20)
+        self.tilingPlot.setLimits(yMax = 20)
 
-        vec_item = vectorPlot(p1)
-        # self.tiling = TileMaker(self.grids, tile_vectors)
+        vec_item = vectorPlot(p1)        
         
         self.areas = self.tiling.areas
         self.areas = np.round(self.areas,3)
@@ -283,20 +329,22 @@ class Ui_MainWindow(object):
         item = tilePlot(self.tiling, color)
 
         if self.plotted == 1:
-            self.tilePlotArea.clear()
-            self.tilePlotArea.enableAutoRange()
+            self.tilingPlot.clear()
+            self.tilingPlot.enableAutoRange()
         
-        self.tilePlotArea.addItem(item)
-        self.graphicsView.clear()
-        self.graphicsView.enableAutoRange()
-        self.graphicsView.addItem(vec_item)   
+        self.tilingPlot.addItem(item)
+        
+
+        self.vectorPlot.clear()
+        self.vectorPlot.enableAutoRange()
+        self.vectorPlot.addItem(vec_item)   
         self.plotted = 1
 
     def pushEditStyleButton(self):
         if self.plotted == 0:
             return
         else:
-            self.tilePlotArea.clear()
+            self.tilingPlot.clear()
             color = []
             h = np.random.rand(1)
             for a in range(len(self.unq)):
@@ -308,36 +356,15 @@ class Ui_MainWindow(object):
 
             color = np.array(color)[self.areas]
             item = tilePlot(self.tiling, color)
-            self.tilePlotArea.addItem(item) 
+            self.tilingPlot.addItem(item) 
     
     def pushVectorNumButton(self):
         # if self.plotted == 0:
         fold = int(self.vectorNumInput.text())
         vec_item = vectorPlot(fold)
-        self.graphicsView.clear()
-        self.graphicsView.addItem(vec_item)   
+        self.vectorPlot.clear()
+        self.vectorPlot.addItem(vec_item)   
         return
-
-if __name__ == "__main__":
-    import sys
-    ##start the app
-    app = QtWidgets.QApplication(sys.argv)
-    ##call our starting function
-    MainWindow = QtWidgets.QMainWindow()
-    #define our variable ui so we can add to things if necessary
-    ui = Ui_MainWindow()
-    ##such as setting up the mainwindow!
-    ui.setupUi(MainWindow)
-
-    # item = vectorPlot(int(ui.vectorNumInput.text()))
-    # ui.graphicsView.addItem(item)
-    # graphicsView.addItem(item)
-    ##finally, show the app, and wait for the user to close
-    MainWindow.show()
-    sys.exit(app.exec_())
-
-
-
 
 
 class TileMaker:
@@ -663,7 +690,7 @@ class tilePlot(pg.GraphicsObject):
         ##grab out tiles
         tiles = tiling.points
         ngons = tiling.p_points
-        ##because of the way I've calculated the areas, we need to seperate our colours out like this
+        #TODO: because of the way I've calculated the areas, we need to seperate our colours out like this
         ##hopefully in the future I can change this
         if len(tiles) == len(color):
             tile_color = color
@@ -734,7 +761,8 @@ class vectorPlot(pg.GraphicsObject):
         p.setRenderHint(QtGui.QPainter.Antialiasing)
         p.setPen(pg.mkPen('k', width = 2))
         for i in range(len(vectors)):
-            p.drawLine(0,0,vectors[i][0],vectors[i][1])
+            line = QtCore.QLineF(0,0,vectors[i][0],vectors[i][1])
+            p.drawLine(line)
 
     
     def paint(self, p, *args):
@@ -742,3 +770,26 @@ class vectorPlot(pg.GraphicsObject):
     
     def boundingRect(self):
         return QtCore.QRectF(self.picture.boundingRect())
+    
+
+
+if __name__ == "__main__":
+    import sys
+    ##start the app
+    app = QtWidgets.QApplication(sys.argv)
+    ##call our starting function
+    MainWindow = QtWidgets.QMainWindow()
+    #define our variable ui so we can add to things if necessary
+    ui = Ui_MainWindow()
+    ##such as setting up the mainwindow!
+    ui.setupUi(MainWindow)
+
+    # item = vectorPlot(int(ui.vectorNumInput.text()))
+    # ui.graphicsView.addItem(item)
+    # graphicsView.addItem(item)
+    ##finally, show the app, and wait for the user to close
+    MainWindow.show()
+    sys.exit(app.exec_())
+
+
+
