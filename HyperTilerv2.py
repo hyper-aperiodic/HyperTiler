@@ -110,7 +110,8 @@ class Ui_MainWindow(object):
         self.presetBox.addItem(spacerItem1)
         self.verticalLayout_4.addLayout(self.presetBox)
         spacerItem2 = QtWidgets.QSpacerItem(20, 5, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
-        
+        self.presetSelect.textActivated.connect(self.presetChange)
+
         ##add our parameters neatly - first, symmetry
         self.verticalLayout_4.addItem(spacerItem2)
         self.symmetryBox = QtWidgets.QHBoxLayout()
@@ -124,6 +125,9 @@ class Ui_MainWindow(object):
         spacerItem3 = QtWidgets.QSpacerItem(130, 20, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
         self.symmetryBox.addItem(spacerItem3)
         self.verticalLayout_4.addLayout(self.symmetryBox)
+        #TODO: consider allowing return to be pressed to tile
+        
+
         ##then, adding the patch size
         self.sizeBox = QtWidgets.QHBoxLayout()
         self.sizeBox.setObjectName("sizeBox")
@@ -216,9 +220,6 @@ class Ui_MainWindow(object):
         self.tilingPlot.getPlotItem().hideAxis('left')
         self.tilingPlot.hideButtons()
 
-
-
-
         ##add our buttons for plotting, editing colour, and saving
         self.plotButtons = QtWidgets.QHBoxLayout()
         self.plotButtons.setSpacing(6)
@@ -271,8 +272,8 @@ class Ui_MainWindow(object):
         self.presetSelect.setItemText(1, _translate("MainWindow", "Ammann-Beenker"))
         self.presetSelect.setItemText(2, _translate("MainWindow", "Socolar Dodecagonal"))
         self.presetSelect.setItemText(3, _translate("MainWindow", "Custom"))
-        self.symmetryLabel.setText(_translate("MainWindow", "Symmetry:"))
-        self.sizeLabel.setText(_translate("MainWindow", "Patch size:"))
+        self.symmetryLabel.setText(_translate("MainWindow", "No. of vectors:"))
+        self.sizeLabel.setText(_translate("MainWindow", "No. of grids:"))
         self.shiftLabel.setText(_translate("MainWindow", "Grid shifts:"))
         self.shiftSelect.setItemText(0, _translate("MainWindow", "Regular"))
         self.shiftSelect.setItemText(1, _translate("MainWindow", "Zero"))
@@ -287,13 +288,14 @@ class Ui_MainWindow(object):
         self.menuTools.setTitle(_translate("MainWindow", "Tools"))
 
     def pushTileButton(self):
-        
-        p1 = int(self.symmetryValue.text())
+        #TODO: do we want this to be int? or float for fun?
+        p1 = self.symmetryValue.value()
         p2 = 1#((np.sqrt(3)+1)/2) 
         p3 = 0
-        p4 = ((np.sqrt(5)+1)/2)
-        p5 = 15#int(self.gridNumInput.text())
-        p6 = 'random'
+        p4 = 1#((np.sqrt(5)+1)/2)
+        p5 = self.sizeValue.value()
+        #TODO: you need to add something which checks the length of the calcs you're about to do - either as a pop up, or as some barrier 
+        p6 = 'special' #'random'
         self.tiling = TileMaker(p1,p2,p3,p4,p5,p6)#((np.sqrt(5)+1)/2)
         # TODO: add parameters which describe the min and max areas properly
         self.tilingPlot.setLimits(xMin = -20)
@@ -301,43 +303,53 @@ class Ui_MainWindow(object):
         self.tilingPlot.setLimits(yMin = -20)
         self.tilingPlot.setLimits(yMax = 20)
 
-        vec_item = vectorPlot(p1)        
+        vec_item = vectorPlot(p1)
+        self.vectorPlot.clear()
+        self.vectorPlot.enableAutoRange()
+        self.vectorPlot.addItem(vec_item)         
+
+        self.poly_areas = self.tiling.poly_areas
+        self.poly_areas = np.round(self.poly_areas,3)
+        self.poly_unq = np.unique(self.poly_areas)
+        # if the area is a whole number then it breaks here (?)
+        #replace the unique area sizes with a 'key'
+        for a in range(len(self.poly_unq)):
+            self.poly_areas[self.poly_areas == self.poly_unq[a]] = a
         
-        self.areas = self.tiling.areas
-        self.areas = np.round(self.areas,3)
-        self.unq = np.unique(self.areas)
-        # if the area is a whole number then it breaks here
-        # # #replace the unique area sizes with a 'key'
-        for a in range(len(self.unq)):
+        self.ngon_unq = []
+        self.ngon_areas = self.tiling.ngon_areas
+        if len(self.ngon_areas) > 0:
+            
+            self.ngon_areas = np.round(self.ngon_areas,3)
+            self.ngon_unq = np.unique(self.ngon_areas)
 
-            self.areas[self.areas == self.unq[a]] = a
-
-        self.areas = self.areas.astype(int)
+            for a in range(len(self.ngon_unq)):
+                ##add the length of the poly_unq as we want to add more colours to the system
+                self.ngon_areas[self.ngon_areas == self.ngon_unq[a]] = a+len(self.poly_unq)
+            self.ngon_areas = self.ngon_areas.astype(int)
+        self.poly_areas = self.poly_areas.astype(int)
+        
 
         color = []
         h = np.random.rand(1)[0]
-        for a in range(len(self.unq)):
+        for a in range(len(self.poly_unq)+len(self.ngon_unq)):
             h += 0.618
             h %= 1
 
             (r, g, b) = colorsys.hsv_to_rgb(h, 0.4, 0.8)
             color.append((float(r*255), float(g*255), float(b*255)))
 
-        color = np.array(color)[self.areas]
+        poly_color = np.array(color)[self.poly_areas]
+        ngon_color = np.array(color)[self.ngon_areas]
 
-
-        item = tilePlot(self.tiling, color)
+        item = tilePlot(self.tiling, poly_color, ngon_color)
 
         if self.plotted == 1:
             self.tilingPlot.clear()
             self.tilingPlot.enableAutoRange()
         
         self.tilingPlot.addItem(item)
-        
-
-        self.vectorPlot.clear()
-        self.vectorPlot.enableAutoRange()
-        self.vectorPlot.addItem(vec_item)   
+          
         self.plotted = 1
 
     def pushEditStyleButton(self):
@@ -357,15 +369,26 @@ class Ui_MainWindow(object):
             color = np.array(color)[self.areas]
             item = tilePlot(self.tiling, color)
             self.tilingPlot.addItem(item) 
-    
-    def pushVectorNumButton(self):
-        # if self.plotted == 0:
-        fold = int(self.vectorNumInput.text())
-        vec_item = vectorPlot(fold)
-        self.vectorPlot.clear()
-        self.vectorPlot.addItem(vec_item)   
-        return
 
+    def presetChange(self):
+
+        ##when presets are changed, we find what index they've been changed to
+        ##then assign the values you need to 
+        preset_idx = self.presetSelect.currentIndex()
+        if preset_idx == 0:
+            value = 5
+            self.symmetryValue.setValue(value)
+        elif preset_idx == 1:
+            value = 8
+            self.symmetryValue.setValue(value)
+        elif preset_idx == 2:
+            value = 12
+            self.symmetryValue.setValue(value) 
+        
+        vec_item = vectorPlot(value)
+        self.vectorPlot.clear()
+        self.vectorPlot.enableAutoRange()
+        self.vectorPlot.addItem(vec_item) 
 
 class TileMaker:
     def __init__(self, fold, tau, ang, omega, grid_len, shift_type, shift_const = None):
@@ -401,6 +424,9 @@ class TileMaker:
 
         grid_vectors = np.array(grid_vectors)[arg]
         tile_vectors = np.array(tile_vectors)[arg]
+
+
+
         if shift_type == 'special':
             shifts = [1/(fold/2),-1/(fold/2)]*fold
 
@@ -409,19 +435,16 @@ class TileMaker:
 
         if shift_type == 'zero':
             shifts = [0]*fold
-        if shift_type == 'constant':
-            if shift_const != None:
-                shifts = [shift_const]*fold
-            else:
-                shifts = [np.random.rand()]*fold
+
         
         line_len = 100
-
+        
         grid = Grids(grid_vectors, line_len, grid_len, shifts, val)
         gen = self.make_tile(grid, tile_vectors)
-        self.points = gen[0]
-        self.areas = gen[1]
-        self.p_points = gen[2]
+        self.points = gen[0]        
+        self.p_points = gen[1]
+        self.poly_areas = gen[2]
+        self.ngon_areas = gen[3]
 
     def intersect(self, A, B, C, D):
         t = ((A[0]-C[0])*(C[1]-D[1])-(A[1]-C[1])*(C[0]-D[0]))/((A[0]-B[0])*(C[1]-D[1])-(A[1]-B[1])*(C[0]-D[0]))
@@ -584,7 +607,8 @@ class TileMaker:
                         dist = self.cdist(interx, grid.midpoints[grid_choice], dm)[0]
                         dist_idx = dist.argsort()
                         dist_sort = dist[dist_idx]
-                        if dist_sort[1] - dist_sort[0] < 0.000001:
+                        #TODO: think about a different, better way of doing this
+                        if dist_sort[1] - dist_sort[0] < 0.00000001:
                             count = count + 1
                             poly.append(grid_choice)
                             list2.append((grid_choice, dist_idx[0], dist_idx[1]))
@@ -604,19 +628,43 @@ class TileMaker:
 
         if len(store) > 0:
             store = np.dot(store, tile_vectors)
-        p_store = self.f(p_store, np.nan, dimension)
-        p_store = np.dot(p_store, tile_vectors)
-        p_store = [x[~np.isnan(x).all(axis=1)] for x in p_store]
+        
+        ##this old method was a way of being able to store all the areas in one - which I don't think we necessarily need? 
+        ##it's just lazy and can cause errors down the line
+        # p_store = self.f(p_store, np.nan, dimension)
+        # p_store = np.dot(p_store, tile_vectors)
+        # p_store = [x[~np.isnan(x).all(axis=1)] for x in p_store]
 
-        tile_area = []
-        for a in range(len(p_store)):
-            if len(p_store[a]) > 0:
-                tile_area.append(self.polygon_area(p_store[a][:, 0], p_store[a][:, 1]))
+        # tile_area = []
+        # for a in range(len(p_store)):
+        #     if len(p_store[a]) > 0:
+        #         tile_area.append(self.polygon_area(p_store[a][:, 0], p_store[a][:, 1]))
 
+        # for a in range(len(store)):
+        #     tile_area.append(self.polygon_area(store[a][:, 0], store[a][:, 1]))
+
+        
+
+        poly_areas = []
+        ngon_areas = []        
+        ##calculate the areas of the 4-gons
         for a in range(len(store)):
-            tile_area.append(self.polygon_area(store[a][:, 0], store[a][:, 1]))
+            poly_areas.append(self.polygon_area(store[a][:, 0], store[a][:, 1]))
 
-        return store, tile_area, p_store
+        #then the n-gons
+        if len(p_store) > 0:
+            
+            ##this is necessary because you have a list of n-gons which may have different n's!
+            #TODO: think - would a dictionary of different N's be useful? 6: [list of all 6-gons], 8: [list of all 8-ngons]?
+            p_store = self.f(p_store, np.nan, dimension)
+            p_store = np.dot(p_store, tile_vectors)
+            p_store = [x[~np.isnan(x).all(axis=1)] for x in p_store]
+            
+            for a in range(len(p_store)):  
+                if len(p_store[a]) > 0:
+                    ngon_areas.append(self.polygon_area(p_store[a][:, 0], p_store[a][:, 1]))
+
+        return store, p_store, poly_areas, ngon_areas
 
     def f(self, l, v, dimension):
         x = (2 + dimension) * 2
@@ -674,12 +722,12 @@ class Grids:
         return store, indices, midpoints
 
 class tilePlot(pg.GraphicsObject):
-    def __init__(self, tiling, color):
+    def __init__(self, tiling, poly_color, ngon_color):
         pg.GraphicsObject.__init__(self)
 
-        self.generatePicture(tiling, color)
+        self.generatePicture(tiling, poly_color, ngon_color)
     
-    def generatePicture(self, tiling, color):
+    def generatePicture(self, tiling, poly_color, ngon_color):
         ## pre-computing a QPicture object allows paint() to run much more quickly, 
         ## rather than re-drawing the shapes every time.
         self.picture = QtGui.QPicture()
@@ -687,23 +735,26 @@ class tilePlot(pg.GraphicsObject):
         p.setRenderHint(QtGui.QPainter.Antialiasing)
         p.setPen(pg.mkPen('k', width = 2))
 
-        ##grab out tiles
+        ##grab our tiles
         tiles = tiling.points
         ngons = tiling.p_points
         #TODO: because of the way I've calculated the areas, we need to seperate our colours out like this
         ##hopefully in the future I can change this
-        if len(tiles) == len(color):
-            tile_color = color
-            ngon_color = []
-        else:
-            tile_color = color[len(ngons):]        
-            ngon_color = color[:len(ngons)]
+        # if len(tiles) == len(color):
+        #     tile_color = color
+        #     ngon_color = []
+        # else:
+        #     tile_color = color[len(ngons):]        
+        #     ngon_color = color[:len(ngons)]
 
         ##draw our tiles and n-gons, if they exist
+
         if len(ngon_color) != 0:
             for i in range(len(ngons)):
                 polygon = QtGui.QPolygonF()
                 ngon = ngons[i]
+                if len(ngon) == 0:
+                    continue
                 p.setBrush(pg.mkBrush(ngon_color[i]))
                 
                 for j in range(len(ngon)):
@@ -712,11 +763,11 @@ class tilePlot(pg.GraphicsObject):
                     polygon.append(QtCore.QPointF(x, y)) 
                 p.drawPolygon(polygon)
 
-        if len(tile_color) != 0:
+        if len(poly_color) != 0:
             for i in range(len(tiles)):
                 polygon = QtGui.QPolygonF()
                 tile = tiles[i]
-                p.setBrush(pg.mkBrush(tile_color[i]))
+                p.setBrush(pg.mkBrush(poly_color[i]))
                 for j in range(len(tile)):
                     x = tile[j][0]
                     y = tile[j][1]
@@ -744,6 +795,7 @@ class vectorPlot(pg.GraphicsObject):
 
         theta = 2*np.pi/fold
         vectors = []
+        #TODO: give a more appropriate scale (currently 30), and figure out what you want to do with 2-fold
         if fold > 2:
             for i in range(int(fold)):
                 vectors.append((30*np.cos(theta*i), 30*np.sin(theta*i)))
@@ -783,10 +835,15 @@ if __name__ == "__main__":
     ui = Ui_MainWindow()
     ##such as setting up the mainwindow!
     ui.setupUi(MainWindow)
+    
+    
+    ui.symmetryValue.setValue(5)
+    vec_item = vectorPlot(5)
+    ui.vectorPlot.clear()
+    ui.vectorPlot.enableAutoRange()
+    ui.vectorPlot.addItem(vec_item) 
 
-    # item = vectorPlot(int(ui.vectorNumInput.text()))
-    # ui.graphicsView.addItem(item)
-    # graphicsView.addItem(item)
+    ui.sizeValue.setValue(10)
     ##finally, show the app, and wait for the user to close
     MainWindow.show()
     sys.exit(app.exec_())
