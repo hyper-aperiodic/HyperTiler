@@ -166,12 +166,25 @@
               <item>
                <widget class="QLabel" name="symmetryLabel">
                 <property name="text">
-                 <string>Symmetry:</string>
+                 <string>No. of vectors:</string>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QSpinBox" name="symmetryValue"/>
+               <widget class="QSpinBox" name="symmetryValue">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>50</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </widget>
               </item>
               <item>
                <spacer name="horizontalSpacer_2">
@@ -196,12 +209,25 @@
               <item>
                <widget class="QLabel" name="sizeLabel">
                 <property name="text">
-                 <string>Patch size:</string>
+                 <string>No. of grids:</string>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QSpinBox" name="sizeValue"/>
+               <widget class="QSpinBox" name="sizeValue">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>50</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </widget>
               </item>
               <item>
                <spacer name="horizontalSpacer_3">

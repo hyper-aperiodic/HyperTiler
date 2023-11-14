@@ -94,25 +94,25 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.setObjectName("verticalLayout_4")
 
         ##add our presets, labels and selections for parameters
-        self.presetBox = QtWidgets.QHBoxLayout()
-        self.presetBox.setObjectName("presetBox")
-        self.presetLabel = QtWidgets.QLabel(self.parameterGroup)
-        self.presetLabel.setObjectName("presetLabel")
-        self.presetBox.addWidget(self.presetLabel)
-        self.presetSelect = QtWidgets.QComboBox(self.parameterGroup)
-        self.presetSelect.setObjectName("presetSelect")
-        self.presetSelect.addItem("")
-        self.presetSelect.addItem("")
-        self.presetSelect.addItem("")
-        self.presetSelect.addItem("")
-        self.presetBox.addWidget(self.presetSelect)
-        spacerItem1 = QtWidgets.QSpacerItem(70, 30, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
-        self.presetBox.addItem(spacerItem1)
-        self.verticalLayout_4.addLayout(self.presetBox)
-        spacerItem2 = QtWidgets.QSpacerItem(20, 5, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
-        self.presetSelect.textActivated.connect(self.presetChange)
+        # self.presetBox = QtWidgets.QHBoxLayout()
+        # self.presetBox.setObjectName("presetBox")
+        # self.presetLabel = QtWidgets.QLabel(self.parameterGroup)
+        # self.presetLabel.setObjectName("presetLabel")
+        # self.presetBox.addWidget(self.presetLabel)
+        # self.presetSelect = QtWidgets.QComboBox(self.parameterGroup)
+        # self.presetSelect.setObjectName("presetSelect")
+        # self.presetSelect.addItem("")
+        # self.presetSelect.addItem("")
+        # self.presetSelect.addItem("")
+        # self.presetSelect.addItem("")
+        # self.presetBox.addWidget(self.presetSelect)
+        # spacerItem1 = QtWidgets.QSpacerItem(70, 30, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
+        # self.presetBox.addItem(spacerItem1)
+        # self.verticalLayout_4.addLayout(self.presetBox)
+        # self.presetSelect.textActivated.connect(self.presetChange)
 
         ##add our parameters neatly - first, symmetry
+        spacerItem2 = QtWidgets.QSpacerItem(20, 5, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
         self.verticalLayout_4.addItem(spacerItem2)
         self.symmetryBox = QtWidgets.QHBoxLayout()
         self.symmetryBox.setObjectName("symmetryBox")
@@ -122,9 +122,17 @@ class Ui_MainWindow(object):
         self.symmetryValue = QtWidgets.QSpinBox(self.parameterGroup)
         self.symmetryValue.setObjectName("symmetryValue")
         self.symmetryBox.addWidget(self.symmetryValue)
-        spacerItem3 = QtWidgets.QSpacerItem(130, 20, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
+        spacerItem3 = QtWidgets.QSpacerItem(110, 20, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
         self.symmetryBox.addItem(spacerItem3)
         self.verticalLayout_4.addLayout(self.symmetryBox)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        self.symmetryValue.setSizePolicy(sizePolicy)
+        self.symmetryValue.setMinimumSize(QtCore.QSize(60, 20))
+        self.symmetryValue.setMaximumSize(QtCore.QSize(60, 20))
+        self.symmetryValue.valueChanged.connect(self.updateVector)
+        # self.symmetryValue.act
         #TODO: consider allowing return to be pressed to tile
         
 
@@ -137,9 +145,18 @@ class Ui_MainWindow(object):
         self.sizeValue = QtWidgets.QSpinBox(self.parameterGroup)
         self.sizeValue.setObjectName("sizeValue")
         self.sizeBox.addWidget(self.sizeValue)
-        spacerItem4 = QtWidgets.QSpacerItem(130, 20, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
+        spacerItem4 = QtWidgets.QSpacerItem(110, 20, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
         self.sizeBox.addItem(spacerItem4)
         self.verticalLayout_4.addLayout(self.sizeBox)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        self.sizeValue.setSizePolicy(sizePolicy)
+        self.sizeValue.setMinimumSize(QtCore.QSize(60, 20))
+        self.sizeValue.setMaximumSize(QtCore.QSize(60, 20))
+
+
+
         ##finally our grid shift selection
         self.gridShiftBox = QtWidgets.QHBoxLayout()
         self.gridShiftBox.setObjectName("gridShiftBox")
@@ -153,7 +170,7 @@ class Ui_MainWindow(object):
         self.shiftSelect.addItem("")
         self.shiftSelect.addItem("")
         self.gridShiftBox.addWidget(self.shiftSelect)
-        spacerItem5 = QtWidgets.QSpacerItem(130, 20, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
+        spacerItem5 = QtWidgets.QSpacerItem(110, 20, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
         self.gridShiftBox.addItem(spacerItem5)
         self.verticalLayout_4.addLayout(self.gridShiftBox)
 
@@ -177,7 +194,7 @@ class Ui_MainWindow(object):
 
 
         ##add a final spacer 
-        spacerItem7 = QtWidgets.QSpacerItem(20, 210, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        spacerItem7 = QtWidgets.QSpacerItem(20, 240, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
         self.verticalLayout_3.addItem(spacerItem7)
 
 
@@ -255,30 +272,33 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuTools.menuAction())
 
+        ##add a bunch of default parameters here (have you plotted yet, etc.)
+        self.plotted = False
+
         ##finally call our function which adds our text to the various objects we need
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-        self.plotted = 0
-
+        
+    
     def retranslateUi(self, MainWindow):
 
         ##relabel all our stuff
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.parameterGroup.setTitle(_translate("MainWindow", "Tiling parameters"))
-        self.presetLabel.setText(_translate("MainWindow", "Preset:"))
-        self.presetSelect.setItemText(0, _translate("MainWindow", "Penrose"))
-        self.presetSelect.setItemText(1, _translate("MainWindow", "Ammann-Beenker"))
-        self.presetSelect.setItemText(2, _translate("MainWindow", "Socolar Dodecagonal"))
-        self.presetSelect.setItemText(3, _translate("MainWindow", "Custom"))
+        # self.presetLabel.setText(_translate("MainWindow", "Preset:"))
+        # self.presetSelect.setItemText(0, _translate("MainWindow", "Penrose"))
+        # self.presetSelect.setItemText(1, _translate("MainWindow", "Ammann-Beenker"))
+        # self.presetSelect.setItemText(2, _translate("MainWindow", "Socolar Dodecagonal"))
+        # self.presetSelect.setItemText(3, _translate("MainWindow", "Load preset..."))
         self.symmetryLabel.setText(_translate("MainWindow", "No. of vectors:"))
         self.sizeLabel.setText(_translate("MainWindow", "No. of grids:"))
         self.shiftLabel.setText(_translate("MainWindow", "Grid shifts:"))
         self.shiftSelect.setItemText(0, _translate("MainWindow", "Regular"))
         self.shiftSelect.setItemText(1, _translate("MainWindow", "Zero"))
         self.shiftSelect.setItemText(2, _translate("MainWindow", "Random"))
-        self.shiftSelect.setItemText(3, _translate("MainWindow", "Custom"))
+        self.shiftSelect.setItemText(3, _translate("MainWindow", "Regular random"))
         self.advancedButton.setText(_translate("MainWindow", "Advanced..."))
         self.tileButton.setText(_translate("MainWindow", "Tile!"))
         self.gridView.setText(_translate("MainWindow", "Grid view"))
@@ -287,6 +307,13 @@ class Ui_MainWindow(object):
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.menuTools.setTitle(_translate("MainWindow", "Tools"))
 
+    def updateVector(self):
+        value = self.symmetryValue.value()        
+        vec_item = vectorPlotting(value)
+        self.vectorPlot.clear()
+        self.vectorPlot.enableAutoRange()
+        self.vectorPlot.addItem(vec_item)
+
     def pushTileButton(self):
         #TODO: do we want this to be int? or float for fun?
         p1 = self.symmetryValue.value()
@@ -294,8 +321,10 @@ class Ui_MainWindow(object):
         p3 = 0
         p4 = 1#((np.sqrt(5)+1)/2)
         p5 = self.sizeValue.value()
+
         #TODO: you need to add something which checks the length of the calcs you're about to do - either as a pop up, or as some barrier 
-        p6 = 'special' #'random'
+        p6 = self.shiftSelect.currentText()#'regular' #'random'
+
         self.tiling = TileMaker(p1,p2,p3,p4,p5,p6)#((np.sqrt(5)+1)/2)
         # TODO: add parameters which describe the min and max areas properly
         self.tilingPlot.setLimits(xMin = -20)
@@ -303,7 +332,7 @@ class Ui_MainWindow(object):
         self.tilingPlot.setLimits(yMin = -20)
         self.tilingPlot.setLimits(yMax = 20)
 
-        vec_item = vectorPlot(p1)
+        vec_item = vectorPlotting(p1)
         self.vectorPlot.clear()
         self.vectorPlot.enableAutoRange()
         self.vectorPlot.addItem(vec_item)         
@@ -344,16 +373,16 @@ class Ui_MainWindow(object):
 
         item = tilePlot(self.tiling, poly_color, ngon_color)
 
-        if self.plotted == 1:
+        if self.plotted:
             self.tilingPlot.clear()
             self.tilingPlot.enableAutoRange()
         
         self.tilingPlot.addItem(item)
           
-        self.plotted = 1
+        self.plotted = True
 
     def pushEditStyleButton(self):
-        if self.plotted == 0:
+        if not self.plotted:
             return
         else:
             self.tilingPlot.clear()
@@ -370,28 +399,34 @@ class Ui_MainWindow(object):
             item = tilePlot(self.tiling, color)
             self.tilingPlot.addItem(item) 
 
-    def presetChange(self):
+    # def presetChange(self):
 
-        ##when presets are changed, we find what index they've been changed to
-        ##then assign the values you need to 
-        preset_idx = self.presetSelect.currentIndex()
-        if preset_idx == 0:
-            value = 5
-            self.symmetryValue.setValue(value)
-        elif preset_idx == 1:
-            value = 8
-            self.symmetryValue.setValue(value)
-        elif preset_idx == 2:
-            value = 12
-            self.symmetryValue.setValue(value) 
-        
-        vec_item = vectorPlot(value)
-        self.vectorPlot.clear()
-        self.vectorPlot.enableAutoRange()
-        self.vectorPlot.addItem(vec_item) 
+    #     ##when presets are changed, we find what index they've been changed to
+    #     ##then assign the values you need to 
+    #     preset_idx = self.presetSelect.currentIndex()
+    #     if preset_idx == 0:
+    #         value = 5
+    #         self.symmetryValue.setValue(value)
+    #     elif preset_idx == 1:
+    #         value = 8
+    #         self.symmetryValue.setValue(value)
+    #     elif preset_idx == 2:
+    #         value = 12
+    #         self.symmetryValue.setValue(value) 
+    #     #TODO: figure out how to load presets
+    #     # elif preset_idx == 3:
+    #     #     value = 12
+    #     #     self.symmetryValue.setValue(value) 
+
+    #     vec_item = vectorPlot(value)
+    #     self.vectorPlot.clear()
+    #     self.vectorPlot.enableAutoRange()
+    #     self.vectorPlot.addItem(vec_item) 
+
+
 
 class TileMaker:
-    def __init__(self, fold, tau, ang, omega, grid_len, shift_type, shift_const = None):
+    def __init__(self, fold, tau, ang, omega, grid_len, shift_type):
 
         theta = 2*np.pi/fold
         grid_vectors = []
@@ -424,18 +459,27 @@ class TileMaker:
 
         grid_vectors = np.array(grid_vectors)[arg]
         tile_vectors = np.array(tile_vectors)[arg]
+        
+        if shift_type == 'Regular':
+            if fold % 2 ==0:
+                shifts = [1/(fold/2),-1/(fold/2)]*int(fold/2)
+            else:
+                shifts = [1/(fold)]*fold
 
-
-
-        if shift_type == 'special':
-            shifts = [1/(fold/2),-1/(fold/2)]*fold
-
-        if shift_type == 'random':
+        if shift_type == 'Random':
             shifts = np.random.rand(fold)
 
-        if shift_type == 'zero':
+        if shift_type == 'Zero':
             shifts = [0]*fold
-
+        
+        if shift_type == 'Regular random':
+            r = np.random.rand(1, fold)
+            r /= np.sum(r)
+            shifts = r[0]
+        #TODO: figure out how to pass your custom shifts here
+        # if shift_type == 'custom':
+        #     shifts = [0]*fold
+   
         
         line_len = 100
         
@@ -738,17 +782,8 @@ class tilePlot(pg.GraphicsObject):
         ##grab our tiles
         tiles = tiling.points
         ngons = tiling.p_points
-        #TODO: because of the way I've calculated the areas, we need to seperate our colours out like this
-        ##hopefully in the future I can change this
-        # if len(tiles) == len(color):
-        #     tile_color = color
-        #     ngon_color = []
-        # else:
-        #     tile_color = color[len(ngons):]        
-        #     ngon_color = color[:len(ngons)]
-
+        
         ##draw our tiles and n-gons, if they exist
-
         if len(ngon_color) != 0:
             for i in range(len(ngons)):
                 polygon = QtGui.QPolygonF()
@@ -786,7 +821,7 @@ class tilePlot(pg.GraphicsObject):
         ## (in this case, QPicture does all the work of computing the bouning rect for us)
         return QtCore.QRectF(self.picture.boundingRect())
 
-class vectorPlot(pg.GraphicsObject):
+class vectorPlotting(pg.GraphicsObject):
 
     #take in an argument of scale here, which is a list of scales according to the vector scale
     def __init__(self, fold):
@@ -795,7 +830,7 @@ class vectorPlot(pg.GraphicsObject):
 
         theta = 2*np.pi/fold
         vectors = []
-        #TODO: give a more appropriate scale (currently 30), and figure out what you want to do with 2-fold
+        #TODO: give a more appropriate scale (currently arbitrarily 30), and figure out what you want to do with 2-fold
         if fold > 2:
             for i in range(int(fold)):
                 vectors.append((30*np.cos(theta*i), 30*np.sin(theta*i)))
@@ -812,9 +847,22 @@ class vectorPlot(pg.GraphicsObject):
         p = QtGui.QPainter(self.picture)
         p.setRenderHint(QtGui.QPainter.Antialiasing)
         p.setPen(pg.mkPen('k', width = 2))
+        p.setBrush(pg.mkBrush('k'))
         for i in range(len(vectors)):
             line = QtCore.QLineF(0,0,vectors[i][0],vectors[i][1])
             p.drawLine(line)
+            ##draw a triangle
+            triangle = []
+            bearing = np.arctan2(vectors[i][1], vectors[i][0])
+
+            p1x, p1y = vectors[i][0], vectors[i][1]
+            p2x, p2y = vectors[i][0]+5*np.cos(bearing+np.radians(150)), vectors[i][1]+5*np.sin(bearing+np.radians(150))
+            p3x, p3y = vectors[i][0]+5*np.cos(bearing-np.radians(150)), vectors[i][1]+5*np.sin(bearing-np.radians(150))
+
+            triangle.append(QtCore.QPointF(p1x, p1y)) 
+            triangle.append(QtCore.QPointF(p2x, p2y)) 
+            triangle.append(QtCore.QPointF(p3x, p3y)) 
+            p.drawPolygon(triangle)  
 
     
     def paint(self, p, *args):
@@ -838,11 +886,11 @@ if __name__ == "__main__":
     
     
     ui.symmetryValue.setValue(5)
-    vec_item = vectorPlot(5)
+    vec_item = vectorPlotting(5)
     ui.vectorPlot.clear()
     ui.vectorPlot.enableAutoRange()
     ui.vectorPlot.addItem(vec_item) 
-
+    ui.presetClick = True
     ui.sizeValue.setValue(10)
     ##finally, show the app, and wait for the user to close
     MainWindow.show()
