@@ -765,61 +765,118 @@ class Grids:
             midpoints.append(mid_p)
         return store, indices, midpoints
 
+
 class tilePlot(pg.GraphicsObject):
     def __init__(self, tiling, poly_color, ngon_color):
         pg.GraphicsObject.__init__(self)
-
         self.generatePicture(tiling, poly_color, ngon_color)
-    
+
     def generatePicture(self, tiling, poly_color, ngon_color):
-        ## pre-computing a QPicture object allows paint() to run much more quickly, 
-        ## rather than re-drawing the shapes every time.
         self.picture = QtGui.QPicture()
         p = QtGui.QPainter(self.picture)
         p.setRenderHint(QtGui.QPainter.Antialiasing)
-        p.setPen(pg.mkPen('k', width = 2))
+        p.setPen(pg.mkPen('k', width=2))
 
-        ##grab our tiles
         tiles = tiling.points
         ngons = tiling.p_points
+
+        path = QtGui.QPainterPath()
+        edge_path = QtGui.QPainterPath()  # For edges
         
-        ##draw our tiles and n-gons, if they exist
         if len(ngon_color) != 0:
-            for i in range(len(ngons)):
-                polygon = QtGui.QPolygonF()
-                ngon = ngons[i]
+            for ngon, color in zip(ngons, ngon_color):
                 if len(ngon) == 0:
                     continue
-                p.setBrush(pg.mkBrush(ngon_color[i]))
+                path.setFillRule(QtCore.Qt.WindingFill)
+                path.addPolygon(QtGui.QPolygonF([QtCore.QPointF(x, y) for x, y in ngon]))
+                p.fillPath(path, pg.mkBrush(color))
                 
-                for j in range(len(ngon)):
-                    x = ngon[j][0]
-                    y = ngon[j][1]
-                    polygon.append(QtCore.QPointF(x, y)) 
-                p.drawPolygon(polygon)
+                for i in range(len(ngon)):  # Collect edges for each side of the ngon
+                    next_i = (i + 1) % len(ngon)
+                    edge_path.moveTo(QtCore.QPointF(ngon[i][0], ngon[i][1]))
+                    edge_path.lineTo(QtCore.QPointF(ngon[next_i][0], ngon[next_i][1]))
+                
+                path = QtGui.QPainterPath()
 
         if len(poly_color) != 0:
-            for i in range(len(tiles)):
-                polygon = QtGui.QPolygonF()
-                tile = tiles[i]
-                p.setBrush(pg.mkBrush(poly_color[i]))
-                for j in range(len(tile)):
-                    x = tile[j][0]
-                    y = tile[j][1]
-                    polygon.append(QtCore.QPointF(x, y)) 
-                p.drawPolygon(polygon)  
+            for tile, color in zip(tiles, poly_color):
+                path.setFillRule(QtCore.Qt.WindingFill)
+                path.addPolygon(QtGui.QPolygonF([QtCore.QPointF(x, y) for x, y in tile]))
+                p.fillPath(path, pg.mkBrush(color))
+                
+                for i in range(len(tile)):  # Collect edges for each side of the tile
+                    next_i = (i + 1) % len(tile)
+                    edge_path.moveTo(QtCore.QPointF(tile[i][0], tile[i][1]))
+                    edge_path.lineTo(QtCore.QPointF(tile[next_i][0], tile[next_i][1]))
+                
+                path = QtGui.QPainterPath()
+
+        p.drawPath(edge_path)  # Draw all collected edges
         p.end()
 
-    
     def paint(self, p, *args):
         p.drawPicture(0, 0, self.picture)
+
+    def boundingRect(self):
+        return QtCore.QRectF(self.picture.boundingRect())
+
+
+####original code
+# class tilePlot(pg.GraphicsObject):
+#     def __init__(self, tiling, poly_color, ngon_color):
+#         pg.GraphicsObject.__init__(self)
+
+#         self.generatePicture(tiling, poly_color, ngon_color)
+    
+#     def generatePicture(self, tiling, poly_color, ngon_color):
+#         ## pre-computing a QPicture object allows paint() to run much more quickly, 
+#         ## rather than re-drawing the shapes every time.
+#         self.picture = QtGui.QPicture()
+#         p = QtGui.QPainter(self.picture)
+#         p.setRenderHint(QtGui.QPainter.Antialiasing)
+#         p.setPen(pg.mkPen('k', width = 2))
+
+#         ##grab our tiles
+#         tiles = tiling.points
+#         ngons = tiling.p_points
+        
+#         ##draw our tiles and n-gons, if they exist
+#         if len(ngon_color) != 0:
+#             for i in range(len(ngons)):
+#                 polygon = QtGui.QPolygonF()
+#                 ngon = ngons[i]
+#                 if len(ngon) == 0:
+#                     continue
+#                 p.setBrush(pg.mkBrush(ngon_color[i]))
+                
+#                 for j in range(len(ngon)):
+#                     x = ngon[j][0]
+#                     y = ngon[j][1]
+#                     polygon.append(QtCore.QPointF(x, y)) 
+#                 p.drawPolygon(polygon)
+
+#         if len(poly_color) != 0:
+#             for i in range(len(tiles)):
+#                 polygon = QtGui.QPolygonF()
+#                 tile = tiles[i]
+#                 p.setBrush(pg.mkBrush(poly_color[i]))
+#                 for j in range(len(tile)):
+#                     x = tile[j][0]
+#                     y = tile[j][1]
+#                     polygon.append(QtCore.QPointF(x, y)) 
+#                 p.drawPolygon(polygon)  
+#         p.end()
+
+    
+#     def paint(self, p, *args):
+#         p.drawPicture(0, 0, self.picture)
        
     
-    def boundingRect(self):
-        ## boundingRect _must_ indicate the entire area that will be drawn on
-        ## or else we will get artifacts and possibly crashing.
-        ## (in this case, QPicture does all the work of computing the bouning rect for us)
-        return QtCore.QRectF(self.picture.boundingRect())
+#     def boundingRect(self):
+#         ## boundingRect _must_ indicate the entire area that will be drawn on
+#         ## or else we will get artifacts and possibly crashing.
+#         ## (in this case, QPicture does all the work of computing the bouning rect for us)
+#         return QtCore.QRectF(self.picture.boundingRect())
 
 class vectorPlotting(pg.GraphicsObject):
 
