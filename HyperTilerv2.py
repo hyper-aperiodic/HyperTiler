@@ -295,10 +295,11 @@ class Ui_MainWindow(object):
         self.symmetryLabel.setText(_translate("MainWindow", "No. of vectors:"))
         self.sizeLabel.setText(_translate("MainWindow", "No. of grids:"))
         self.shiftLabel.setText(_translate("MainWindow", "Grid shifts:"))
-        self.shiftSelect.setItemText(0, _translate("MainWindow", "Regular"))
-        self.shiftSelect.setItemText(1, _translate("MainWindow", "Zero"))
-        self.shiftSelect.setItemText(2, _translate("MainWindow", "Random"))
-        self.shiftSelect.setItemText(3, _translate("MainWindow", "Regular random"))
+        self.shiftSelect.setItemText(0, _translate("MainWindow", "Regular central"))
+        self.shiftSelect.setItemText(1, _translate("MainWindow", "Regular random"))
+        self.shiftSelect.setItemText(2, _translate("MainWindow", "Zero"))
+        self.shiftSelect.setItemText(3, _translate("MainWindow", "Random"))
+        
         self.advancedButton.setText(_translate("MainWindow", "Advanced..."))
         self.tileButton.setText(_translate("MainWindow", "Tile!"))
         self.gridView.setText(_translate("MainWindow", "Grid view"))
@@ -326,7 +327,7 @@ class Ui_MainWindow(object):
         p6 = self.shiftSelect.currentText()#'regular' #'random'
 
         self.tiling = TileMaker(p1,p2,p3,p4,p5,p6)#((np.sqrt(5)+1)/2)
-        # TODO: add parameters which describe the min and max areas properly
+        # TODO: add parameters which describe the min and max limits properly
         self.tilingPlot.setLimits(xMin = -20)
         self.tilingPlot.setLimits(xMax = 20)
         self.tilingPlot.setLimits(yMin = -20)
@@ -460,11 +461,16 @@ class TileMaker:
         grid_vectors = np.array(grid_vectors)[arg]
         tile_vectors = np.array(tile_vectors)[arg]
         
-        if shift_type == 'Regular':
+        if shift_type == 'Regular central':
             if fold % 2 ==0:
                 shifts = [1/(fold/2),-1/(fold/2)]*int(fold/2)
             else:
                 shifts = [1/(fold)]*fold
+                
+        if shift_type == 'Regular random':
+            r = np.random.rand(1, fold)
+            r /= np.sum(r)
+            shifts = r[0]
 
         if shift_type == 'Random':
             shifts = np.random.rand(fold)
@@ -472,10 +478,7 @@ class TileMaker:
         if shift_type == 'Zero':
             shifts = [0]*fold
         
-        if shift_type == 'Regular random':
-            r = np.random.rand(1, fold)
-            r /= np.sum(r)
-            shifts = r[0]
+        
         #TODO: figure out how to pass your custom shifts here
         # if shift_type == 'custom':
         #     shifts = [0]*fold
@@ -618,7 +621,7 @@ class TileMaker:
         dimension = len(grid.grid_vectors)
         ind_mult = [[1, 0], [1, 1], [0, 1]]
         vec_no = list(range(dimension))
-        radius = np.ceil(grid.grid_len / 3)
+        radius = np.ceil(grid.grid_len / 2.5)
         val = grid.val
         combs = self.collinear(list(itertools.combinations(list(range(dimension)), 2)), grid.grid_vectors)
         store = []
@@ -714,7 +717,7 @@ class TileMaker:
         x = (2 + dimension) * 2
         return [(a + [[v] * dimension] * (x - len(a))) for a in l + [[]] * (x - len(l))]
 
-
+asdsadsa
 class Grids:
     def __init__(self, vectors, line_len, grid_len, shifts, val):
         gen = self.line_generator(vectors, line_len, grid_len, shifts)
