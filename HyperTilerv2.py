@@ -79,6 +79,11 @@ class Ui_MainWindow(object):
         self.vectorPlot.getPlotItem().hideAxis('bottom')
         self.vectorPlot.getPlotItem().hideAxis('left')
         self.vectorPlot.hideButtons()
+        
+        vec_item = vectorPlotting(5)
+        self.vectorPlot.clear()
+        self.vectorPlot.enableAutoRange()
+        self.vectorPlot.addItem(vec_item) 
 
         ##add a spacer to neaten things up between the vector plot area and the tiling parameter section
         spacerItem = QtWidgets.QSpacerItem(20, 10, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
@@ -132,6 +137,8 @@ class Ui_MainWindow(object):
         self.symmetryValue.setMinimumSize(QtCore.QSize(60, 20))
         self.symmetryValue.setMaximumSize(QtCore.QSize(60, 20))
         self.symmetryValue.valueChanged.connect(self.updateVector)
+        
+        self.symmetryValue.setValue(5)
         # self.symmetryValue.act
         #TODO: consider allowing return to be pressed to tile
         
@@ -154,8 +161,8 @@ class Ui_MainWindow(object):
         self.sizeValue.setSizePolicy(sizePolicy)
         self.sizeValue.setMinimumSize(QtCore.QSize(60, 20))
         self.sizeValue.setMaximumSize(QtCore.QSize(60, 20))
-
-
+        self.sizeValue.setValue(10)
+       
 
         ##finally our grid shift selection
         self.gridShiftBox = QtWidgets.QHBoxLayout()
@@ -170,7 +177,7 @@ class Ui_MainWindow(object):
         self.shiftSelect.addItem("")
         self.shiftSelect.addItem("")
         self.gridShiftBox.addWidget(self.shiftSelect)
-        spacerItem5 = QtWidgets.QSpacerItem(110, 20, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
+        spacerItem5 = QtWidgets.QSpacerItem(69, 20, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
         self.gridShiftBox.addItem(spacerItem5)
         self.verticalLayout_4.addLayout(self.gridShiftBox)
 
@@ -184,6 +191,13 @@ class Ui_MainWindow(object):
         self.advancedBox.addWidget(self.advancedButton)
         self.verticalLayout_4.addLayout(self.advancedBox)
         self.tilingParameters.addWidget(self.parameterGroup)
+        
+        ##add the advanced window here
+        self.advancedWindow = createAdvancedWindow()
+        self.advancedButton.clicked.connect(
+            lambda checked: self.toggle_window(self.advancedWindow)
+        )
+        self.symmetryValue.valueChanged.connect(self.advancedWindow.mainValChange)
 
         ##finally add the tile button
         self.verticalLayout_3.addLayout(self.tilingParameters)
@@ -280,7 +294,12 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
         
-    
+    def toggle_window(self, window):
+        if window.isVisible():
+            window.hide()
+        else:
+            window.show()
+
     def retranslateUi(self, MainWindow):
 
         ##relabel all our stuff
@@ -326,6 +345,13 @@ class Ui_MainWindow(object):
         p6 = self.shiftSelect.currentText()#'regular' #'random'
 
         self.tiling = TileMaker(p1,p2,p3,p4,p5,p6)#((np.sqrt(5)+1)/2)
+        
+        try:
+            stack = np.vstack(self.tiling.points)
+            xmax = np.max(stack[:,0])
+        except:
+            xmax = np.max(np.vstack(self.tiling.p_points)[:,0])
+
         # TODO: add parameters which describe the min and max areas properly
         self.tilingPlot.setLimits(xMin = -20)
         self.tilingPlot.setLimits(xMax = 20)
@@ -423,6 +449,25 @@ class Ui_MainWindow(object):
     #     self.vectorPlot.enableAutoRange()
     #     self.vectorPlot.addItem(vec_item) 
 
+class createAdvancedWindow(QtWidgets.QWidget):
+
+    def __init__(self):
+        super().__init__()
+        layout = QtWidgets.QVBoxLayout()
+        
+        self.label = QtWidgets.QLabel("Another Window % d" % np.random.randint(0, 100))
+        self.test_VAL = QtWidgets.QSpinBox()
+        self.test_VAL.setValue(ui.symmetryValue.value())
+        self.test_VAL.valueChanged.connect(self.valChange)
+        layout.addWidget(self.test_VAL)
+        layout.addWidget(self.label)
+        self.setLayout(layout)
+
+    def valChange(self, value):
+        ui.symmetryValue.setValue(value)
+
+    def mainValChange(self, value):
+        self.test_VAL.setValue(ui.symmetryValue.value())
 
 
 class TileMaker:
@@ -942,13 +987,8 @@ if __name__ == "__main__":
     ui.setupUi(MainWindow)
     
     
-    ui.symmetryValue.setValue(5)
-    vec_item = vectorPlotting(5)
-    ui.vectorPlot.clear()
-    ui.vectorPlot.enableAutoRange()
-    ui.vectorPlot.addItem(vec_item) 
-    ui.presetClick = True
-    ui.sizeValue.setValue(10)
+    # ui.symmetryValue.setValue(5)
+
     ##finally, show the app, and wait for the user to close
     MainWindow.show()
     sys.exit(app.exec_())
