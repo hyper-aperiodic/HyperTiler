@@ -139,6 +139,7 @@ class Ui_MainWindow(object):
         self.symmetryValue.valueChanged.connect(self.updateVector)
         
         self.symmetryValue.setValue(5)
+        self.symmetryValue.setMinimum(3)
         # self.symmetryValue.act
         #TODO: consider allowing return to be pressed to tile
         
@@ -468,6 +469,8 @@ class createAdvancedWindow(QtWidgets.QWidget):
 
     def mainValChange(self, value):
         self.test_VAL.setValue(ui.symmetryValue.value())
+    ##TODO: we want to be able to change values in the main window that change their respective values in the window. e.g. we create a custom set, 
+    # then click random shifts - this should update
 
 
 class TileMaker:
@@ -477,24 +480,24 @@ class TileMaker:
         grid_vectors = []
         tile_vectors = []
 
-        if fold == 4:
-            for i in range(int(fold)):
-                if (i)<2:
-                    grid_vectors.append((np.cos(theta*i), np.sin(theta*i)))
-                    tile_vectors.append((np.cos(theta*i), np.sin(theta*i)))
+        
+        for i in range(int(fold)):            
+            grid_vectors.append((np.cos(theta*i), np.sin(theta*i)))
+            tile_vectors.append((np.cos(theta*i), np.sin(theta*i)))
+#TODO: you'll need to update this once the advanced button works nicely
+#TODO: will the vectors need to be defined somewhere first before being passed here? especially the customised ones...
+        #         else:
+        #             grid_vectors.append((omega*np.cos(ang+theta*i), omega*np.sin(ang+theta*i)))
+        #             tile_vectors.append(((1/tau)*np.cos(ang+theta*i), (1/tau)*np.sin(ang+theta*i)))
+        # else:
+        #     for i in range(int(fold)):
+        #         if (i)%2:
+        #             grid_vectors.append((np.cos(theta*i), np.sin(theta*i)))
+        #             tile_vectors.append((np.cos(theta*i), np.sin(theta*i)))
 
-                else:
-                    grid_vectors.append((omega*np.cos(ang+theta*i), omega*np.sin(ang+theta*i)))
-                    tile_vectors.append(((1/tau)*np.cos(ang+theta*i), (1/tau)*np.sin(ang+theta*i)))
-        else:
-            for i in range(int(fold)):
-                if (i)%2:
-                    grid_vectors.append((np.cos(theta*i), np.sin(theta*i)))
-                    tile_vectors.append((np.cos(theta*i), np.sin(theta*i)))
-
-                else:
-                    grid_vectors.append((omega*np.cos(ang+theta*i), omega*np.sin(ang+theta*i)))
-                    tile_vectors.append(((1/tau)*np.cos(ang+theta*i), (1/tau)*np.sin(ang+theta*i)))
+        #         else:
+        #             grid_vectors.append((omega*np.cos(ang+theta*i), omega*np.sin(ang+theta*i)))
+        #             tile_vectors.append(((1/tau)*np.cos(ang+theta*i), (1/tau)*np.sin(ang+theta*i)))
 
 
         ang = [math.atan2(x[1],x[0]) for x in grid_vectors]
@@ -512,7 +515,7 @@ class TileMaker:
                 shifts = [1/(fold)]*fold
 
         if shift_type == 'Random':
-            shifts = np.random.rand(fold)
+            shifts = np.random.uniform(-1,1,fold)
 
         if shift_type == 'Zero':
             shifts = [0]*fold
@@ -937,8 +940,8 @@ class vectorPlotting(pg.GraphicsObject):
             for i in range(int(fold)):
                 vectors.append((30*np.cos(theta*i), 30*np.sin(theta*i)))
         else:
-            vectors.append((1, 0))
-            vectors.append((0, 2))
+            vectors.append((15, 0))
+            vectors.append((0, 30))
 
         self.generatePicture(vectors)
     
