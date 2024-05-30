@@ -9,6 +9,7 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import Qt
 import pyqtgraph as pg
 import numpy as np
 import itertools
@@ -18,6 +19,7 @@ from scipy.spatial.distance import _distance_wrap
 
 class Ui_MainWindow(object):
     ##here we're setting up the whole GUI
+    
     def setupUi(self, MainWindow):
         ##first we set the size of the main window, which is fixed - picked these for aesthetics and to allow square windows
         MainWindow.setObjectName("MainWindow")
@@ -30,6 +32,9 @@ class Ui_MainWindow(object):
         MainWindow.setSizePolicy(sizePolicy)
         MainWindow.setMinimumSize(QtCore.QSize(1050, 800))
         MainWindow.setMaximumSize(QtCore.QSize(1050, 800))
+        
+        ##add a dict which keeps track of which windows are open
+        self.windows_open = {}
 
         ##add our main widget to the main window
         self.centralwidget = QtWidgets.QWidget(MainWindow)
@@ -80,6 +85,7 @@ class Ui_MainWindow(object):
         self.vectorPlot.getPlotItem().hideAxis('left')
         self.vectorPlot.hideButtons()
         
+        #TODO: change the input for vectorPlotting so we can input the custom advanced things
         vec_item = vectorPlotting(5)
         self.vectorPlot.clear()
         self.vectorPlot.enableAutoRange()
@@ -194,11 +200,15 @@ class Ui_MainWindow(object):
         self.tilingParameters.addWidget(self.parameterGroup)
         
         ##add the advanced window here
+        self.windows_open['advancedWindow'] = False
         self.advancedWindow = createAdvancedWindow()
         self.advancedButton.clicked.connect(
             lambda checked: self.toggle_window(self.advancedWindow)
         )
-        self.symmetryValue.valueChanged.connect(self.advancedWindow.mainValChange)
+        self.advancedButton.clicked.connect(self.advancedWindow.dataGrab)
+        self.advancedWindow.destroyed.connect(lambda: self.updateWindowState('advancedWindow'))
+        # self.advancedWindow.setParent(MainWindow)
+        # self.symmetryValue.valueChanged.connect(self.advancedWindow.mainValChange)
 
         ##finally add the tile button
         self.verticalLayout_3.addLayout(self.tilingParameters)
@@ -206,7 +216,7 @@ class Ui_MainWindow(object):
         self.tileButton.setObjectName("pushButton")
         self.verticalLayout_3.addWidget(self.tileButton)
         self.tileButton.clicked.connect(self.pushTileButton)
-
+ 
 
         ##add a final spacer 
         spacerItem7 = QtWidgets.QSpacerItem(20, 240, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
@@ -294,7 +304,11 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-        
+    def updateWindowState(self, window_name):
+        self.windows_open[window_name] = False    
+
+
+
     def toggle_window(self, window):
         if window.isVisible():
             window.hide()
@@ -333,6 +347,26 @@ class Ui_MainWindow(object):
         self.vectorPlot.clear()
         self.vectorPlot.enableAutoRange()
         self.vectorPlot.addItem(vec_item)
+
+    def advancedWindowSetup(self):
+        fold = self.symmetryValue.value()
+        theta = 2*np.pi/fold
+        grid_vectors = []      
+        tile_vectors = []
+        grid_scale = [1] *fold     
+        tile_scale = [1]*fold
+
+        angle = []
+        for i in range(int(fold)):            
+            # grid_vectors.append((np.cos(theta*i), np.sin(theta*i)))
+            # tile_vectors.append((np.cos(theta*i), np.sin(theta*i)))
+            angle.append(np.round(np.degrees(theta*i),2))
+
+        if fold % 2 ==0:
+            shifts = [1/(fold/2),-1/(fold/2)]*int(fold/2)
+        else:
+            shifts = [1/(fold)]*fold
+        return np.array(list(zip(grid_scale, tile_scale, angle, shifts)))
 
     def pushTileButton(self):
         #TODO: do we want this to be int? or float for fun?
@@ -450,25 +484,282 @@ class Ui_MainWindow(object):
     #     self.vectorPlot.enableAutoRange()
     #     self.vectorPlot.addItem(vec_item) 
 
+class TableModel(QtCore.QAbstractTableModel):
+
+    def __init__(self, data, headers):
+        super(TableModel, self).__init__()
+        self._data = data
+        self._headers = headers
+
+    ##populate the table with data
+    def data(self, index, role):
+        if role == Qt.DisplayRole:
+            # Note: self._data[index.row()][index.column()] will also work
+            value = self._data[index.row(), index.column()]
+            return str(value)
+
+    def rowCount(self, index):
+        return self._data.shape[0]
+
+    def columnCount(self, index):
+        return self._data.shape[1]
+    ##populate our labels
+    def headerData(self, section, orientation, role):
+        if role == QtCore.Qt.DisplayRole:
+            if orientation == QtCore.Qt.Horizontal:
+                return self._headers[section]
+            if orientation == QtCore.Qt.Vertical:
+                return ['v'+ str(x+1) for x in range(len(self._data))][section]
+####if you want to mess about with editing
+    def setData(self, index, value, role):
+        if role == QtCore.Qt.EditRole:
+            self._data[index.row(), index.column()] = value
+            self.dataChanged.emit(index, index, (QtCore.Qt.DisplayRole,))
+            return True
+        return False
+
+    def flags(self, index):
+        return Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
+
 class createAdvancedWindow(QtWidgets.QWidget):
 
     def __init__(self):
         super().__init__()
-        layout = QtWidgets.QVBoxLayout()
         
-        self.label = QtWidgets.QLabel("Another Window % d" % np.random.randint(0, 100))
-        self.test_VAL = QtWidgets.QSpinBox()
-        self.test_VAL.setValue(ui.symmetryValue.value())
-        self.test_VAL.valueChanged.connect(self.valChange)
-        layout.addWidget(self.test_VAL)
-        layout.addWidget(self.label)
-        self.setLayout(layout)
+        self.setupUi()
+        ui.windows_open['advancedWindow'] = True
+        
+        # self.label = QtWidgets.QLabel("Another Window % d" % np.random.randint(0, 100))
+        # self.test_VAL = QtWidgets.QSpinBox()
+        # 
+        # self.test_VAL.valueChanged.connect(self.valChange)
+        # layout.addWidget(self.test_VAL)
+        # layout.addWidget(self.label)
+        # self.setLayout(layout)
 
-    def valChange(self, value):
-        ui.symmetryValue.setValue(value)
+    def setupUi(self):
+        self.setObjectName("Form")
+        self.resize(596, 418)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
+        self.setSizePolicy(sizePolicy)
+        self.setMinimumSize(QtCore.QSize(0, 0))
+        self.setMaximumSize(QtCore.QSize(10101010, 10101010))
+        self.verticalLayout = QtWidgets.QVBoxLayout(self)
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.groupBox = QtWidgets.QGroupBox(self)
+        self.groupBox.setObjectName("groupBox")
+        self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.groupBox)
+        self.verticalLayout_3.setObjectName("verticalLayout_3")
+        spacerItem = QtWidgets.QSpacerItem(20, 5, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        self.verticalLayout_3.addItem(spacerItem)
+        self.formLayout = QtWidgets.QFormLayout()
+        self.formLayout.setObjectName("formLayout")
+        self.label = QtWidgets.QLabel(self.groupBox)
+        self.label.setObjectName("label")
+        self.formLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.label)
+        self.lineEdit = QtWidgets.QLineEdit(self.groupBox)
+        self.lineEdit.setMaximumSize(QtCore.QSize(75, 16777215))
+        self.lineEdit.setObjectName("lineEdit")
+        self.formLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.lineEdit)
+        self.label_2 = QtWidgets.QLabel(self.groupBox)
+        self.label_2.setObjectName("label_2")
+        self.formLayout.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.label_2)
+        self.lineEdit_2 = QtWidgets.QLineEdit(self.groupBox)
+        self.lineEdit_2.setMaximumSize(QtCore.QSize(75, 16777215))
+        self.lineEdit_2.setObjectName("lineEdit_2")
+        self.formLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.lineEdit_2)
+        self.label_3 = QtWidgets.QLabel(self.groupBox)
+        self.label_3.setObjectName("label_3")
+        self.formLayout.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.label_3)
+        self.lineEdit_3 = QtWidgets.QLineEdit(self.groupBox)
+        self.lineEdit_3.setMaximumSize(QtCore.QSize(75, 16777215))
+        self.lineEdit_3.setObjectName("lineEdit_3")
+        self.formLayout.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.lineEdit_3)
+        self.label_4 = QtWidgets.QLabel(self.groupBox)
+        self.label_4.setObjectName("label_4")
+        self.formLayout.setWidget(3, QtWidgets.QFormLayout.LabelRole, self.label_4)
+        self.lineEdit_4 = QtWidgets.QLineEdit(self.groupBox)
+        self.lineEdit_4.setMaximumSize(QtCore.QSize(75, 16777215))
+        self.lineEdit_4.setObjectName("lineEdit_4")
+        self.formLayout.setWidget(3, QtWidgets.QFormLayout.FieldRole, self.lineEdit_4)
+        self.verticalLayout_3.addLayout(self.formLayout)
+        self.horizontalLayout_2.addWidget(self.groupBox)
+        self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_4.setObjectName("horizontalLayout_4")
+        self.groupBox_2 = QtWidgets.QGroupBox(self)
+        self.groupBox_2.setObjectName("groupBox_2")
+        self.verticalLayout_5 = QtWidgets.QVBoxLayout(self.groupBox_2)
+        self.verticalLayout_5.setObjectName("verticalLayout_5")
+        self.groupBox_2.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        self.groupBox_2.setFixedHeight(189)
+        self.horizontalLayout_5 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_5.setObjectName("horizontalLayout_5")
+        self.label_5 = QtWidgets.QLabel(self.groupBox_2)
+        self.label_5.setObjectName("label_5")
+        self.horizontalLayout_5.addWidget(self.label_5)
+        self.pushButton_3 = QtWidgets.QPushButton(self.groupBox_2)
+        self.pushButton_3.setObjectName("pushButton_3")
+        self.horizontalLayout_5.addWidget(self.pushButton_3)
+        self.pushButton_4 = QtWidgets.QPushButton(self.groupBox_2)
+        self.pushButton_4.setObjectName("pushButton_4")
+        self.horizontalLayout_5.addWidget(self.pushButton_4)
+        self.pushButton_5 = QtWidgets.QPushButton(self.groupBox_2)
+        self.pushButton_5.setObjectName("pushButton_5")
+        self.horizontalLayout_5.addWidget(self.pushButton_5)
+        self.pushButton_6 = QtWidgets.QPushButton(self.groupBox_2)
+        self.pushButton_6.setObjectName("pushButton_6")
+        self.horizontalLayout_5.addWidget(self.pushButton_6)
+        self.verticalLayout_5.addLayout(self.horizontalLayout_5)
+        self.horizontalLayout_6 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_6.setObjectName("horizontalLayout_6")
+        self.label_6 = QtWidgets.QLabel(self.groupBox_2)
+        self.label_6.setObjectName("label_6")
+        self.horizontalLayout_6.addWidget(self.label_6)
+        self.pushButton_7 = QtWidgets.QPushButton(self.groupBox_2)
+        self.pushButton_7.setObjectName("pushButton_7")
+        self.horizontalLayout_6.addWidget(self.pushButton_7)
+        self.pushButton_8 = QtWidgets.QPushButton(self.groupBox_2)
+        self.pushButton_8.setObjectName("pushButton_8")
+        self.horizontalLayout_6.addWidget(self.pushButton_8)
+        self.pushButton_9 = QtWidgets.QPushButton(self.groupBox_2)
+        self.pushButton_9.setObjectName("pushButton_9")
+        self.horizontalLayout_6.addWidget(self.pushButton_9)
+        self.pushButton_10 = QtWidgets.QPushButton(self.groupBox_2)
+        self.pushButton_10.setObjectName("pushButton_10")
+        self.horizontalLayout_6.addWidget(self.pushButton_10)
+        self.verticalLayout_5.addLayout(self.horizontalLayout_6)
+        self.horizontalLayout_7 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_7.setObjectName("horizontalLayout_7")
+        self.label_7 = QtWidgets.QLabel(self.groupBox_2)
+        self.label_7.setObjectName("label_7")
+        self.horizontalLayout_7.addWidget(self.label_7)
+        self.pushButton_11 = QtWidgets.QPushButton(self.groupBox_2)
+        self.pushButton_11.setObjectName("pushButton_11")
+        self.horizontalLayout_7.addWidget(self.pushButton_11)
+        self.pushButton_12 = QtWidgets.QPushButton(self.groupBox_2)
+        self.pushButton_12.setObjectName("pushButton_12")
+        self.horizontalLayout_7.addWidget(self.pushButton_12)
+        spacerItem1 = QtWidgets.QSpacerItem(162, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_7.addItem(spacerItem1)
+        self.verticalLayout_5.addLayout(self.horizontalLayout_7)
+        self.horizontalLayout_8 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_8.setObjectName("horizontalLayout_8")
+        self.label_8 = QtWidgets.QLabel(self.groupBox_2)
+        self.label_8.setObjectName("label_8")
+        self.horizontalLayout_8.addWidget(self.label_8)
+        spacerItem2 = QtWidgets.QSpacerItem(30, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_8.addItem(spacerItem2)
+        self.lineEdit_5 = QtWidgets.QLineEdit(self.groupBox_2)
+        self.lineEdit_5.setObjectName("lineEdit_5")
+        self.horizontalLayout_8.addWidget(self.lineEdit_5)
+        self.pushButton_13 = QtWidgets.QPushButton(self.groupBox_2)
+        self.pushButton_13.setObjectName("pushButton_13")
+        self.horizontalLayout_8.addWidget(self.pushButton_13)
+        self.verticalLayout_5.addLayout(self.horizontalLayout_8)
+        self.horizontalLayout_4.addWidget(self.groupBox_2)
+        self.horizontalLayout_2.addLayout(self.horizontalLayout_4)
+        self.horizontalLayout_2.setStretch(1, 2)
+        self.verticalLayout.addLayout(self.horizontalLayout_2)
+        spacerItem3 = QtWidgets.QSpacerItem(20, 5, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout.addItem(spacerItem3)
+        self.checkBox = QtWidgets.QCheckBox(self)
+        self.checkBox.setObjectName("checkBox")
+        self.verticalLayout.addWidget(self.checkBox)
+        spacerItem4 = QtWidgets.QSpacerItem(20, 5, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout.addItem(spacerItem4)
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.tableView = QtWidgets.QTableView(self)
+        self.tableView.setObjectName("tableView")
+        self.horizontalLayout.addWidget(self.tableView)
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.pushButton_2 = QtWidgets.QPushButton(self)
+        self.pushButton_2.setObjectName("pushButton_2")
+        self.verticalLayout_2.addWidget(self.pushButton_2)
+        self.pushButton = QtWidgets.QPushButton(self)
+        self.pushButton.setObjectName("pushButton")
+        self.verticalLayout_2.addWidget(self.pushButton)
+        spacerItem5 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_2.addItem(spacerItem5)
+        self.horizontalLayout.addLayout(self.verticalLayout_2)
+        self.horizontalLayout.setStretch(0, 4)
+        self.horizontalLayout.setStretch(1, 1)
+        self.verticalLayout.addLayout(self.horizontalLayout)
+        self.verticalLayout.setStretch(0, 2)
+        self.verticalLayout.setStretch(4, 3)
 
-    def mainValChange(self, value):
-        self.test_VAL.setValue(ui.symmetryValue.value())
+        self.retranslateUi(self)
+        QtCore.QMetaObject.connectSlotsByName(self)
+
+        ##add these so we can edit things - label is required so we can find the thing
+        self.lineEdits = [self.lineEdit, self.lineEdit_2, self.lineEdit_3, self.lineEdit_4]
+        # Connect the editingFinished signals to the slot
+        for col, lineEdit in enumerate(self.lineEdits):
+            lineEdit.editingFinished.connect(lambda col=col, le=lineEdit: self.on_line_edit_finished(col, le))
+
+
+    def retranslateUi(self, Form):
+        _translate = QtCore.QCoreApplication.translate
+        Form.setWindowTitle(_translate("Form", "Form"))
+        self.groupBox.setTitle(_translate("Form", "Vector customisation"))
+        self.label.setText(_translate("Form", "Tile scale:"))
+        self.label_2.setText(_translate("Form", "Grid scale:"))
+        self.label_3.setText(_translate("Form", "Angle:"))
+        self.label_4.setText(_translate("Form", "Grid shift:"))
+        self.groupBox_2.setTitle(_translate("Form", "Irrational values"))
+        self.label_5.setText(_translate("Form", "Metallic ratios:"))
+        self.pushButton_3.setText(_translate("Form", "1.618..."))
+        self.pushButton_4.setText(_translate("Form", "2.414..."))
+        self.pushButton_5.setText(_translate("Form", "3.302..."))
+        self.pushButton_6.setText(_translate("Form", "4.236..."))
+        self.label_6.setText(_translate("Form", "Roots:"))
+        self.pushButton_7.setText(_translate("Form", "√2"))
+        self.pushButton_8.setText(_translate("Form", "√3"))
+        self.pushButton_9.setText(_translate("Form", "√5"))
+        self.pushButton_10.setText(_translate("Form", "√8"))
+        self.label_7.setText(_translate("Form", "Other:"))
+        self.pushButton_11.setText(_translate("Form", "π"))
+        self.pushButton_12.setText(_translate("Form", "e"))
+        self.label_8.setText(_translate("Form", "Custom:"))
+        self.pushButton_13.setText(_translate("Form", "Set"))
+        self.checkBox.setText(_translate("Form", "Apply symmetry"))
+        self.pushButton_2.setText(_translate("Form", "New"))
+        self.pushButton.setText(_translate("Form", "Delete"))
+    
+    def dataGrab(self):
+        data = Ui_MainWindow.advancedWindowSetup(ui)
+        # print(grab.shape[0])
+        # data = np.array(grab[0])
+        self.model = TableModel(data,['Tile scale','Grid scale','Angle','Grid shift'])
+        self.tableView.setModel(self.model)
+        self.tableView.verticalHeader().sectionClicked.connect(self.on_row_header_clicked)
+        self.tableView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+        self.current_row = None
+
+    def on_row_header_clicked(self, logicalIndex):
+        self.current_row = logicalIndex
+        row_data = [self.model.data(self.model.index(logicalIndex, col), QtCore.Qt.DisplayRole)
+                    for col in range(self.model.columnCount(None))]
+        for col, lineEdit in enumerate(self.lineEdits):
+            lineEdit.setText(row_data[col])
+
+    def on_line_edit_finished(self, col, lineEdit):
+        if self.current_row is not None:
+            value = lineEdit.text()
+            index = self.model.index(self.current_row, col)
+            self.model.setData(index, value, QtCore.Qt.EditRole)
+
+    # def valChange(self, value):
+    #     ui.symmetryValue.setValue(value)
+
+    # def mainValChange(self, value):
+    #     self.test_VAL.setValue(ui.symmetryValue.value())
     ##TODO: we want to be able to change values in the main window that change their respective values in the window. e.g. we create a custom set, 
     # then click random shifts - this should update
 
@@ -552,7 +843,7 @@ class TileMaker:
 
     def collinear(self, comb_list, vectors):
         indexes = []
-
+        ##TODO: round this to 2 d.p!
         for a in range(len(comb_list)):
             if np.cross(vectors[comb_list[a][0]], vectors[comb_list[a][1]]) == 0:
                 indexes.append(a)
@@ -687,12 +978,9 @@ class TileMaker:
                     if interx[0][0]**2 + interx[0][1]**2 > radius**2:
                         continue
                     tile = []
-                    poly = []
                     index_set = indices.copy()
                     index_set[grid1_idx] = grid.index[grid1_idx][j]
-                    index_set[grid2_idx] = grid.index[grid2_idx][k]
-                    poly.append(grid1_idx)
-                    poly.append(grid2_idx)
+                    index_set[grid2_idx] = grid.index[grid2_idx][k] 
                     list2 = []
                     for l in range(len(vec_query)):
                         grid_choice = vec_query[l]
@@ -701,8 +989,7 @@ class TileMaker:
                         dist_sort = dist[dist_idx]
                         #TODO: think about a different, better way of doing this
                         if dist_sort[1] - dist_sort[0] < 0.00000001:
-                            count = count + 1
-                            poly.append(grid_choice)
+                            count += 1
                             list2.append((grid_choice, dist_idx[0], dist_idx[1]))
                         else:
                             index_set[grid_choice] = grid.index[grid_choice][dist_idx[0]]
@@ -830,37 +1117,36 @@ class tilePlot(pg.GraphicsObject):
 
         path = QtGui.QPainterPath()
         edge_path = QtGui.QPainterPath()  # For edges
-        
-        if len(ngon_color) != 0:
-            for ngon, color in zip(ngons, ngon_color):
-                if len(ngon) == 0:
-                    continue
-                path.setFillRule(QtCore.Qt.WindingFill)
-                path.addPolygon(QtGui.QPolygonF([QtCore.QPointF(x, y) for x, y in ngon]))
-                p.fillPath(path, pg.mkBrush(color))
-                
-                for i in range(len(ngon)):  # Collect edges for each side of the ngon
-                    next_i = (i + 1) % len(ngon)
-                    edge_path.moveTo(QtCore.QPointF(ngon[i][0], ngon[i][1]))
-                    edge_path.lineTo(QtCore.QPointF(ngon[next_i][0], ngon[next_i][1]))
-                
-                path = QtGui.QPainterPath()
 
-        if len(poly_color) != 0:
-            for tile, color in zip(tiles, poly_color):
-                path.setFillRule(QtCore.Qt.WindingFill)
-                path.addPolygon(QtGui.QPolygonF([QtCore.QPointF(x, y) for x, y in tile]))
-                p.fillPath(path, pg.mkBrush(color))
-                
-                for i in range(len(tile)):  # Collect edges for each side of the tile
-                    next_i = (i + 1) % len(tile)
-                    edge_path.moveTo(QtCore.QPointF(tile[i][0], tile[i][1]))
-                    edge_path.lineTo(QtCore.QPointF(tile[next_i][0], tile[next_i][1]))
-                
-                path = QtGui.QPainterPath()
+        for ngon, color in zip(ngons, ngon_color):
+            if len(ngon) == 0:
+                continue
+            path.setFillRule(QtCore.Qt.WindingFill)
+            path.addPolygon(QtGui.QPolygonF([QtCore.QPointF(x, y) for x, y in ngon]))
+            p.fillPath(path, pg.mkBrush(color))
+
+            for i in range(len(ngon)):  # Collect edges for each side of the ngon
+                next_i = (i + 1) % len(ngon)
+                edge_path.moveTo(QtCore.QPointF(*ngon[i]))
+                edge_path.lineTo(QtCore.QPointF(*ngon[next_i]))
+
+            path.clear()
+
+        for tile, color in zip(tiles, poly_color):
+            path.setFillRule(QtCore.Qt.WindingFill)
+            path.addPolygon(QtGui.QPolygonF([QtCore.QPointF(x, y) for x, y in tile]))
+            p.fillPath(path, pg.mkBrush(color))
+
+            for i in range(len(tile)):  # Collect edges for each side of the tile
+                next_i = (i + 1) % len(tile)
+                edge_path.moveTo(QtCore.QPointF(*tile[i]))
+                edge_path.lineTo(QtCore.QPointF(*tile[next_i]))
+
+            path.clear()
 
         p.drawPath(edge_path)  # Draw all collected edges
         p.end()
+
 
     def paint(self, p, *args):
         p.drawPicture(0, 0, self.picture)
@@ -868,63 +1154,6 @@ class tilePlot(pg.GraphicsObject):
     def boundingRect(self):
         return QtCore.QRectF(self.picture.boundingRect())
 
-
-####original code
-# class tilePlot(pg.GraphicsObject):
-#     def __init__(self, tiling, poly_color, ngon_color):
-#         pg.GraphicsObject.__init__(self)
-
-#         self.generatePicture(tiling, poly_color, ngon_color)
-    
-#     def generatePicture(self, tiling, poly_color, ngon_color):
-#         ## pre-computing a QPicture object allows paint() to run much more quickly, 
-#         ## rather than re-drawing the shapes every time.
-#         self.picture = QtGui.QPicture()
-#         p = QtGui.QPainter(self.picture)
-#         p.setRenderHint(QtGui.QPainter.Antialiasing)
-#         p.setPen(pg.mkPen('k', width = 2))
-
-#         ##grab our tiles
-#         tiles = tiling.points
-#         ngons = tiling.p_points
-        
-#         ##draw our tiles and n-gons, if they exist
-#         if len(ngon_color) != 0:
-#             for i in range(len(ngons)):
-#                 polygon = QtGui.QPolygonF()
-#                 ngon = ngons[i]
-#                 if len(ngon) == 0:
-#                     continue
-#                 p.setBrush(pg.mkBrush(ngon_color[i]))
-                
-#                 for j in range(len(ngon)):
-#                     x = ngon[j][0]
-#                     y = ngon[j][1]
-#                     polygon.append(QtCore.QPointF(x, y)) 
-#                 p.drawPolygon(polygon)
-
-#         if len(poly_color) != 0:
-#             for i in range(len(tiles)):
-#                 polygon = QtGui.QPolygonF()
-#                 tile = tiles[i]
-#                 p.setBrush(pg.mkBrush(poly_color[i]))
-#                 for j in range(len(tile)):
-#                     x = tile[j][0]
-#                     y = tile[j][1]
-#                     polygon.append(QtCore.QPointF(x, y)) 
-#                 p.drawPolygon(polygon)  
-#         p.end()
-
-    
-#     def paint(self, p, *args):
-#         p.drawPicture(0, 0, self.picture)
-       
-    
-#     def boundingRect(self):
-#         ## boundingRect _must_ indicate the entire area that will be drawn on
-#         ## or else we will get artifacts and possibly crashing.
-#         ## (in this case, QPicture does all the work of computing the bouning rect for us)
-#         return QtCore.QRectF(self.picture.boundingRect())
 
 class vectorPlotting(pg.GraphicsObject):
 
@@ -978,10 +1207,20 @@ class vectorPlotting(pg.GraphicsObject):
     
 
 
+
 if __name__ == "__main__":
+    
     import sys
+
+    ##little function to close all open windows 
+    def closeAllWindows(self):
+        for window_name, is_open in ui.windows_open.items():
+            if is_open:
+                getattr(ui, window_name).close()
+
     ##start the app
     app = QtWidgets.QApplication(sys.argv)
+
     ##call our starting function
     MainWindow = QtWidgets.QMainWindow()
     #define our variable ui so we can add to things if necessary
@@ -991,10 +1230,12 @@ if __name__ == "__main__":
     
     
     # ui.symmetryValue.setValue(5)
-
+    
+    MainWindow.closeEvent = closeAllWindows
     ##finally, show the app, and wait for the user to close
     MainWindow.show()
-    sys.exit(app.exec_())
 
+    sys.exit(app.exec_())
+    
 
 
