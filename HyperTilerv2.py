@@ -21,6 +21,7 @@ class Ui_MainWindow(object):
     ##here we're setting up the whole GUI
     
     def setupUi(self, MainWindow):
+        
         ##first we set the size of the main window, which is fixed - picked these for aesthetics and to allow square windows
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1050, 800)
@@ -85,12 +86,6 @@ class Ui_MainWindow(object):
         self.vectorPlot.getPlotItem().hideAxis('left')
         self.vectorPlot.hideButtons()
         
-        #TODO: change the input for vectorPlotting so we can input the custom advanced things
-        vec_item = vectorPlotting(5)
-        self.vectorPlot.clear()
-        self.vectorPlot.enableAutoRange()
-        self.vectorPlot.addItem(vec_item) 
-
         ##add a spacer to neaten things up between the vector plot area and the tiling parameter section
         spacerItem = QtWidgets.QSpacerItem(20, 10, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
         self.verticalLayout_3.addItem(spacerItem)
@@ -122,6 +117,26 @@ class Ui_MainWindow(object):
         # self.verticalLayout_4.addLayout(self.presetBox)
         # self.presetSelect.textActivated.connect(self.presetChange)
 
+        ##add our grid shift selection here as otherwise the initialisation doesn't recognise it quickly enough
+        self.gridShiftBox = QtWidgets.QHBoxLayout()
+        self.gridShiftBox.setObjectName("gridShiftBox")
+        self.shiftLabel = QtWidgets.QLabel(self.parameterGroup)
+        self.shiftLabel.setObjectName("shiftLabel")
+        self.gridShiftBox.addWidget(self.shiftLabel)
+        self.shiftSelect = QtWidgets.QComboBox(self.parameterGroup)
+        self.shiftSelect.setObjectName("shiftSelect")
+        self.shiftSelect.addItem("Regular")
+        self.shiftSelect.addItem("Zero")
+        self.shiftSelect.addItem("Random")
+        self.shiftSelect.addItem("Regular random")
+        self.gridShiftBox.addWidget(self.shiftSelect)
+        self.shiftSelect.setCurrentIndex(0)
+        spacerItem5 = QtWidgets.QSpacerItem(69, 20, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
+        self.gridShiftBox.addItem(spacerItem5)
+        self.verticalLayout_4.addLayout(self.gridShiftBox)
+        self.shiftSelect.currentIndexChanged.connect(self.updateShift)
+
+
         ##add our parameters neatly - first, symmetry
         spacerItem2 = QtWidgets.QSpacerItem(20, 5, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
         self.verticalLayout_4.addItem(spacerItem2)
@@ -143,6 +158,9 @@ class Ui_MainWindow(object):
         self.symmetryValue.setMinimumSize(QtCore.QSize(60, 20))
         self.symmetryValue.setMaximumSize(QtCore.QSize(60, 20))
         self.symmetryValue.valueChanged.connect(self.updateVector)
+        
+
+
         
         self.symmetryValue.setValue(5)
         self.symmetryValue.setMinimum(3)
@@ -171,23 +189,7 @@ class Ui_MainWindow(object):
         self.sizeValue.setValue(10)
        
 
-        ##finally our grid shift selection
-        self.gridShiftBox = QtWidgets.QHBoxLayout()
-        self.gridShiftBox.setObjectName("gridShiftBox")
-        self.shiftLabel = QtWidgets.QLabel(self.parameterGroup)
-        self.shiftLabel.setObjectName("shiftLabel")
-        self.gridShiftBox.addWidget(self.shiftLabel)
-        self.shiftSelect = QtWidgets.QComboBox(self.parameterGroup)
-        self.shiftSelect.setObjectName("shiftSelect")
-        self.shiftSelect.addItem("")
-        self.shiftSelect.addItem("")
-        self.shiftSelect.addItem("")
-        self.shiftSelect.addItem("")
-        self.gridShiftBox.addWidget(self.shiftSelect)
-        spacerItem5 = QtWidgets.QSpacerItem(69, 20, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
-        self.gridShiftBox.addItem(spacerItem5)
-        self.verticalLayout_4.addLayout(self.gridShiftBox)
-
+   
         ##add a spacer so there's a nice gap between parameters and the advanced button, then add the advanced button
         spacerItem6 = QtWidgets.QSpacerItem(20, 10, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
         self.verticalLayout_4.addItem(spacerItem6)
@@ -205,9 +207,12 @@ class Ui_MainWindow(object):
         self.advancedButton.clicked.connect(
             lambda checked: self.toggle_window(self.advancedWindow)
         )
-        self.advancedButton.clicked.connect(self.advancedWindow.dataGrab)
+        self.advancedButton.clicked.connect(self.advancedWindow.dataGrab)        
         self.advancedWindow.destroyed.connect(lambda: self.updateWindowState('advancedWindow'))
-        # self.advancedWindow.setParent(MainWindow)
+
+        ##hook the main window changes into the table changes in the advance dinow
+        self.symmetryValue.valueChanged.connect(self.advancedWindow.dataGrab)
+        self.shiftSelect.currentIndexChanged.connect(self.advancedWindow.dataGrab)
         # self.symmetryValue.valueChanged.connect(self.advancedWindow.mainValChange)
 
         ##finally add the tile button
@@ -233,20 +238,7 @@ class Ui_MainWindow(object):
         self.verticalLayout.setContentsMargins(7, 0, -1, 0)
         self.verticalLayout.setObjectName("verticalLayout")
 
-        ##this is the thing we actually plot to - it's auto generated, but i think we have to change it
-        # self.tilingPlot = QtWidgets.QGraphicsView(self.plotArea)
-        # sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-        # sizePolicy.setHorizontalStretch(0)
-        # sizePolicy.setVerticalStretch(0)
-        # sizePolicy.setHeightForWidth(self.tilingPlot.sizePolicy().hasHeightForWidth())
-        # self.tilingPlot.setSizePolicy(sizePolicy)
-        # self.tilingPlot.setMinimumSize(QtCore.QSize(700, 700))
-        # self.tilingPlot.setMaximumSize(QtCore.QSize(700, 700))
-        # self.tilingPlot.setObjectName("tilingPlot")
-        # self.verticalLayout.addWidget(self.tilingPlot)
-
-
-        ## to this:
+        ## plotting
         self.tilingPlot = pg.PlotWidget(self.plotArea)
         self.tilingPlot.setObjectName("tilingPlot")
         self.verticalLayout.addWidget(self.tilingPlot)
@@ -284,7 +276,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout.setStretch(0, 3)
         self.horizontalLayout.setStretch(1, 7)
 
-        ##go back to our centralwidget, add out menu bar and associated menus
+        ##go back to our centralwidget, add our menu bar and associated menus
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1050, 21))
@@ -300,14 +292,18 @@ class Ui_MainWindow(object):
         ##add a bunch of default parameters here (have you plotted yet, etc.)
         self.plotted = False
 
+        self.vector_data = self.vectorSetup(5, self.shiftSelect.currentIndex())     
+        vec_item = vectorPlotting(self.vector_data)
+        self.vectorPlot.clear()
+        self.vectorPlot.enableAutoRange()
+        self.vectorPlot.addItem(vec_item) 
+
         ##finally call our function which adds our text to the various objects we need
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def updateWindowState(self, window_name):
         self.windows_open[window_name] = False    
-
-
 
     def toggle_window(self, window):
         if window.isVisible():
@@ -329,10 +325,10 @@ class Ui_MainWindow(object):
         self.symmetryLabel.setText(_translate("MainWindow", "No. of vectors:"))
         self.sizeLabel.setText(_translate("MainWindow", "No. of grids:"))
         self.shiftLabel.setText(_translate("MainWindow", "Grid shifts:"))
-        self.shiftSelect.setItemText(0, _translate("MainWindow", "Regular"))
-        self.shiftSelect.setItemText(1, _translate("MainWindow", "Zero"))
-        self.shiftSelect.setItemText(2, _translate("MainWindow", "Random"))
-        self.shiftSelect.setItemText(3, _translate("MainWindow", "Regular random"))
+        # self.shiftSelect.setItemText(0, _translate("MainWindow", "Regular"))
+        # self.shiftSelect.setItemText(1, _translate("MainWindow", "Zero"))
+        # self.shiftSelect.setItemText(2, _translate("MainWindow", "Random"))
+        # self.shiftSelect.setItemText(3, _translate("MainWindow", "Regular random"))
         self.advancedButton.setText(_translate("MainWindow", "Advanced..."))
         self.tileButton.setText(_translate("MainWindow", "Tile!"))
         self.gridView.setText(_translate("MainWindow", "Grid view"))
@@ -341,45 +337,86 @@ class Ui_MainWindow(object):
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.menuTools.setTitle(_translate("MainWindow", "Tools"))
 
+    def updateShift(self):
+        shift_type = self.shiftSelect.currentIndex()
+        fold = self.symmetryValue.value()
+        shifts = []
+        if shift_type == 0:
+            if fold % 2 == 0:
+                shifts = [1/(fold/2),-1/(fold/2)]*int(fold/2)
+            else:
+                shifts = [1/(fold)]*fold
+
+        if shift_type == 1:
+            shifts = [0]*fold
+
+        if shift_type == 2:
+            shifts = np.random.uniform(-1,1,fold)
+        
+        if shift_type == 3:
+            r = np.random.rand(1, fold)
+            r /= np.sum(r)
+            shifts = r[0]
+        self.vector_data[:,3] = shifts
+
     def updateVector(self):
-        value = self.symmetryValue.value()        
-        vec_item = vectorPlotting(value)
+        shiftSelect = self.shiftSelect.currentIndex()
+        value = self.symmetryValue.value()
+        self.vector_data = self.vectorSetup(value, shiftSelect)        
+        vec_item = vectorPlotting(self.vector_data)
         self.vectorPlot.clear()
         self.vectorPlot.enableAutoRange()
         self.vectorPlot.addItem(vec_item)
 
-    def advancedWindowSetup(self):
-        fold = self.symmetryValue.value()
+    def editVector(self, data):
+        # shiftSelect = self.shiftSelect.currentIndex()
+        # value = self.symmetryValue.value()
+        # self.vector_data = self.vectorSetup(value, shiftSelect)        
+        vec_item = vectorPlotting(data)
+        self.vectorPlot.clear()
+        self.vectorPlot.enableAutoRange()
+        self.vectorPlot.addItem(vec_item)
+
+    def vectorSetup(self, fold, shift_type):
+
         theta = 2*np.pi/fold
-        grid_vectors = []      
-        tile_vectors = []
         grid_scale = [1] *fold     
         tile_scale = [1]*fold
 
+        shifts = []
         angle = []
         for i in range(int(fold)):            
-            # grid_vectors.append((np.cos(theta*i), np.sin(theta*i)))
-            # tile_vectors.append((np.cos(theta*i), np.sin(theta*i)))
             angle.append(np.round(np.degrees(theta*i),2))
 
-        if fold % 2 ==0:
-            shifts = [1/(fold/2),-1/(fold/2)]*int(fold/2)
-        else:
-            shifts = [1/(fold)]*fold
+        if shift_type == 0:
+            if fold % 2 == 0:
+                shifts = [1/(fold/2),-1/(fold/2)]*int(fold/2)
+            else:
+                shifts = [1/(fold)]*fold
+
+        if shift_type == 1:
+            shifts = [0]*fold
+
+        if shift_type == 2:
+            shifts = np.random.uniform(-1,1,fold)
+        
+        if shift_type == 3:
+            r = np.random.rand(1, fold)
+            r /= np.sum(r)
+            shifts = r[0]        
+
         return np.array(list(zip(grid_scale, tile_scale, angle, shifts)))
 
     def pushTileButton(self):
-        #TODO: do we want this to be int? or float for fun?
+
+        # print()
         p1 = self.symmetryValue.value()
-        p2 = 1#((np.sqrt(3)+1)/2) 
-        p3 = 0
-        p4 = 1#((np.sqrt(5)+1)/2)
         p5 = self.sizeValue.value()
 
         #TODO: you need to add something which checks the length of the calcs you're about to do - either as a pop up, or as some barrier 
         p6 = self.shiftSelect.currentText()#'regular' #'random'
 
-        self.tiling = TileMaker(p1,p2,p3,p4,p5,p6)#((np.sqrt(5)+1)/2)
+        self.tiling = TileMaker(self.vector_data, p5)#((np.sqrt(5)+1)/2)
         
         try:
             stack = np.vstack(self.tiling.points)
@@ -392,11 +429,11 @@ class Ui_MainWindow(object):
         self.tilingPlot.setLimits(xMax = 20)
         self.tilingPlot.setLimits(yMin = -20)
         self.tilingPlot.setLimits(yMax = 20)
-
-        vec_item = vectorPlotting(p1)
-        self.vectorPlot.clear()
-        self.vectorPlot.enableAutoRange()
-        self.vectorPlot.addItem(vec_item)         
+        # vec_data = self.vectorSetup(p1, self.shiftSelect.currentIndex())
+        # vec_item = vectorPlotting(vec_data)
+        # self.vectorPlot.clear()
+        # self.vectorPlot.enableAutoRange()
+        # self.vectorPlot.addItem(vec_item)         
 
         self.poly_areas = self.tiling.poly_areas
         self.poly_areas = np.round(self.poly_areas,3)
@@ -733,9 +770,8 @@ class createAdvancedWindow(QtWidgets.QWidget):
         self.pushButton.setText(_translate("Form", "Delete"))
     
     def dataGrab(self):
-        data = Ui_MainWindow.advancedWindowSetup(ui)
-        # print(grab.shape[0])
-        # data = np.array(grab[0])
+        data = ui.vector_data#Ui_MainWindow.vectorSetup(ui, ui.symmetryValue.value(), ui.shiftSelect.currentIndex())
+        data[:,3] = np.round(data[:,3],3)
         self.model = TableModel(data,['Tile scale','Grid scale','Angle','Grid shift'])
         self.tableView.setModel(self.model)
         self.tableView.verticalHeader().sectionClicked.connect(self.on_row_header_clicked)
@@ -748,48 +784,27 @@ class createAdvancedWindow(QtWidgets.QWidget):
                     for col in range(self.model.columnCount(None))]
         for col, lineEdit in enumerate(self.lineEdits):
             lineEdit.setText(row_data[col])
-
+    ##TODO: add a function which also changes/updates the lineedit when you're messing with individual cells
     def on_line_edit_finished(self, col, lineEdit):
         if self.current_row is not None:
             value = lineEdit.text()
             index = self.model.index(self.current_row, col)
             self.model.setData(index, value, QtCore.Qt.EditRole)
-
-    # def valChange(self, value):
-    #     ui.symmetryValue.setValue(value)
-
-    # def mainValChange(self, value):
-    #     self.test_VAL.setValue(ui.symmetryValue.value())
-    ##TODO: we want to be able to change values in the main window that change their respective values in the window. e.g. we create a custom set, 
-    # then click random shifts - this should update
-
+            ui.vector_data[self.current_row][col] = value
+            ui.editVector(ui.vector_data)
 
 class TileMaker:
-    def __init__(self, fold, tau, ang, omega, grid_len, shift_type):
+    # def __init__(self, fold, tau, ang, omega, grid_len, shift_type):
+    def __init__(self, vector_data, grid_len):
 
-        theta = 2*np.pi/fold
+        # theta = 2*np.pi/fold
         grid_vectors = []
         tile_vectors = []
-
-        
-        for i in range(int(fold)):            
-            grid_vectors.append((np.cos(theta*i), np.sin(theta*i)))
-            tile_vectors.append((np.cos(theta*i), np.sin(theta*i)))
-#TODO: you'll need to update this once the advanced button works nicely
-#TODO: will the vectors need to be defined somewhere first before being passed here? especially the customised ones...
-        #         else:
-        #             grid_vectors.append((omega*np.cos(ang+theta*i), omega*np.sin(ang+theta*i)))
-        #             tile_vectors.append(((1/tau)*np.cos(ang+theta*i), (1/tau)*np.sin(ang+theta*i)))
-        # else:
-        #     for i in range(int(fold)):
-        #         if (i)%2:
-        #             grid_vectors.append((np.cos(theta*i), np.sin(theta*i)))
-        #             tile_vectors.append((np.cos(theta*i), np.sin(theta*i)))
-
-        #         else:
-        #             grid_vectors.append((omega*np.cos(ang+theta*i), omega*np.sin(ang+theta*i)))
-        #             tile_vectors.append(((1/tau)*np.cos(ang+theta*i), (1/tau)*np.sin(ang+theta*i)))
-
+        shifts = []
+        for i in vector_data:
+            tile_vectors.append((i[0]*np.cos(np.radians(i[2])),i[0]*np.sin(np.radians(i[2]))))
+            grid_vectors.append((i[1]*np.cos(np.radians(i[2])),i[1]*np.sin(np.radians(i[2]))))
+            shifts.append(i[3])
 
         ang = [math.atan2(x[1],x[0]) for x in grid_vectors]
         val = (np.round(ang,2)+0 >= 0).sum()
@@ -798,27 +813,6 @@ class TileMaker:
 
         grid_vectors = np.array(grid_vectors)[arg]
         tile_vectors = np.array(tile_vectors)[arg]
-        
-        if shift_type == 'Regular':
-            if fold % 2 ==0:
-                shifts = [1/(fold/2),-1/(fold/2)]*int(fold/2)
-            else:
-                shifts = [1/(fold)]*fold
-
-        if shift_type == 'Random':
-            shifts = np.random.uniform(-1,1,fold)
-
-        if shift_type == 'Zero':
-            shifts = [0]*fold
-        
-        if shift_type == 'Regular random':
-            r = np.random.rand(1, fold)
-            r /= np.sum(r)
-            shifts = r[0]
-        #TODO: figure out how to pass your custom shifts here
-        # if shift_type == 'custom':
-        #     shifts = [0]*fold
-   
         
         line_len = 100
         
@@ -843,7 +837,7 @@ class TileMaker:
 
     def collinear(self, comb_list, vectors):
         indexes = []
-        ##TODO: round this to 2 d.p!
+
         for a in range(len(comb_list)):
             if np.cross(vectors[comb_list[a][0]], vectors[comb_list[a][1]]) == 0:
                 indexes.append(a)
@@ -935,7 +929,7 @@ class TileMaker:
                 factor.append(1)
 
         origin = index_set.copy()
-        clocksort = [(x + 2 * np.pi if x < 0 else x) for x in angles]
+        # clocksort = [(x + 2 * np.pi if x < 0 else x) for x in angles]
         ang_sort = np.argsort(angles)
         all_grids = np.array(all_grids)
         all_grids = all_grids[ang_sort]
@@ -1158,19 +1152,18 @@ class tilePlot(pg.GraphicsObject):
 class vectorPlotting(pg.GraphicsObject):
 
     #take in an argument of scale here, which is a list of scales according to the vector scale
-    def __init__(self, fold):
+    def __init__(self, vector_data):
 
         pg.GraphicsObject.__init__(self)
 
-        theta = 2*np.pi/fold
+        # theta = 2*np.pi/fold
+        #TODO: add in the grid vector plotting when ticked
         vectors = []
         #TODO: give a more appropriate scale (currently arbitrarily 30), and figure out what you want to do with 2-fold
-        if fold > 2:
-            for i in range(int(fold)):
-                vectors.append((30*np.cos(theta*i), 30*np.sin(theta*i)))
-        else:
-            vectors.append((15, 0))
-            vectors.append((0, 30))
+       
+        ##plot the tile vectors
+        for i in vector_data:
+            vectors.append((30*i[0]*np.cos(np.radians(i[2])),30*i[0]*np.sin(np.radians(i[2]))))
 
         self.generatePicture(vectors)
     
