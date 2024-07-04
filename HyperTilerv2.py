@@ -805,7 +805,7 @@ class TileMaker:
             tile_vectors.append((i[0]*np.cos(np.radians(i[2])),i[0]*np.sin(np.radians(i[2]))))
             grid_vectors.append((i[1]*np.cos(np.radians(i[2])),i[1]*np.sin(np.radians(i[2]))))
             shifts.append(i[3])
-
+        print(vector_data)
         ang = [math.atan2(x[1],x[0]) for x in grid_vectors]
         val = (np.round(ang,2)+0 >= 0).sum()
         ang = [(x+2*np.pi if np.round(x,2) < 0 else x) for x in ang]
