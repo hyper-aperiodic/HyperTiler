@@ -163,7 +163,7 @@ class Ui_MainWindow(object):
 
         
         self.symmetryValue.setValue(5)
-        self.symmetryValue.setMinimum(3)
+        self.symmetryValue.setMinimum(2)
         # self.symmetryValue.act
         #TODO: consider allowing return to be pressed to tile
         
@@ -552,6 +552,7 @@ class TableModel(QtCore.QAbstractTableModel):
         if role == QtCore.Qt.EditRole:
             self._data[index.row(), index.column()] = value
             self.dataChanged.emit(index, index, (QtCore.Qt.DisplayRole,))
+            
             return True
         return False
 
@@ -771,10 +772,13 @@ class createAdvancedWindow(QtWidgets.QWidget):
     
     def dataGrab(self):
         data = ui.vector_data#Ui_MainWindow.vectorSetup(ui, ui.symmetryValue.value(), ui.shiftSelect.currentIndex())
-        data[:,3] = np.round(data[:,3],3)
+        # data[:,3] = np.round(data[:,3],3)
         self.model = TableModel(data,['Tile scale','Grid scale','Angle','Grid shift'])
         self.tableView.setModel(self.model)
         self.tableView.verticalHeader().sectionClicked.connect(self.on_row_header_clicked)
+        self.tableView.horizontalHeader().sectionClicked.connect(self.on_col_header_clicked)
+        self.tableView.clicked.connect(self.on_cell_clicked)
+        self.model.dataChanged.connect(self.on_cell_edited)
         self.tableView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
         self.current_row = None
 
@@ -784,14 +788,42 @@ class createAdvancedWindow(QtWidgets.QWidget):
                     for col in range(self.model.columnCount(None))]
         for col, lineEdit in enumerate(self.lineEdits):
             lineEdit.setText(row_data[col])
+    
+    def on_col_header_clicked(self, logicalIndex):
+        self.current_col = logicalIndex
+        col_data = [self.model.data(self.model.index(logicalIndex, row), QtCore.Qt.DisplayRole)
+                    for row in range(self.model.rowCount(None))]
+        for col, lineEdit in enumerate(self.lineEdits):
+            lineEdit.setText(col_data[col])
+
+    # def on_cell_edit(self, logicalIndex):
+        
+    def on_cell_clicked(self, logicalIndex):
+
+        col_data = [self.model.data(self.model.index(logicalIndex.row(), col), QtCore.Qt.DisplayRole)
+                     for col in range(self.model.columnCount(None))]
+        for col, lineEdit in enumerate(self.lineEdits):
+            lineEdit.setText(col_data[col])
+        
+    def on_cell_edited(self, logicalIndex):
+
+        col_data = [self.model.data(self.model.index(logicalIndex.row(), col), QtCore.Qt.DisplayRole)
+                     for col in range(self.model.columnCount(None))]
+        for col, lineEdit in enumerate(self.lineEdits):
+            lineEdit.setText(col_data[col])
+            value = col_data[col]
+            ui.vector_data[logicalIndex.row()][col] = value
+            ui.editVector(ui.vector_data)
+
+
     ##TODO: add a function which also changes/updates the lineedit when you're messing with individual cells
     def on_line_edit_finished(self, col, lineEdit):
-        if self.current_row is not None:
-            value = lineEdit.text()
-            index = self.model.index(self.current_row, col)
-            self.model.setData(index, value, QtCore.Qt.EditRole)
-            ui.vector_data[self.current_row][col] = value
-            ui.editVector(ui.vector_data)
+        current_row = self.tableView.currentIndex().row()
+        value = lineEdit.text()
+        index = self.model.index(current_row, col)
+        self.model.setData(index, value, QtCore.Qt.EditRole)
+        ui.vector_data[current_row][col] = value
+        ui.editVector(ui.vector_data)
 
 class TileMaker:
     # def __init__(self, fold, tau, ang, omega, grid_len, shift_type):
@@ -805,7 +837,7 @@ class TileMaker:
             tile_vectors.append((i[0]*np.cos(np.radians(i[2])),i[0]*np.sin(np.radians(i[2]))))
             grid_vectors.append((i[1]*np.cos(np.radians(i[2])),i[1]*np.sin(np.radians(i[2]))))
             shifts.append(i[3])
-        print(vector_data)
+        
         ang = [math.atan2(x[1],x[0]) for x in grid_vectors]
         val = (np.round(ang,2)+0 >= 0).sum()
         ang = [(x+2*np.pi if np.round(x,2) < 0 else x) for x in ang]
@@ -813,7 +845,7 @@ class TileMaker:
 
         grid_vectors = np.array(grid_vectors)[arg]
         tile_vectors = np.array(tile_vectors)[arg]
-        
+
         line_len = 100
         
         grid = Grids(grid_vectors, line_len, grid_len, shifts, val)
