@@ -202,13 +202,32 @@ class Ui_MainWindow(object):
         self.tilingParameters.addWidget(self.parameterGroup)
         
         ##add the advanced window here
-        self.windows_open['advancedWindow'] = False
+
+        self.advancedDock = QtWidgets.QDockWidget("Advanced Settings", MainWindow)
+        self.advancedDock.setObjectName("advancedDock")
         self.advancedWindow = createAdvancedWindow()
-        self.advancedButton.clicked.connect(
-            lambda checked: self.toggle_window(self.advancedWindow)
-        )
-        self.advancedButton.clicked.connect(self.advancedWindow.dataGrab)        
-        self.advancedWindow.destroyed.connect(lambda: self.updateWindowState('advancedWindow'))
+        self.advancedDock.setWidget(self.advancedWindow)
+        MainWindow.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.advancedDock)
+        self.advancedDock.hide()
+        self.advancedButton.clicked.connect(self.toggleDock)
+        self.advancedButton.clicked.connect(self.advancedWindow.dataGrab)  
+        # Remove the resize handle from the dock widget
+        self.advancedDock.setFeatures(QtWidgets.QDockWidget.DockWidgetClosable)
+        # Store the original size of the main window
+        self.original_size = MainWindow.size()
+        # Disable the ability to float the dock widget (pop out)
+        self.advancedDock.setFloating(False)
+        # Connect the signal for advanced window closed (when dock widget closed)
+        self.advancedDock.closeEvent = self.closeDock
+        
+        
+        # self.windows_open['advancedWindow'] = False
+        # self.advancedWindow = createAdvancedWindow()
+        # self.advancedButton.clicked.connect(
+        #     lambda checked: self.toggle_window(self.advancedWindow)
+        # )
+        # self.advancedButton.clicked.connect(self.advancedWindow.dataGrab)        
+        # self.advancedWindow.destroyed.connect(lambda: self.updateWindowState('advancedWindow'))
 
         ##hook the main window changes into the table changes in the advance dinow
         self.symmetryValue.valueChanged.connect(self.advancedWindow.dataGrab)
@@ -301,6 +320,46 @@ class Ui_MainWindow(object):
         ##finally call our function which adds our text to the various objects we need
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
+    def toggleDock(self):       
+
+        # Determine the width of the advanced dock widget
+        dock_width = self.advancedDock.sizeHint().width()
+        if self.advancedDock.isVisible():
+            self.advancedDock.hide()
+        
+            # Decrease the main window width
+            new_size = QtCore.QSize(self.original_size.width(), MainWindow.height())
+            
+            # Update the main window size policies
+            MainWindow.setMinimumSize(new_size)
+            MainWindow.setMaximumSize(new_size)
+            MainWindow.resize(new_size)
+        else:
+            self.advancedDock.show()
+        
+            # Increase the main window width
+            new_width = self.original_size.width() + dock_width
+            new_size = QtCore.QSize(new_width, MainWindow.height())
+            
+            # Update the main window size policies
+            MainWindow.setMinimumSize(new_size)
+            MainWindow.setMaximumSize(new_size)
+            MainWindow.resize(new_size)
+
+        # # Resize the main window to the new size
+        # MainWindow.resize(new_size)
+
+
+    def closeDock(self, event):
+
+        new_size = QtCore.QSize(self.original_size.width(), MainWindow.height())
+        
+        # Update the main window size policies
+        MainWindow.setMinimumSize(new_size)
+        MainWindow.setMaximumSize(new_size)
+        MainWindow.resize(new_size)
+            
 
     def updateWindowState(self, window_name):
         self.windows_open[window_name] = False    
@@ -497,29 +556,7 @@ class Ui_MainWindow(object):
             item = tilePlot(self.tiling, color)
             self.tilingPlot.addItem(item) 
 
-    # def presetChange(self):
-
-    #     ##when presets are changed, we find what index they've been changed to
-    #     ##then assign the values you need to 
-    #     preset_idx = self.presetSelect.currentIndex()
-    #     if preset_idx == 0:
-    #         value = 5
-    #         self.symmetryValue.setValue(value)
-    #     elif preset_idx == 1:
-    #         value = 8
-    #         self.symmetryValue.setValue(value)
-    #     elif preset_idx == 2:
-    #         value = 12
-    #         self.symmetryValue.setValue(value) 
     #     #TODO: figure out how to load presets
-    #     # elif preset_idx == 3:
-    #     #     value = 12
-    #     #     self.symmetryValue.setValue(value) 
-
-    #     vec_item = vectorPlot(value)
-    #     self.vectorPlot.clear()
-    #     self.vectorPlot.enableAutoRange()
-    #     self.vectorPlot.addItem(vec_item) 
 
 class TableModel(QtCore.QAbstractTableModel):
 
@@ -576,7 +613,6 @@ class createAdvancedWindow(QtWidgets.QWidget):
         # self.setLayout(layout)
 
     def setupUi(self):
-        self.setObjectName("Form")
         self.resize(596, 418)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
