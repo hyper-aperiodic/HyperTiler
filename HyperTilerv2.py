@@ -303,11 +303,22 @@ class Ui_MainWindow(object):
         self.vectorPlot.enableAutoRange()
         self.vectorPlot.addItem(vec_item)
 
+        grid_vec_item = vectorPlotting(self.vector_data,'grid')
+        self.advancedWindow.gridVectorPlot.clear()
+        self.advancedWindow.gridVectorPlot.enableAutoRange()
+        self.advancedWindow.gridVectorPlot.addItem(grid_vec_item)
+
     def editVector(self, data):
         vec_item = vectorPlotting(data)
         self.vectorPlot.clear()
         self.vectorPlot.enableAutoRange()
         self.vectorPlot.addItem(vec_item)
+
+        grid_vec_item = vectorPlotting(data,'grid')
+        self.advancedWindow.gridVectorPlot.clear()
+        self.advancedWindow.gridVectorPlot.enableAutoRange()
+        self.advancedWindow.gridVectorPlot.addItem(grid_vec_item)
+
 
     def vectorSetup(self, fold, shift_type):
         theta = 2*np.pi/fold
@@ -522,59 +533,38 @@ class createAdvancedWindow(QtWidgets.QWidget):
         self.horizontalLayout_2.addWidget(self.groupBox)
         self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_4.setObjectName("horizontalLayout_4")
+
+        
         self.groupBox_2 = QtWidgets.QGroupBox(self)
         self.groupBox_2.setObjectName("groupBox_2")
         self.verticalLayout_5 = QtWidgets.QVBoxLayout(self.groupBox_2)
         self.verticalLayout_5.setObjectName("verticalLayout_5")
-        self.groupBox_2.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
-        self.groupBox_2.setFixedHeight(189)
-        self.horizontalLayout_5 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_5.setObjectName("horizontalLayout_5")
-        self.label_5 = QtWidgets.QLabel(self.groupBox_2)
-        self.label_5.setObjectName("label_5")
-        self.horizontalLayout_5.addWidget(self.label_5)
-        self.pushButton_3 = QtWidgets.QPushButton(self.groupBox_2)
-        self.pushButton_3.setObjectName("pushButton_3")
-        self.horizontalLayout_5.addWidget(self.pushButton_3)
-        self.pushButton_4 = QtWidgets.QPushButton(self.groupBox_2)
-        self.pushButton_4.setObjectName("pushButton_4")
-        self.horizontalLayout_5.addWidget(self.pushButton_4)
-        self.pushButton_5 = QtWidgets.QPushButton(self.groupBox_2)
-        self.pushButton_5.setObjectName("pushButton_5")
-        self.horizontalLayout_5.addWidget(self.pushButton_5)
-        self.pushButton_6 = QtWidgets.QPushButton(self.groupBox_2)
-        self.pushButton_6.setObjectName("pushButton_6")
-        self.horizontalLayout_5.addWidget(self.pushButton_6)
-        self.verticalLayout_5.addLayout(self.horizontalLayout_5)
-        self.horizontalLayout_6 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_6.setObjectName("horizontalLayout_6")
-        self.label_6 = QtWidgets.QLabel(self.groupBox_2)
-        self.label_6.setObjectName("label_6")
-        self.horizontalLayout_6.addWidget(self.label_6)
-        self.pushButton_7 = QtWidgets.QPushButton(self.groupBox_2)
-        self.pushButton_7.setObjectName("pushButton_7")
-        self.horizontalLayout_6.addWidget(self.pushButton_7)
-        self.pushButton_8 = QtWidgets.QPushButton(self.groupBox_2)
-        self.pushButton_8.setObjectName("pushButton_8")
-        self.horizontalLayout_6.addWidget(self.pushButton_8)
-        self.pushButton_9 = QtWidgets.QPushButton(self.groupBox_2)
-        self.pushButton_9.setObjectName("pushButton_9")
-        self.horizontalLayout_6.addWidget(self.pushButton_9)
-        self.pushButton_10 = QtWidgets.QPushButton(self.groupBox_2)
-        self.pushButton_10.setObjectName("pushButton_10")
-        self.horizontalLayout_6.addWidget(self.pushButton_10)
-        self.verticalLayout_5.addLayout(self.horizontalLayout_6)
+
+        self.groupBox_2.setMinimumSize(QtCore.QSize(310, 320))
+        self.groupBox_2.setMaximumSize(QtCore.QSize(310, 320))
+
+
+        self.gridVectorPlot = pg.PlotWidget(self.groupBox_2)
+        self.gridVectorPlot.setObjectName("gridVectorPlot")
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHeightForWidth(self.gridVectorPlot.sizePolicy().hasHeightForWidth())
+        self.gridVectorPlot.setSizePolicy(sizePolicy)
+        self.gridVectorPlot.setMinimumSize(QtCore.QSize(288, 288))
+        self.gridVectorPlot.setMaximumSize(QtCore.QSize(288, 288))
+        self.gridVectorPlot.setBackground('w')
+        self.gridVectorPlot.getPlotItem().hideAxis('bottom')
+        self.gridVectorPlot.getPlotItem().hideAxis('left')
+        self.gridVectorPlot.hideButtons()
+        self.verticalLayout_5.addWidget(self.gridVectorPlot)
+
+        self.vector_data = ui.vector_data
+        vec_item = vectorPlotting(self.vector_data, 'grid')
+        self.gridVectorPlot.clear()
+        self.gridVectorPlot.enableAutoRange()
+        self.gridVectorPlot.addItem(vec_item)
+
         self.horizontalLayout_7 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_7.setObjectName("horizontalLayout_7")
-        self.label_7 = QtWidgets.QLabel(self.groupBox_2)
-        self.label_7.setObjectName("label_7")
-        self.horizontalLayout_7.addWidget(self.label_7)
-        self.pushButton_11 = QtWidgets.QPushButton(self.groupBox_2)
-        self.pushButton_11.setObjectName("pushButton_11")
-        self.horizontalLayout_7.addWidget(self.pushButton_11)
-        self.pushButton_12 = QtWidgets.QPushButton(self.groupBox_2)
-        self.pushButton_12.setObjectName("pushButton_12")
-        self.horizontalLayout_7.addWidget(self.pushButton_12)
+
         spacerItem1 = QtWidgets.QSpacerItem(162, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_7.addItem(spacerItem1)
         self.verticalLayout_5.addLayout(self.horizontalLayout_7)
@@ -585,13 +575,7 @@ class createAdvancedWindow(QtWidgets.QWidget):
         self.horizontalLayout_8.addWidget(self.label_8)
         spacerItem2 = QtWidgets.QSpacerItem(30, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_8.addItem(spacerItem2)
-        self.lineEdit_5 = QtWidgets.QLineEdit(self.groupBox_2)
-        self.lineEdit_5.setObjectName("lineEdit_5")
-        self.horizontalLayout_8.addWidget(self.lineEdit_5)
-        self.pushButton_13 = QtWidgets.QPushButton(self.groupBox_2)
-        self.pushButton_13.setObjectName("pushButton_13")
-        self.horizontalLayout_8.addWidget(self.pushButton_13)
-        self.verticalLayout_5.addLayout(self.horizontalLayout_8)
+
         self.horizontalLayout_4.addWidget(self.groupBox_2)
         self.horizontalLayout_2.addLayout(self.horizontalLayout_4)
         self.horizontalLayout_2.setStretch(1, 2)
@@ -636,22 +620,22 @@ class createAdvancedWindow(QtWidgets.QWidget):
         self.label_2.setText(_translate("Form", "Grid scale:"))
         self.label_3.setText(_translate("Form", "Angle:"))
         self.label_4.setText(_translate("Form", "Grid shift:"))
-        self.groupBox_2.setTitle(_translate("Form", "Irrational values"))
-        self.label_5.setText(_translate("Form", "Metallic ratios:"))
-        self.pushButton_3.setText(_translate("Form", "1.618..."))
-        self.pushButton_4.setText(_translate("Form", "2.414..."))
-        self.pushButton_5.setText(_translate("Form", "3.302..."))
-        self.pushButton_6.setText(_translate("Form", "4.236..."))
-        self.label_6.setText(_translate("Form", "Roots:"))
-        self.pushButton_7.setText(_translate("Form", "√2"))
-        self.pushButton_8.setText(_translate("Form", "√3"))
-        self.pushButton_9.setText(_translate("Form", "√5"))
-        self.pushButton_10.setText(_translate("Form", "√8"))
-        self.label_7.setText(_translate("Form", "Other:"))
-        self.pushButton_11.setText(_translate("Form", "π"))
-        self.pushButton_12.setText(_translate("Form", "e"))
-        self.label_8.setText(_translate("Form", "Custom:"))
-        self.pushButton_13.setText(_translate("Form", "Set"))
+        self.groupBox_2.setTitle(_translate("Form", "Grid vectors"))
+        # self.label_5.setText(_translate("Form", "Metallic ratios:"))
+        # self.pushButton_3.setText(_translate("Form", "1.618..."))
+        # self.pushButton_4.setText(_translate("Form", "2.414..."))
+        # self.pushButton_5.setText(_translate("Form", "3.302..."))
+        # self.pushButton_6.setText(_translate("Form", "4.236..."))
+        # self.label_6.setText(_translate("Form", "Roots:"))
+        # self.pushButton_7.setText(_translate("Form", "√2"))
+        # self.pushButton_8.setText(_translate("Form", "√3"))
+        # self.pushButton_9.setText(_translate("Form", "√5"))
+        # self.pushButton_10.setText(_translate("Form", "√8"))
+        # self.label_7.setText(_translate("Form", "Other:"))
+        # self.pushButton_11.setText(_translate("Form", "π"))
+        # self.pushButton_12.setText(_translate("Form", "e"))
+        # self.label_8.setText(_translate("Form", "Custom:"))
+        # self.pushButton_13.setText(_translate("Form", "Set"))
         self.pushButton_2.setText(_translate("Form", "New"))
         self.pushButton.setText(_translate("Form", "Delete"))
 
@@ -694,6 +678,13 @@ class createAdvancedWindow(QtWidgets.QWidget):
         ui.vectorPlot.clear()
         ui.vectorPlot.enableAutoRange()
         ui.vectorPlot.addItem(vec_item)
+
+
+        vec_item = vectorPlotting(ui.vector_data, 'grid')
+        self.gridVectorPlot.clear()
+        self.gridVectorPlot.enableAutoRange()
+        self.gridVectorPlot.addItem(vec_item)
+
         self.model.removeRow(row)
 
     def on_new(self):
@@ -725,6 +716,7 @@ class createAdvancedWindow(QtWidgets.QWidget):
             lineEdit.setText(str(value))
             ui.vector_data[logicalIndex.row()][col] = value
             ui.editVector(ui.vector_data)
+
 
     def on_line_edit_finished(self, col, lineEdit):
         current_row = self.tableView.currentIndex().row()
@@ -1015,11 +1007,15 @@ class tilePlot(pg.GraphicsObject):
         return QtCore.QRectF(self.picture.boundingRect())
 
 class vectorPlotting(pg.GraphicsObject):
-    def __init__(self, vector_data):
+    def __init__(self, vector_data, type = 'real'):
         pg.GraphicsObject.__init__(self)
         vectors = []
-        for i in vector_data:
-            vectors.append((30*i[0]*np.cos(np.radians(i[2])),30*i[0]*np.sin(np.radians(i[2]))))
+        if type == 'real':
+            for i in vector_data:
+                vectors.append((30*i[0]*np.cos(np.radians(i[2])),30*i[0]*np.sin(np.radians(i[2]))))
+        else:
+            for i in vector_data:
+                vectors.append((30*i[1]*np.cos(np.radians(i[2])),30*i[1]*np.sin(np.radians(i[2]))))
         self.generatePicture(vectors)
 
     def generatePicture(self, vectors):
