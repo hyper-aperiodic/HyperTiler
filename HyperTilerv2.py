@@ -10,6 +10,7 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QDoubleValidator
 import pyqtgraph as pg
 import numpy as np
 import itertools
@@ -134,7 +135,8 @@ class Ui_MainWindow(object):
         spacerItem5 = QtWidgets.QSpacerItem(69, 20, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
         self.gridShiftBox.addItem(spacerItem5)
         self.verticalLayout_4.addLayout(self.gridShiftBox)
-        self.shiftSelect.currentIndexChanged.connect(self.updateShift)
+        self.shiftSelect.activated.connect(self.updateShift)
+        # self.shiftSelect.activated.connect(self.editVector)
 
 
         ##add our parameters neatly - first, symmetry
@@ -227,11 +229,11 @@ class Ui_MainWindow(object):
         #     lambda checked: self.toggle_window(self.advancedWindow)
         # )
         # self.advancedButton.clicked.connect(self.advancedWindow.dataGrab)        
-        # self.advancedWindow.destroyed.connect(lambda: self.updateWindowState('advancedWindow'))
+        self.advancedWindow.destroyed.connect(lambda: self.updateWindowState('advancedWindow'))
 
         ##hook the main window changes into the table changes in the advance dinow
         self.symmetryValue.valueChanged.connect(self.advancedWindow.dataGrab)
-        self.shiftSelect.currentIndexChanged.connect(self.advancedWindow.dataGrab)
+        self.shiftSelect.activated.connect(self.advancedWindow.dataGrab)
         # self.symmetryValue.valueChanged.connect(self.advancedWindow.mainValChange)
 
         ##finally add the tile button
@@ -410,17 +412,20 @@ class Ui_MainWindow(object):
             shifts = [0]*fold
 
         if shift_type == 2:
-            shifts = np.random.uniform(-1,1,fold)
+            shifts = np.round(np.random.uniform(-1,1,fold),3)
         
         if shift_type == 3:
             r = np.random.rand(1, fold)
             r /= np.sum(r)
-            shifts = r[0]
+            shifts = np.round(r[0],3)
         self.vector_data[:,3] = shifts
 
+
     def updateVector(self):
-        shiftSelect = self.shiftSelect.currentIndex()
+        ##TODO: consider adding this in if you want to control the number of vectors on both sides
+        #if not self.advancedDock.isVisible():
         value = self.symmetryValue.value()
+        shiftSelect = self.shiftSelect.currentIndex()
         self.vector_data = self.vectorSetup(value, shiftSelect)        
         vec_item = vectorPlotting(self.vector_data)
         self.vectorPlot.clear()
@@ -468,12 +473,12 @@ class Ui_MainWindow(object):
 
     def pushTileButton(self):
 
-        # print()
-        p1 = self.symmetryValue.value()
+
+        # p1 = self.symmetryValue.value()
         p5 = self.sizeValue.value()
 
         #TODO: you need to add something which checks the length of the calcs you're about to do - either as a pop up, or as some barrier 
-        p6 = self.shiftSelect.currentText()#'regular' #'random'
+        # p6 = self.shiftSelect.currentText()#'regular' #'random'
 
         self.tiling = TileMaker(self.vector_data, p5)#((np.sqrt(5)+1)/2)
         
@@ -558,6 +563,19 @@ class Ui_MainWindow(object):
 
     #     #TODO: figure out how to load presets
 
+##Class for changing decimals in the tableview of the advanced window
+class DecimalDelegate(QtWidgets.QStyledItemDelegate):
+    def __init__(self, decimals=2, parent=None):
+        super().__init__(parent)
+        self.decimals = decimals
+
+    def displayText(self, value, locale):
+        try:
+            return f"{float(value):.{self.decimals}f}"
+        except (ValueError, TypeError):
+            return str(value)  # Fallback for non-numeric values
+
+
 class TableModel(QtCore.QAbstractTableModel):
 
     def __init__(self, data, headers):
@@ -584,6 +602,25 @@ class TableModel(QtCore.QAbstractTableModel):
                 return self._headers[section]
             if orientation == QtCore.Qt.Vertical:
                 return ['v'+ str(x+1) for x in range(len(self._data))][section]
+            
+
+    def insertRow(self, row, parent=QtCore.QModelIndex()):
+        self.beginInsertRows(parent, row, row)
+        self._data = np.insert(self._data, row, np.zeros(self.columnCount(parent)), axis=0)  # Use columnCount() with QModelIndex() if necessary
+        self.endInsertRows()
+
+    def removeRow(self, row, parent=QtCore.QModelIndex()):
+        self.beginRemoveRows(QtCore.QModelIndex(), row, row)
+        self._data = np.delete(self._data, row, axis=0)  # Removing row from data
+        self.endRemoveRows()
+
+
+
+    def set_row_data(self, row, new_data, parent=QtCore.QModelIndex()):
+        # Update the entire row with the new data
+        for col in range(self.columnCount(parent)):
+            self.setData(self.index(row, col), new_data[col], QtCore.Qt.EditRole)
+
 ####if you want to mess about with editing
     def setData(self, index, value, role):
         if role == QtCore.Qt.EditRole:
@@ -595,6 +632,8 @@ class TableModel(QtCore.QAbstractTableModel):
 
     def flags(self, index):
         return Qt.ItemIsSelectable | Qt.ItemIsEnabled | Qt.ItemIsEditable
+
+
 
 class createAdvancedWindow(QtWidgets.QWidget):
 
@@ -633,34 +672,59 @@ class createAdvancedWindow(QtWidgets.QWidget):
         self.verticalLayout_3.addItem(spacerItem)
         self.formLayout = QtWidgets.QFormLayout()
         self.formLayout.setObjectName("formLayout")
+        ##TODO: when advanced is open, add a `custom' option for the grid shifts
+        ##tile scale
         self.label = QtWidgets.QLabel(self.groupBox)
         self.label.setObjectName("label")
         self.formLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.label)
         self.lineEdit = QtWidgets.QLineEdit(self.groupBox)
         self.lineEdit.setMaximumSize(QtCore.QSize(75, 16777215))
         self.lineEdit.setObjectName("lineEdit")
+
+        validator = QDoubleValidator(-1e10, 1e10, 3)
+        validator.setNotation(QDoubleValidator.StandardNotation)  # Optional
+        self.lineEdit.setValidator(validator)
         self.formLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.lineEdit)
+        ##grid scale
+        
         self.label_2 = QtWidgets.QLabel(self.groupBox)
         self.label_2.setObjectName("label_2")
         self.formLayout.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.label_2)
         self.lineEdit_2 = QtWidgets.QLineEdit(self.groupBox)
         self.lineEdit_2.setMaximumSize(QtCore.QSize(75, 16777215))
         self.lineEdit_2.setObjectName("lineEdit_2")
+
+        validator = QDoubleValidator(-1e10, 1e10, 3)
+        validator.setNotation(QDoubleValidator.StandardNotation)  # Optional
+        self.lineEdit_2.setValidator(validator)        
         self.formLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.lineEdit_2)
+
+        ##angle
         self.label_3 = QtWidgets.QLabel(self.groupBox)
         self.label_3.setObjectName("label_3")
         self.formLayout.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.label_3)
         self.lineEdit_3 = QtWidgets.QLineEdit(self.groupBox)
         self.lineEdit_3.setMaximumSize(QtCore.QSize(75, 16777215))
         self.lineEdit_3.setObjectName("lineEdit_3")
+
+        validator = QDoubleValidator(0.0, 360., 2)  # Min, Max, Decimal Points
+        validator.setNotation(QDoubleValidator.StandardNotation)  # Optional
+        self.lineEdit_3.setValidator(validator)
         self.formLayout.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.lineEdit_3)
+
+        ##grid shift
         self.label_4 = QtWidgets.QLabel(self.groupBox)
         self.label_4.setObjectName("label_4")
         self.formLayout.setWidget(3, QtWidgets.QFormLayout.LabelRole, self.label_4)
         self.lineEdit_4 = QtWidgets.QLineEdit(self.groupBox)
         self.lineEdit_4.setMaximumSize(QtCore.QSize(75, 16777215))
         self.lineEdit_4.setObjectName("lineEdit_4")
+
+        validator = QDoubleValidator(-1e10, 1e10, 3)
+        validator.setNotation(QDoubleValidator.StandardNotation)  # Optional
+        self.lineEdit_2.setValidator(validator)   
         self.formLayout.setWidget(3, QtWidgets.QFormLayout.FieldRole, self.lineEdit_4)
+
         self.verticalLayout_3.addLayout(self.formLayout)
         self.horizontalLayout_2.addWidget(self.groupBox)
         self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
@@ -740,12 +804,12 @@ class createAdvancedWindow(QtWidgets.QWidget):
         self.horizontalLayout_2.setStretch(1, 2)
         self.verticalLayout.addLayout(self.horizontalLayout_2)
         spacerItem3 = QtWidgets.QSpacerItem(20, 5, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout.addItem(spacerItem3)
-        self.checkBox = QtWidgets.QCheckBox(self)
-        self.checkBox.setObjectName("checkBox")
-        self.verticalLayout.addWidget(self.checkBox)
-        spacerItem4 = QtWidgets.QSpacerItem(20, 5, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout.addItem(spacerItem4)
+        # self.verticalLayout.addItem(spacerItem3)
+        # self.checkBox = QtWidgets.QCheckBox(self)
+        # self.checkBox.setObjectName("checkBox")
+        # self.verticalLayout.addWidget(self.checkBox)
+        # spacerItem4 = QtWidgets.QSpacerItem(20, 5, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        # self.verticalLayout.addItem(spacerItem4)
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.tableView = QtWidgets.QTableView(self)
@@ -755,9 +819,12 @@ class createAdvancedWindow(QtWidgets.QWidget):
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.pushButton_2 = QtWidgets.QPushButton(self)
         self.pushButton_2.setObjectName("pushButton_2")
+        self.pushButton_2.clicked.connect(self.on_new)
         self.verticalLayout_2.addWidget(self.pushButton_2)
         self.pushButton = QtWidgets.QPushButton(self)
         self.pushButton.setObjectName("pushButton")
+        self.pushButton.clicked.connect(self.on_delete)
+
         self.verticalLayout_2.addWidget(self.pushButton)
         spacerItem5 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_2.addItem(spacerItem5)
@@ -802,9 +869,10 @@ class createAdvancedWindow(QtWidgets.QWidget):
         self.pushButton_12.setText(_translate("Form", "e"))
         self.label_8.setText(_translate("Form", "Custom:"))
         self.pushButton_13.setText(_translate("Form", "Set"))
-        self.checkBox.setText(_translate("Form", "Apply symmetry"))
+        # self.checkBox.setText(_translate("Form", "Apply symmetry"))
         self.pushButton_2.setText(_translate("Form", "New"))
         self.pushButton.setText(_translate("Form", "Delete"))
+        
     
     def dataGrab(self):
         data = ui.vector_data#Ui_MainWindow.vectorSetup(ui, ui.symmetryValue.value(), ui.shiftSelect.currentIndex())
@@ -816,6 +884,12 @@ class createAdvancedWindow(QtWidgets.QWidget):
         self.tableView.clicked.connect(self.on_cell_clicked)
         self.model.dataChanged.connect(self.on_cell_edited)
         self.tableView.horizontalHeader().setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+
+
+        decimal_delegate = DecimalDelegate(decimals=3)  # 3 decimal places for "Grid shift"
+        self.tableView.setItemDelegateForColumn(3, decimal_delegate)
+
+
         self.current_row = None
 
     def on_row_header_clicked(self, logicalIndex):
@@ -832,7 +906,50 @@ class createAdvancedWindow(QtWidgets.QWidget):
         for col, lineEdit in enumerate(self.lineEdits):
             lineEdit.setText(col_data[col])
 
-    # def on_cell_edit(self, logicalIndex):
+    def on_delete(self):      
+        row = self.tableView.selectedIndexes()[0].row()
+        value = ui.symmetryValue.value()-1
+        shiftSelect = ui.shiftSelect.currentIndex()
+
+        ui.symmetryValue.blockSignals(True)
+        ui.symmetryValue.setValue(value)
+        ui.symmetryValue.blockSignals(False)
+        # ui.symmetryValue.valueChanged.connect(ui.updateVector)
+
+        ui.vector_data = np.delete(ui.vector_data,row, axis = 0)
+
+        vec_item = vectorPlotting(ui.vector_data)
+        ui.vectorPlot.clear()
+        ui.vectorPlot.enableAutoRange()
+        ui.vectorPlot.addItem(vec_item)
+        self.model.removeRow(row)
+
+    def on_new(self):      
+        row = [1.0, 1.0, 0.0, 0.0] #self.tableView.selectedIndexes()[0].row()
+        ui.vector_data = np.vstack([ui.vector_data,row])
+
+        value = ui.symmetryValue.value()+1
+        row_index = self.model.rowCount(QtCore.QModelIndex())  # This will return the last index
+        
+        # Insert the row at the last position
+        self.model.insertRow(row_index)
+        self.model.set_row_data(row_index, row)
+        ui.symmetryValue.blockSignals(True)
+        ui.symmetryValue.setValue(value)
+        ui.symmetryValue.blockSignals(False)
+        
+        # shiftSelect = ui.shiftSelect.currentIndex()
+        # ui.vector_data = ui.vectorSetup(value, shiftSelect)
+
+        
+        
+        vec_item = vectorPlotting(ui.vector_data)
+
+        ui.vectorPlot.clear()
+        ui.vectorPlot.enableAutoRange()
+        ui.vectorPlot.addItem(vec_item)
+        
+
         
     def on_cell_clicked(self, logicalIndex):
 
@@ -846,13 +963,13 @@ class createAdvancedWindow(QtWidgets.QWidget):
         col_data = [self.model.data(self.model.index(logicalIndex.row(), col), QtCore.Qt.DisplayRole)
                      for col in range(self.model.columnCount(None))]
         for col, lineEdit in enumerate(self.lineEdits):
-            lineEdit.setText(col_data[col])
-            value = col_data[col]
+            value = np.round(float(col_data[col]),3)
+
+            lineEdit.setText(str(value))
             ui.vector_data[logicalIndex.row()][col] = value
             ui.editVector(ui.vector_data)
 
 
-    ##TODO: add a function which also changes/updates the lineedit when you're messing with individual cells
     def on_line_edit_finished(self, col, lineEdit):
         current_row = self.tableView.currentIndex().row()
         value = lineEdit.text()
