@@ -9,7 +9,7 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QDoubleValidator
+from PyQt5.QtGui import QDoubleValidator, QFont
 import pyqtgraph as pg
 import numpy as np
 import itertools
@@ -28,7 +28,13 @@ class Ui_MainWindow(object):
         MainWindow.setSizePolicy(sizePolicy)
         MainWindow.setMinimumSize(QtCore.QSize(1050, 800))
         MainWindow.setMaximumSize(QtCore.QSize(1050, 800))
-        
+        screen = QtWidgets.QApplication.desktop().screenGeometry()
+        center_x = (screen.width() - MainWindow.width()) // 2
+        center_y = (screen.height() - MainWindow.height()) // 3
+        MainWindow.move(center_x - 200, center_y)
+
+        font = QFont()
+        font.setPointSize(8)
         self.windows_open = {}
 
         self.centralwidget = QtWidgets.QWidget(MainWindow)
@@ -66,6 +72,7 @@ class Ui_MainWindow(object):
         self.tilingParameters.setObjectName("tilingParameters")
         self.parameterGroup = QtWidgets.QGroupBox(self.parameterArea)
         self.parameterGroup.setObjectName("parameterGroup")
+        self.parameterGroup.setFont(font)
         self.verticalLayout_4 = QtWidgets.QVBoxLayout(self.parameterGroup)
         self.verticalLayout_4.setContentsMargins(-1, -1, -1, 0)
         self.verticalLayout_4.setObjectName("verticalLayout_4")
