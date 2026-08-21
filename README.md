@@ -17,6 +17,7 @@ A paragraph explaining your work, who you are, and why you made it.
 ### ✍️ Authors
 
 Sam Coates - [University of Liverpool](https://www.liverpool.ac.uk/people/samuel-coates)
+
 Claude Code for polishing up and organisation of a physicist's code.
 
 
