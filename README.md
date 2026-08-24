@@ -1,35 +1,28 @@
 # ☆ HyperTiler
 
-Hypertiler makes creating quasiperiodic tilings easy, using two of the established methods: dual-grid and substitution!
+HyperTiler makes creating patches of quasiperiodic tilings easy!
 
 ## 🌟 Highlights
 
 - Create ANY dual-grid tiling defined by custom parameters.
 - Generate tilings using established substitution rules, or make your own!
-- Save tilings, tiling properties, and perform spatial analysis.
+- Save tilings, tiling properties, and perform some basic spatial analysis.
 
 
 ## ℹ️ Overview
 
-A paragraph explaining your work, who you are, and why you made it.
+My goal for HyperTiler was to create a friendly low/no-code tool that allows anyone to generate quasiperiodic tilings. It's aimed at tiling enthusiasts both inside and outside of academia: you can just use it to create nice patterns, or to create input files for theoretical simulation.
 
-
-### ✍️ Authors
-
-Sam Coates - [University of Liverpool](https://www.liverpool.ac.uk/people/samuel-coates)
-
-Claude Code for polishing up and organisation of a physicist's code.
+You can make tilings one of two ways: the dual-grid method **CITE**, or by substitution rules. Both have an endless amount of flexibility, based on the input parameters. 
 
 
 ## 🚀 Usage
 
-*Show off what your software looks like in action! Try to limit it to one-liners if possible and don't delve into API specifics.*
+### Dual-grid mode
 
-```py
->>> import mypackage
->>> mypackage.do_stuff()
-'Oh yeah!'
-```
+### Substitution mode
+
+### Analysis
 
 
 ## ⬇️ Installation
@@ -44,6 +37,13 @@ And be sure to specify any other minimum requirements like Python versions or op
 
 *You may be inclined to add development instructions here, don't.*
 
+
+
+### ✍️ Authors
+
+Sam Coates - [University of Liverpool](https://www.liverpool.ac.uk/people/samuel-coates)
+
+Claude Code for polishing up and organisation of a physicist's code.
 
 ## 💭 Feedback and Contributing
 
