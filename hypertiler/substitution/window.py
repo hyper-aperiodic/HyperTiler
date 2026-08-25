@@ -4,6 +4,7 @@ from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtCore import Qt
 import pyqtgraph as pg
 import numpy as np
+from pyqtgraph.exporters import ImageExporter
 
 from ..widgets import LockedViewBox
 from ..config import _quality_for_count, _apply_quality
@@ -146,6 +147,10 @@ class SubstitutionWindow(QtWidgets.QWidget):
         ew_h.addWidget(self._ew_spin)
         ew_h.addStretch()
         sv2.addLayout(ew_h)
+
+        self._save_as_btn = QtWidgets.QPushButton("Save as...")
+        self._save_as_btn.clicked.connect(self._save_as_image)
+        sv2.addWidget(self._save_as_btn)
 
         lv.addWidget(self._style_widget)
         self._style_widget.setVisible(False)
@@ -373,6 +378,19 @@ class SubstitutionWindow(QtWidgets.QWidget):
     def _on_edge_width_changed(self, val):
         self._edge_width = val
         self._rebuild_plot_item()
+
+    def _save_as_image(self):
+        if self._final_tiles is None:
+            return
+        path, _ = QtWidgets.QFileDialog.getSaveFileName(
+            self, "Save Tiling", "", "PNG Image (*.png)")
+        if not path:
+            return
+        if not path.endswith('.png'):
+            path += '.png'
+        exporter = ImageExporter(self._plot.plotItem)
+        exporter.parameters()['width'] = 1000
+        exporter.export(path)
 
     def _rebuild_plot_item(self):
         if self._final_tiles is None:

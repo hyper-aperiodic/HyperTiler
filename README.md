@@ -27,15 +27,17 @@ You can make tilings one of two ways: the dual-grid method **CITE**, or by subst
 
 ## ⬇️ Installation
 
-Simple, understandable installation instructions!
+Requires Python 3.11+.
 
 ```bash
-pip install my-package
+pip install hypertiler
 ```
 
-And be sure to specify any other minimum requirements like Python versions or operating systems.
+Then launch it from anywhere with:
 
-*You may be inclined to add development instructions here, don't.*
+```bash
+hypertiler
+```
 
 
 

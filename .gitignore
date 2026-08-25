@@ -5,4 +5,7 @@ __pycache__/
 *.pyo
 *.tmp.*
 .vscode/
+dist/
+build/
+*.egg-info/
 
