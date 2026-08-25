@@ -254,6 +254,16 @@ class TileMaker:
                         p_store.append(
                             self._n_gon(index_set, g1, g2, j, k, grid, list2, val))
 
+        if p_store:
+            seen = set()
+            deduped = []
+            for ngon in p_store:
+                key = frozenset(tuple(v) for v in ngon)
+                if key not in seen:
+                    seen.add(key)
+                    deduped.append(ngon)
+            p_store = deduped
+
         poly_areas, ngon_areas = [], []
 
         if store:

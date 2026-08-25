@@ -46,7 +46,7 @@ class VertexFinderWindow(QtWidgets.QMainWindow):
 
     def _find_and_display(self):
         ui = self.ui
-        self._worker = _VertexWorker(ui.tiling, ui.poly_areas, ui.current_colors)
+        self._worker = _VertexWorker(ui.tiling, ui.poly_areas, ui.current_colors, ui.ngon_areas)
         self._worker.finished.connect(self._build_display)
         self._worker.start()
 

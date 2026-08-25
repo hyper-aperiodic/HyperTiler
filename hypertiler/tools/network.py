@@ -44,7 +44,8 @@ class NetworkBuilderWindow(QtWidgets.QMainWindow):
         else:
             self._setup_loading_ui()
             self._worker = _VertexWorker(
-                parent_ui.tiling, parent_ui.poly_areas, parent_ui.current_colors)
+                parent_ui.tiling, parent_ui.poly_areas, parent_ui.current_colors,
+                parent_ui.ngon_areas)
             self._worker.finished.connect(self._on_worker_done)
             self._worker.start()
 
@@ -75,7 +76,8 @@ class NetworkBuilderWindow(QtWidgets.QMainWindow):
         self._plot = None
         self._setup_loading_ui()
         self._worker = _VertexWorker(
-            self.ui.tiling, self.ui.poly_areas, self.ui.current_colors)
+            self.ui.tiling, self.ui.poly_areas, self.ui.current_colors,
+            self.ui.ngon_areas)
         self._worker.finished.connect(self._on_worker_done)
         self._worker.start()
 

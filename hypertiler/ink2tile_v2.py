@@ -28,9 +28,6 @@ class inkTile:
         seed  : str, optional
             Seed SVG base name (without .svg). Tiles inside are inflated using
             the rules from the main SVG.
-        sym   : int
-            Rotational symmetry order. Creates sym additional rotated copies of
-            the starting tile at angles k * 2π/sym for k = 1..sym.
         idx   : bool
             If True, build integer-lattice indices instead of float coords.
         """
@@ -134,8 +131,6 @@ class inkTile:
             for idx in range(len(all_verts)):
                 groups[find(parent, idx)].append(idx)
 
-            # merged = {root: all_verts[members][np.argmin(np.linalg.norm(all_verts[members] - all_verts[members].mean(axis=0), axis=1))]
-            #         for root, members in groups.items()}
             merged = {root: all_verts[members].mean(axis=0)
                     for root, members in groups.items()}
             
@@ -281,8 +276,8 @@ class inkTile:
 
         Returns
         -------
-        tiling : dict  – raw group data
-        types  : dict  – stroke-color -> tile-type
+        tiling : dict  - raw group data
+        types  : dict  - stroke-color -> tile-type
         """
         ns = {'svg': 'http://www.w3.org/2000/svg'}
         tree = ET.parse(filename)

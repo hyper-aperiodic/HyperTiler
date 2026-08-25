@@ -1,4 +1,8 @@
+import os
 import sys
+
+os.environ.setdefault("PYQTGRAPH_QT_LIB", "PyQt5")
+
 import pyqtgraph as pg
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import QSurfaceFormat
@@ -29,6 +33,14 @@ def main():
 
     main_win.closeEvent = close_all_windows
     main_win.show()
+
+    if getattr(sys, "frozen", False):
+        try:
+            import pyi_splash
+            pyi_splash.close()
+        except ImportError:
+            pass
+
     sys.exit(app.exec_())
 
 
