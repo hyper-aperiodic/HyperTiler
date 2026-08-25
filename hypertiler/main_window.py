@@ -16,7 +16,7 @@ from .config import (
 )
 from .tiling import TileMaker
 from .graphics import tilePlot, pointPlot, vectorPlotting, edgePlot, gridPlot
-from .widgets import LockedViewBox, DecimalDelegate, TableModel, TileSwatchButton
+from .widgets import LockedViewBox, DecimalDelegate, TableModel, TileSwatchButton, center_on_screen
 from .workers import _VertexWorker
 from .tools.style_dialog import StyleDialog
 from .tools.vertex_finder import VertexFinderWindow
@@ -949,8 +949,7 @@ class Ui_MainWindow(object):
         self.fft_window.setCentralWidget(plot)
         self.fft_window.setFixedSize(600, 600)
         ref = self._active_plot_widget()
-        top_right = ref.mapToGlobal(QtCore.QPoint(ref.width() + 10, 0))
-        self.fft_window.move(top_right)
+        center_on_screen(self.fft_window, ref)
         self.fft_window.show()
 
     # ------------------------------------------------------------------

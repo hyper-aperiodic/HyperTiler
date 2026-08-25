@@ -4,6 +4,7 @@ import numpy as np
 import math
 import colorsys
 from ..workers import _VertexWorker
+from ..widgets import center_on_screen
 
 
 class VertexFinderWindow(QtWidgets.QMainWindow):
@@ -15,7 +16,7 @@ class VertexFinderWindow(QtWidgets.QMainWindow):
         self._show_loading()
         self.resize(400, 150)
         ref = self.ui._active_plot_widget()
-        self.move(ref.mapToGlobal(QtCore.QPoint(ref.width() + 10, 0)))
+        center_on_screen(self, ref)
         self.show()
         self._find_and_display()
 
@@ -164,7 +165,7 @@ class VertexFinderWindow(QtWidgets.QMainWindow):
         n_rows = math.ceil(len(type_map) / cols)
         self.resize(cols * 190 + 20, min(n_rows * 260 + 20, 600))
         ref = self.ui._active_plot_widget()
-        self.move(ref.mapToGlobal(QtCore.QPoint(ref.width() + 10, 0)))
+        center_on_screen(self, ref)
         self.show()
 
     def _toggle_highlight(self, checked, key, vert_keys, type_idx):

@@ -4,6 +4,21 @@ import pyqtgraph as pg
 import numpy as np
 
 
+def center_on_screen(window, ref_widget=None):
+    """Center `window` on the screen that `ref_widget` (or `window` itself)
+    currently occupies, instead of an absolute pixel offset that can land
+    off-screen. Caller must set the window's size (resize/setFixedSize)
+    before calling this, since it doesn't touch sizing itself."""
+    target = ref_widget if ref_widget is not None else window
+    screen = target.screen() if hasattr(target, 'screen') else None
+    if screen is None:
+        screen = QtWidgets.QApplication.primaryScreen()
+    geo = screen.availableGeometry()
+    x = geo.x() + (geo.width() - window.width()) // 2
+    y = geo.y() + (geo.height() - window.height()) // 2
+    window.move(x, y)
+
+
 class LockedViewBox(pg.ViewBox):
     def mousePressEvent(self, event):
         if event.button() in (QtCore.Qt.RightButton, QtCore.Qt.MiddleButton):

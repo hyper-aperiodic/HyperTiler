@@ -5,6 +5,7 @@ from collections import defaultdict
 import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
 import pyqtgraph as pg
+from ..widgets import center_on_screen
 
 ## similar vertex window to the main window. seperate because we use a different 'mode'
 ##but could potentially be folded into the main if I can be bothered.
@@ -134,7 +135,7 @@ class SubstitutionVertexWindow(QtWidgets.QMainWindow):
         n_rows = math.ceil(len(canon_to_indices) / cols)
         self.resize(cols * 190 + 20, min(n_rows * 260 + 20, 600))
         ref = self._sub_win._plot
-        self.move(ref.mapToGlobal(QtCore.QPoint(ref.width() + 10, 0)))
+        center_on_screen(self, ref)
         self.show()
 
     def _make_preview(self, rep_i, vert_type, all_verts, tile_colors, size):

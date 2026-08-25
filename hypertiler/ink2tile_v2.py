@@ -72,7 +72,7 @@ class inkTile:
         self.rules = self.extract_rules(supertiles, subtiles)
 
         if seed is not None:
-            tile_list = self.parse_seed_svg(f"{seed}.svg", types, scale)
+            tile_list = self.parse_seed_svg(f"{seed}.svg", types, supertiles)
         else:
             if start is None:
                 start = list(supertiles.keys())[0]
@@ -81,18 +81,14 @@ class inkTile:
             tile_list = [(start, centered)]
             
         self.final_tiles = self.substitute(tile_list, self.rules, supertiles, gen)
+        self.final_tiles = self._snap_flat(self.final_tiles, tol=1e-2)
 # -------------------------------------------------------------------------
     # Snap helpers
     # -------------------------------------------------------------------------
-    def _snap(self, subtiles):
-        # KDTree
-        data = subtiles
-        # Absolute tolerance in raw SVG drawing units (independent of any
-        # tiling normalization scale). True coincident vertices land at
-        # ~0 distance (shared path endpoints); genuinely distinct vertices
-        # in these drawings are tens of units apart, so this has wide margin.
-        tol = 1.0
-
+    @staticmethod
+    def _cluster_merge(verts, tol):
+        """Union-find clustering of near-coincident points; each point is
+        replaced by the mean of its cluster."""
         def find(parent, x):
             while parent[x] != x:
                 parent[x] = parent[parent[x]]
@@ -106,39 +102,52 @@ class inkTile:
             parent[rb] = ra
             if rank[ra] == rank[rb]: rank[ra] += 1
 
-        for ok, inner in data.items():
+        pairs = KDTree(verts).query_pairs(r=tol)
+        parent = list(range(len(verts)))
+        rank = [0] * len(verts)
+        for i, j in pairs:
+            union(parent, rank, i, j)
 
-            # 1. Flatten just this outer group
+        groups = defaultdict(list)
+        for idx in range(len(verts)):
+            groups[find(parent, idx)].append(idx)
+        merged = {root: verts[members].mean(axis=0) for root, members in groups.items()}
+        return np.array([merged[find(parent, idx)] for idx in range(len(verts))])
+
+    def _snap(self, subtiles):
+        # Absolute tolerance in raw SVG drawing units (independent of any
+        # tiling normalization scale). True coincident vertices land at
+        # ~0 distance (shared path endpoints); genuinely distinct vertices
+        # in these drawings are tens of units apart, so this has wide margin.
+        tol = 1.0
+        for ok, inner in subtiles.items():
             all_verts, addresses = [], []
             for ik, poly in inner.items():
                 for vi, v in enumerate(poly):
                     all_verts.append(v)
                     addresses.append((ik, vi))
             all_verts = np.array(all_verts)
-
-            # 2. KDTree pairs within this group only
-            pairs = KDTree(all_verts).query_pairs(r=tol)
-
-            # 3. Union-Find (fresh state per outer key)
-            parent = list(range(len(all_verts)))
-            rank   = [0] * len(all_verts)
-
-            for i, j in pairs:
-                union(parent, rank, i, j)
-
-            # 4. Mean per group
-            groups = defaultdict(list)
-            for idx in range(len(all_verts)):
-                groups[find(parent, idx)].append(idx)
-
-            merged = {root: all_verts[members].mean(axis=0)
-                    for root, members in groups.items()}
-            
-            # 5. Write back into this outer group only
+            snapped = self._cluster_merge(all_verts, tol)
             for idx, (ik, vi) in enumerate(addresses):
-                data[ok][ik][vi] = merged[find(parent, idx)]
-            
-        return data
+                subtiles[ok][ik][vi] = snapped[idx]
+        return subtiles
+
+    def _snap_flat(self, tile_list, tol):
+        """Snap near-coincident vertices across a flat [(type, coords), ...]
+        list, regardless of which tile they belong to."""
+        if not tile_list:
+            return tile_list
+        all_verts, addresses = [], []
+        for ti, (_, coords) in enumerate(tile_list):
+            for vi, v in enumerate(coords):
+                all_verts.append(v)
+                addresses.append((ti, vi))
+        all_verts = np.array(all_verts)
+        snapped = self._cluster_merge(all_verts, tol)
+        new_tiles = [(t, np.array(coords, dtype=float)) for t, coords in tile_list]
+        for idx, (ti, vi) in enumerate(addresses):
+            new_tiles[ti][1][vi] = snapped[idx]
+        return new_tiles
     # -------------------------------------------------------------------------
     # Geometry helpers
     # -------------------------------------------------------------------------
@@ -348,13 +357,17 @@ class inkTile:
 
         return supertile, types
 
-    def parse_seed_svg(self, filename, types, scale):
+    def parse_seed_svg(self, filename, types, supertiles):
         """
         Parse a seed SVG containing pre-placed tiles.
 
         Tiles are identified by fill color (using the types mapping from the
-        rules SVG). Coordinates are divided by the same scale factor so units
-        match.  Group transforms are applied recursively.
+        rules SVG). The seed may be drawn at any consistent scale (supertile
+        size, subtile size, or otherwise) -- the actual scale factor is
+        inferred by comparing the first seed tile's own edge length to its
+        type's already-normalized (unity-edge) template in `supertiles`, the
+        same trick `globalScale` itself is derived with. Group transforms are
+        applied recursively.
 
         Returns a list of (tile_type, coords) tuples.
         """
@@ -376,7 +389,6 @@ class inkTile:
                 if t_type:
                     pts = self.apply_transform_to_points(pts, t_type, t_nums)
                 pts[:, 1] = -pts[:, 1]
-                pts = pts #/ scale
                 fill, _, _ = self.extract_style(path)
                 if fill in types:
                     tile_list.append((types[fill], pts))
@@ -385,7 +397,19 @@ class inkTile:
                 collect_paths(child)
 
         collect_paths(root)
-        return tile_list
+        # snap in raw SVG units first (matches _snap()'s reasoning for the
+        # rules SVG), then normalize into the same unit space as supertiles
+        tile_list = self._snap_flat(tile_list, tol=1.0)
+        if not tile_list:
+            return tile_list
+
+        t0, coords0 = tile_list[0]
+        template = supertiles[t0]
+        e_seed = np.linalg.norm(coords0[1] - coords0[0])
+        e_template = np.linalg.norm(template[1] - template[0])
+        seed_scale = e_seed / e_template
+
+        return [(t, coords / seed_scale) for t, coords in tile_list]
 
     # -------------------------------------------------------------------------
     # Tile helpers

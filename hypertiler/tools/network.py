@@ -5,7 +5,7 @@ import numpy as np
 import colorsys
 import json
 from ..workers import _VertexWorker
-from ..widgets import LockedViewBox
+from ..widgets import LockedViewBox, center_on_screen
 
 ###a self-contained little thing which allows the creation, visualisation, and
 ##exportation of a network of connected sites
@@ -224,7 +224,7 @@ class NetworkBuilderWindow(QtWidgets.QMainWindow):
 
     def _reposition(self):
         ref = self.ui._active_plot_widget()
-        self.move(ref.mapToGlobal(QtCore.QPoint(ref.width() - 400, 0)))
+        center_on_screen(self, ref)
 
 
     def _select_all(self):
