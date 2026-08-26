@@ -1,3 +1,6 @@
+
+<a href="url"><img src="./docs/HT.png" align="left" height="48" width="48" ></a>
+
 # ☆ HyperTiler
 
 HyperTiler makes creating patches of quasiperiodic tilings easy!
@@ -90,6 +93,8 @@ Or just [email!](mailto:Samuel.Coates@liverpool.ac.uk)
 ## ✍🏻 Acknowledgements 
 
 Work funded by EPSRC Grant No. EP/X011984/1.
+
+With thanks to Ellie Weightman for stress-testing!
 
 I started development of this code under the above grant, back in 2023. So the conceptualisation, application of mathematical methodology, design desisions, and initial back-breaking development of the codebase is all human-driven. 
 

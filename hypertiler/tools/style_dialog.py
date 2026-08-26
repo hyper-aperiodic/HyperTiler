@@ -406,21 +406,36 @@ class StyleDialog(QtWidgets.QDialog):
         d = idata[idx]
         ui = self.ui
         type_idx = d.get('type_idx', -1)
+        n_polys = len(ui.tiling.points)
+        is_ngon = idx >= n_polys
 
-        if idx < len(ui.tiling.points):
-            color = (ui.current_colors[type_idx]
-                     if 0 <= type_idx < len(ui.current_colors)
-                     else (200, 200, 200))
+        color = (ui.current_colors[type_idx]
+                 if 0 <= type_idx < len(ui.current_colors)
+                 else (200, 200, 200))
+        if is_ngon:
+            ngon_idx = idx - n_polys
+            if ngon_idx < len(ui.tiling.p_points):
+                self._render_tile_preview(ui.tiling.p_points[ngon_idx], color)
+        elif idx < len(ui.tiling.points):
             self._render_tile_preview(ui.tiling.points[idx], color)
 
-        if 0 <= type_idx < len(ui.poly_unq):
+        n_poly_types = len(ui.poly_unq)
+        if 0 <= type_idx < n_poly_types:
             area = float(ui.poly_unq[type_idx])
+        elif n_poly_types <= type_idx < n_poly_types + len(ui.ngon_unq):
+            area = float(ui.ngon_unq[type_idx - n_poly_types])
+        else:
+            area = None
+
+        if area is not None:
             r, g, b = [int(c) for c in ui.current_colors[type_idx]]
             swatch = (f"<span style='background-color:rgb({r},{g},{b});"
                       f"border:1px solid #555;'>&nbsp;&nbsp;&nbsp;&nbsp;</span>")
             type_str = f"Type {type_idx + 1} (area≈{area:.3f}) {swatch}"
         else:
             type_str = "Unknown"
+
+        grids_str = "multiple grids" if is_ngon else f"{d['g1']+1} ∩ {d['g2']+1}"
 
         vertex_indices = d.get('vertex_indices', [])
         idx_lines = "<br>".join(
@@ -429,7 +444,7 @@ class StyleDialog(QtWidgets.QDialog):
 
         self.intersect_info.setText(
             f"<b>Type:</b> {type_str}<br>"
-            f"<b>Grids:</b> {d['g1']+1} ∩ {d['g2']+1}<br><br>"
+            f"<b>Grids:</b> {grids_str}<br><br>"
             f"<b>Vertex indices:</b><br>{idx_lines}"
         )
 

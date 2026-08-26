@@ -41,12 +41,17 @@ class DecimalDelegate(QtWidgets.QStyledItemDelegate):
     (steppers, scroll-wheel, clamped range) instead of the default bare
     line-edit editor."""
 
-    def __init__(self, decimals=2, minimum=-1e10, maximum=1e10, step=0.1, parent=None):
+    def __init__(self, decimals=2, minimum=-1e10, maximum=1e10, step=0.1,
+                 parent=None, live_callback=None):
         super().__init__(parent)
         self.decimals = decimals
         self.minimum = minimum
         self.maximum = maximum
         self.step = step
+        # called with (row, col, value) on every tick of the spin box -
+        # scroll-wheel, steppers, typing - not just on commit. Meant for a
+        # cheap live preview; anything expensive has no business in here.
+        self.live_callback = live_callback
 
     def displayText(self, value, locale):
         try:
@@ -59,6 +64,10 @@ class DecimalDelegate(QtWidgets.QStyledItemDelegate):
         editor.setDecimals(self.decimals)
         editor.setRange(self.minimum, self.maximum)
         editor.setSingleStep(self.step)
+        if self.live_callback is not None:
+            row, col = index.row(), index.column()
+            editor.valueChanged.connect(
+                lambda v, r=row, c=col: self.live_callback(r, c, v))
         return editor
 
     def setEditorData(self, editor, index):

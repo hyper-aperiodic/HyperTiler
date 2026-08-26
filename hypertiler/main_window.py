@@ -51,8 +51,23 @@ class createAdvancedWindow(QtWidgets.QWidget):
     def __init__(self, ui_ref):
         super().__init__()
         self._ui = ui_ref
+        # debounced full tiling regeneration while live-editing vectors -
+        # a full rebuild can run from tens of ms to well over half a second
+        # depending on fold/grid_len, so regenerating on every scroll tick
+        # would freeze the UI
+        self._live_regen_timer = QtCore.QTimer(self)
+        self._live_regen_timer.setSingleShot(True)
+        self._live_regen_timer.timeout.connect(self._live_regenerate)
         self._setup()
         ui_ref.windows_open['advancedWindow'] = True
+
+    def _live_regenerate(self):
+        # without this, generateTiling() would call _makeColors() again,
+        # which picks a fresh random starting hue every time
+        ui = self._ui
+        if hasattr(ui, 'current_colors'):
+            ui._pending_colors = list(ui.current_colors)
+        ui.generateTiling()
 
     def _setup(self):
         font = QFont()
@@ -149,13 +164,49 @@ class createAdvancedWindow(QtWidgets.QWidget):
         # after this call and the view is left holding a dangling pointer to
         # it, which segfaults on the next paint/layout pass.
         self._column_delegates = [
-            DecimalDelegate(decimals=3, minimum=-1e10, maximum=1e10, step=0.1),
-            DecimalDelegate(decimals=3, minimum=-1e10, maximum=1e10, step=0.1),
-            DecimalDelegate(decimals=2, minimum=0.0, maximum=360.0, step=1.0),
-            DecimalDelegate(decimals=3, minimum=-1e10, maximum=1e10, step=0.1),
+            DecimalDelegate(decimals=3, minimum=-1e10, maximum=1e10, step=0.1,
+                            live_callback=self.on_live_vector_change),
+            DecimalDelegate(decimals=3, minimum=-1e10, maximum=1e10, step=0.1,
+                            live_callback=self.on_live_vector_change),
+            DecimalDelegate(decimals=2, minimum=0.0, maximum=360.0, step=1.0,
+                            live_callback=self.on_live_vector_change),
+            DecimalDelegate(decimals=3, minimum=-1e10, maximum=1e10, step=0.1,
+                            live_callback=self.on_live_vector_change),
         ]
         for col, delegate in enumerate(self._column_delegates):
             self.tableView.setItemDelegateForColumn(col, delegate)
+
+    def on_live_vector_change(self, row, col, value):
+        """Fires on every tick of a vector spin box (scroll, steppers,
+        typing). The cheap parts run immediately: redraw the vector arrows,
+        and if Grid view is showing, rebuild just the grid lines. The actual tiling is
+        expensive (tens of ms to well over half a second depending on
+        fold/grid_len), so it's debounced - each tick restarts a timer, and
+        the real regenerate only fires once ticks stop arriving for a
+        moment, instead of on every single one."""
+        self._ui.vector_data[row][col] = value
+        self._ui._refreshVectorPlot()
+        self.gridVectorPlot.clear()
+        self.gridVectorPlot.addItem(vectorPlotting(self._ui.vector_data, 'grid'))
+        self.gridVectorPlot.enableAutoRange()
+
+        ui = self._ui
+        if ui.plotted and ui.gridView.isChecked():
+            grid, _ = TileMaker.build_grid(ui.vector_data, ui.sizeValue.value())
+            was_visible = ui.gridItem.isVisible()
+            ui.tilingPlot.removeItem(ui.gridItem)
+            ui.gridItem = gridPlot(grid, ui.grid_color, ui.grid_width)
+            ui.tilingPlot.addItem(ui.gridItem)
+            ui.gridItem.setZValue(ui.tileItem.zValue() - 1)
+            if not was_visible:
+                ui.gridItem.hide()
+
+        # "Random"/"Regular random" shift modes regenerate shifts from
+        # scratch on every generateTiling() call (see updateShift()), which
+        # would silently overwrite a manually-edited shift before the
+        # debounced regen even used it
+        if ui.plotted and ui.shiftSelect.currentIndex() not in (2, 3):
+            self._live_regen_timer.start(200)
 
     def _fill_edits(self, row_data):
         for le, val in zip(self.lineEdits, row_data):
@@ -300,7 +351,7 @@ class Ui_MainWindow(object):
         self.symmetryLabel = QtWidgets.QLabel("No. of vectors:")
         self.symmetryValue = QtWidgets.QSpinBox()
         self.symmetryValue.setFixedSize(60, 20)
-        self.symmetryValue.setMinimum(2)
+        self.symmetryValue.setMinimum(3)
         sym_h.addWidget(self.symmetryLabel)
         sym_h.addWidget(self.symmetryValue)
         sym_h.addItem(QtWidgets.QSpacerItem(110, 20, QtWidgets.QSizePolicy.Maximum,
@@ -813,9 +864,14 @@ class Ui_MainWindow(object):
         }
         self.qualityLabel.setText(_qlabels[quality] if _PREFS['contextual_rendering'] else '')
 
+        n_polys = len(self.poly_areas)
         for i, d in enumerate(self.tiling.intersection_data):
-            if i < len(self.poly_areas):
+            if i < n_polys:
                 d['type_idx'] = int(self.poly_areas[i])
+            else:
+                j = i - n_polys
+                if j < len(self.ngon_areas):
+                    d['type_idx'] = int(self.ngon_areas[j])
 
         self.gridItem = gridPlot(self.tiling.grid, self.grid_color, self.grid_width)
         self.tilingPlot.addItem(self.gridItem)

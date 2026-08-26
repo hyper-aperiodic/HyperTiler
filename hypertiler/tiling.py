@@ -50,6 +50,16 @@ class Grids:
 class TileMaker:
     def __init__(self, vector_data, grid_len):
         """For the passed vector data, build our tiling engine."""
+        grid, tile_vectors = self.build_grid(vector_data, grid_len)
+        self.grid = grid
+        ##send everything off to create out tiles!
+        self.points, self.p_points, self.poly_areas, self.ngon_areas = \
+            self._make_tile(grid, tile_vectors)
+
+    @classmethod
+    def build_grid(cls, vector_data, grid_len):
+        """Just the grid-line construction (dedupe + sort + Grids), with no
+        tile/intersection computation at all. """
         tile_vectors, grid_vectors, shifts = [], [], []
         for row in vector_data:
             angle_rad = np.radians(row[2])
@@ -57,7 +67,7 @@ class TileMaker:
             grid_vectors.append((row[1] * np.cos(angle_rad), row[1] * np.sin(angle_rad)))
             shifts.append(row[3])
 
-        grid_vectors, tile_vectors, shifts = self._dedupe_vectors(
+        grid_vectors, tile_vectors, shifts = cls._dedupe_vectors(
             grid_vectors, tile_vectors, shifts)
 
         ang = [math.atan2(v[1], v[0]) for v in grid_vectors]
@@ -66,12 +76,7 @@ class TileMaker:
         order = np.argsort(ang)
         grid_vectors = np.array(grid_vectors)[order]
         tile_vectors = np.array(tile_vectors)[order]
-        ##create the grids
-        grid = Grids(grid_vectors, 100, grid_len, shifts, val)
-        self.grid = grid
-        ##send everything off to create out tiles!
-        self.points, self.p_points, self.poly_areas, self.ngon_areas = \
-            self._make_tile(grid, tile_vectors)
+        return Grids(grid_vectors, 100, grid_len, shifts, val), tile_vectors
 
     @staticmethod
     def _dedupe_vectors(grid_vectors, tile_vectors, shifts, tol=1e-6):
@@ -246,7 +251,7 @@ class TileMaker:
         combs = self._collinear_filter(
             list(itertools.combinations(vec_no, 2)), grid.grid_vectors)
 
-        store, p_store = [], []
+        store, p_store, p_store_interx = [], [], []
         indices = [0] * dimension
         self.intersection_data = []
 
@@ -296,16 +301,21 @@ class TileMaker:
                     else:
                         p_store.append(
                             self._n_gon(index_set, g1, g2, j, k, grid, list2, val))
+                     
+                        p_store_interx.append((float(interx[0][0]), float(interx[0][1])))
 
         if p_store:
             seen = set()
             deduped = []
-            for ngon in p_store:
+            deduped_interx = []
+            for ngon, ix in zip(p_store, p_store_interx):
                 key = frozenset(tuple(v) for v in ngon)
                 if key not in seen:
                     seen.add(key)
                     deduped.append(ngon)
+                    deduped_interx.append(ix)
             p_store = deduped
+            p_store_interx = deduped_interx
 
         poly_areas, ngon_areas = [], []
         self.raw_indices = []
@@ -336,12 +346,27 @@ class TileMaker:
             p_store_xy = np.dot(padded, tile_vectors)
             p_store_xy = [s[~np.isnan(s).any(axis=1)] for s in p_store_xy]
 
-            keep = [(orig, xy) for orig, xy in zip(p_store, p_store_xy)
+            keep = [(orig, xy, ix) for orig, xy, ix in zip(p_store, p_store_xy, p_store_interx)
                     if len(xy) >= 3 and self._polygon_area(xy[:, 0], xy[:, 1]) > AREA_EPS]
             if keep:
-                self.raw_indices.append([orig for orig, _ in keep])
-                p_store = [xy for _, xy in keep]
+                self.raw_indices.append([orig for orig, _, _ in keep])
+                p_store = [xy for _, xy, _ in keep]
                 ngon_areas = [self._polygon_area(xy[:, 0], xy[:, 1]) for xy in p_store]
+                # n-gons involve more than 2 grid families crossing at once,
+                # so unlike the quad branch above there's no single (g1, g2)
+                # to report - g1/g2 are left as -1 to mark that. The crossing
+                # point is `ix`, carried from the intersect() call that found
+                # it - none of _n_gon's own vertices are the crossing point
+                # itself (they're corners offset from it by construction).
+                for orig, xy, ix in keep:
+                    self.intersection_data.append({
+                        'x': ix[0],
+                        'y': ix[1],
+                        'index_set': tuple(orig[0]),
+                        'vertex_indices': [tuple(v) for v in orig],
+                        'g1': -1, 'g2': -1,
+                        'type_idx': -1,
+                    })
             else:
                 p_store = []
 
