@@ -26,7 +26,10 @@ Dual-grid mode builds tilings using de Bruijn's method from two sets of vectors:
 
 Advanced mode drops those defaults and lets you customise every vector individually - a far more powerful way to design fully custom tilings.
 
-![The dual grid window of HyperTiler in advanced mode, with a Penrose tiling example](./docs/grid_mode.png)
+<figure>
+  <img src="./docs/grid_mode.png" alt="The dual grid window of HyperTiler, with a Penrose tiling example">
+  <figcaption>The dual-grid window, showing a Penrose tiling.</figcaption>
+</figure>
 
 ### Substitution mode
 
