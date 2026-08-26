@@ -26,19 +26,20 @@ Dual-grid mode builds tilings using de Bruijn's method from two sets of vectors:
 
 Advanced mode drops those defaults and lets you customise every vector individually - a far more powerful way to design fully custom tilings.
 
-<figure>
-  <img src="./docs/grid_mode.png" alt="The dual grid window of HyperTiler, with a Penrose tiling example">
-  <figcaption>The dual-grid window, showing a Penrose tiling.</figcaption>
-</figure>
+![The dual grid window of HyperTiler in advanced mode, with a Penrose tiling example](./docs/grid_mode.png)
 
 ### Substitution mode
 
-Substitution mode builds tilings with supplied substitution rules. The *example svgs* folder contains some sample files, otherwise, see the HyperTiler guide on how to create your own svgs.
+Substitution mode builds tilings with substitution rules that are supplied in the form of a structured svg file. Tilings can be initiated with a single tile, or a seed svg file with an initial design.
+
+The *example svgs* folder contains some sample files, otherwise, see the HyperTiler guide on how to create your own svgs.
 
 ![The substitution window of HyperTiler, with the octagonal m,n = 1 tiling](./docs/sub_mode.png)
 
 ### Analysis
+ ![alt text](analysis.png)
 
+ ![alt text](network.png)
 
 ## ⬇️ Installation
 
