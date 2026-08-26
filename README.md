@@ -18,13 +18,21 @@ You can make tilings one of two ways: the dual-grid method, or by substitution r
 
 ## 🚀 Usage
 
-**Recommended:** read through the user guide pdf for a more detailed explanation (soon to be a wiki) -- this is just a lightweight overview!
+**Recommended:** read through the user guide pdf for a more detailed explanation (soon to be a wiki) - this is just a lightweight overview!
 
 ### Dual-grid mode
 
-![alt](./docs/grid_mode.png)
+Dual-grid mode builds tilings using de Bruijn's method from two sets of vectors: **tiling** and **grid**. In default mode, you shape the result by adjusting the number of vectors, the number of grids (which sets the size of the tiling patch), and the grid shifts.
+
+Advanced mode drops those defaults and lets you customise every vector individually - a far more powerful way to design fully custom tilings.
+
+![The dual grid window of HyperTiler in advanced mode, with a Penrose tiling example](./docs/grid_mode.png)
 
 ### Substitution mode
+
+Substitution mode builds tilings with supplied substitution rules. The *example svgs* folder contains some sample files, otherwise, see the HyperTiler guide on how to create your own svgs.
+
+![The substitution window of HyperTiler, with the octagonal m,n = 1 tiling](./docs/sub_mode.png)
 
 ### Analysis
 
