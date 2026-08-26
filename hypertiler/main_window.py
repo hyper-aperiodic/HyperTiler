@@ -144,7 +144,18 @@ class createAdvancedWindow(QtWidgets.QWidget):
         self.tableView.horizontalHeader().sectionClicked.connect(self.on_col_header_clicked)
         self.tableView.clicked.connect(self.on_cell_clicked)
         self.model.dataChanged.connect(self.on_cell_edited)
-        self.tableView.setItemDelegateForColumn(3, DecimalDelegate(decimals=3))
+        # delegates must be kept alive on self - setItemDelegateForColumn does
+        # not take ownership, so a bare temporary gets garbage-collected right
+        # after this call and the view is left holding a dangling pointer to
+        # it, which segfaults on the next paint/layout pass.
+        self._column_delegates = [
+            DecimalDelegate(decimals=3, minimum=-1e10, maximum=1e10, step=0.1),
+            DecimalDelegate(decimals=3, minimum=-1e10, maximum=1e10, step=0.1),
+            DecimalDelegate(decimals=2, minimum=0.0, maximum=360.0, step=1.0),
+            DecimalDelegate(decimals=3, minimum=-1e10, maximum=1e10, step=0.1),
+        ]
+        for col, delegate in enumerate(self._column_delegates):
+            self.tableView.setItemDelegateForColumn(col, delegate)
 
     def _fill_edits(self, row_data):
         for le, val in zip(self.lineEdits, row_data):

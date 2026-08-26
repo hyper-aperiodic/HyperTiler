@@ -37,15 +37,39 @@ class LockedViewBox(pg.ViewBox):
 
 
 class DecimalDelegate(QtWidgets.QStyledItemDelegate):
-    def __init__(self, decimals=2, parent=None):
+    """Formats a cell's numeric display, and edits it with a QDoubleSpinBox
+    (steppers, scroll-wheel, clamped range) instead of the default bare
+    line-edit editor."""
+
+    def __init__(self, decimals=2, minimum=-1e10, maximum=1e10, step=0.1, parent=None):
         super().__init__(parent)
         self.decimals = decimals
+        self.minimum = minimum
+        self.maximum = maximum
+        self.step = step
 
     def displayText(self, value, locale):
         try:
             return f"{float(value):.{self.decimals}f}"
         except (ValueError, TypeError):
             return str(value)
+
+    def createEditor(self, parent, option, index):
+        editor = QtWidgets.QDoubleSpinBox(parent)
+        editor.setDecimals(self.decimals)
+        editor.setRange(self.minimum, self.maximum)
+        editor.setSingleStep(self.step)
+        return editor
+
+    def setEditorData(self, editor, index):
+        try:
+            editor.setValue(float(index.model().data(index, Qt.EditRole)))
+        except (TypeError, ValueError):
+            editor.setValue(0.0)
+
+    def setModelData(self, editor, model, index):
+        editor.interpretText()
+        model.setData(index, editor.value(), Qt.EditRole)
 
 
 class TableModel(QtCore.QAbstractTableModel):
@@ -57,6 +81,8 @@ class TableModel(QtCore.QAbstractTableModel):
     def data(self, index, role=Qt.DisplayRole):
         if role == Qt.DisplayRole:
             return str(self._data[index.row(), index.column()])
+        if role == Qt.EditRole:
+            return float(self._data[index.row(), index.column()])
 
     def rowCount(self, index=QtCore.QModelIndex()):
         return self._data.shape[0]

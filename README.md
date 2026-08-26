@@ -22,7 +22,7 @@ You can make tilings one of two ways: the dual-grid method, or by substitution r
 
 ### Dual-grid mode
 
-Dual-grid mode builds tilings using de Bruijn's method from two sets of vectors: **tiling** and **grid**. In default mode, you shape the result by adjusting the number of vectors, the number of grids (which sets the size of the tiling patch), and the grid shifts.
+Dual-grid mode builds tilings using de Bruijn's method from two sets of vectors: **tiling** and **grid**. In default mode, you shape the tiling by adjusting the number of vectors, the number of grids (which sets the size of the tiling patch), and the grid shifts.
 
 Advanced mode drops those defaults and lets you customise every vector individually - a far more powerful way to design fully custom tilings.
 
@@ -37,24 +37,42 @@ The *example svgs* folder contains some sample files, otherwise, see the HyperTi
 ![The substitution window of HyperTiler, with the octagonal m,n = 1 tiling](./docs/sub_mode.png)
 
 ### Analysis
+
+HyperTiler comes with a couple of tools for the analysis of the generated tiling - independent of which mode created it.
+
+It can numerically compute the fast Fourier transform of the tiling's point set, and identify every distinct vertex type (or star) present. For anyone wanting to simulate models *on* a tiling, a network builder also produces a connectivity network with nearest-neighbour, next-nearest, and higher-order shell information.
  ![alt text](./docs/analysis.png)
 
  ![alt text](./docs/network.png)
 
 ## ⬇️ Installation
 
-Requires Python 3.11+.
+Pick whichever fits how you like to work. Every method below needs Python 3.11+ installed, except the standalone executable.
+
+
+### Standalone executable
+
+A packaged `.exe` - no Python install required at all. Not built yet; coming soon.
+
+### PyPI package
 
 ```bash
 pip install hypertiler
 ```
 
-Then launch it from anywhere with:
+Then launch it with (from that same environment - activate it first if you used a virtualenv):
 
 ```bash
 hypertiler
 ```
 
+### Git clone
+
+Clone the repo, then run `scripts/setup.sh`/`setup.bat` to create a `.venv` and install dependencies, then `scripts/run.sh`/`run.bat` to launch. Assumes familiarity with git and a terminal.
+
+### Download + double-click (no terminal needed)
+
+Download the repo as a zip - no git required. Double-click `scripts/setup.bat` once, then `scripts/run.bat` each time after (Mac/Linux: `setup.sh`/`run.sh`).
 
 
 ### ✍️ Authors
