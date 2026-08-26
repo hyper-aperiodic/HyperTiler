@@ -6,12 +6,12 @@ from . import config
 ##all the settings for how to draw things 
 
 class tilePlot(pg.GraphicsObject):
-    def __init__(self, tiling, poly_color, ngon_color):
+    def __init__(self, tiling, poly_color, ngon_color, edge_color=(0, 0, 0), edge_width=2):
         pg.GraphicsObject.__init__(self)
-        self._build(tiling, poly_color, ngon_color)
+        self._build(tiling, poly_color, ngon_color, edge_color, edge_width)
         self._bounding_rect = QtCore.QRectF(self.picture.boundingRect())
 
-    def _build(self, tiling, poly_color, ngon_color):
+    def _build(self, tiling, poly_color, ngon_color, edge_color, edge_width):
         self.picture = QtGui.QPicture()
         p = QtGui.QPainter(self.picture)
         if config._antialias:
@@ -46,7 +46,7 @@ class tilePlot(pg.GraphicsObject):
             p.setBrush(pg.mkBrush(*color_key))
             p.drawPath(path)
 
-        p.setPen(pg.mkPen('k', width=2))
+        p.setPen(pg.mkPen(edge_color, width=edge_width))
         p.setBrush(pg.mkBrush(None))
         p.drawPath(edge_path)
 

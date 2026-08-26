@@ -57,6 +57,9 @@ class TileMaker:
             grid_vectors.append((row[1] * np.cos(angle_rad), row[1] * np.sin(angle_rad)))
             shifts.append(row[3])
 
+        grid_vectors, tile_vectors, shifts = self._dedupe_vectors(
+            grid_vectors, tile_vectors, shifts)
+
         ang = [math.atan2(v[1], v[0]) for v in grid_vectors]
         val = (np.round(ang, 2) >= 0).sum()
         ang = [(a + 2 * np.pi if np.round(a, 2) < 0 else a) for a in ang]
@@ -69,6 +72,46 @@ class TileMaker:
         ##send everything off to create out tiles!
         self.points, self.p_points, self.poly_areas, self.ngon_areas = \
             self._make_tile(grid, tile_vectors)
+
+    @staticmethod
+    def _dedupe_vectors(grid_vectors, tile_vectors, shifts, tol=1e-6):
+        """Some vector sets describe the same infinite line family more than
+        once - e.g. an 8-vector set at zero shift is really just 4 true
+        directions, each listed twice . A family's line
+        at label L sits at scalar offset (L + shift) along its own vector,
+        so two families are exact duplicates when they're parallel with
+        matching shift (mod 1), or antiparallel with shifts summing to an
+        integer.
+
+        Keeping a redundant duplicate forces the intersection code to treat
+        every ordinary crossing as if an extra grid meets there too,
+        producing degenerate zero-area tiles and fake high-vertex-count
+        n-gons for what are really plain rhombi. Collapse each duplicate
+        group down to a single representative before any of that runs -
+        a 6-vector zero-shift set becomes the 3-vector, 120-degree family
+        it actually is; 8 vectors at zero shift becomes 4 vectors at
+        45 degrees."""
+        n = len(grid_vectors)
+        angles = [math.atan2(v[1], v[0]) for v in grid_vectors]
+        dropped = set()
+        for i, j in itertools.combinations(range(n), 2):
+            if i in dropped or j in dropped:
+                continue
+            da = (angles[j] - angles[i]) % (2 * np.pi)
+            parallel = da < tol or (2 * np.pi - da) < tol
+            antiparallel = abs(da - np.pi) < tol
+            if not (parallel or antiparallel):
+                continue
+            combined = shifts[i] + shifts[j] if antiparallel else shifts[i] - shifts[j]
+            offset = (combined + 0.5) % 1 - 0.5
+            if abs(offset) < tol:
+                dropped.add(j)
+        if not dropped:
+            return grid_vectors, tile_vectors, shifts
+        keep = [i for i in range(n) if i not in dropped]
+        return ([grid_vectors[i] for i in keep],
+                [tile_vectors[i] for i in keep],
+                [shifts[i] for i in keep])
 
     @staticmethod
     def _intersect(A, B, C, D):
@@ -265,26 +308,41 @@ class TileMaker:
             p_store = deduped
 
         poly_areas, ngon_areas = [], []
+        self.raw_indices = []
+        # coincident grid families (e.g. antipodal directions in even-fold
+        # sets) can produce degenerate, zero-area "tiles" that are really
+        # just collapsed lines - drop them here so nothing downstream
+        # (plotting, vertex-type wedge lookup) ever sees them.
+        AREA_EPS = 1e-9
 
         if store:
-            self.raw_indices = [list(tile) for tile in store]
-            store = np.dot(store, tile_vectors)
-            for s in store:
-                poly_areas.append(self._polygon_area(s[:, 0], s[:, 1]))
+            store_xy = np.dot(store, tile_vectors)
+            keep_idx = [i for i, s in enumerate(store_xy)
+                        if self._polygon_area(s[:, 0], s[:, 1]) > AREA_EPS]
+            if keep_idx:
+                self.raw_indices = [list(store[i]) for i in keep_idx]
+                store = store_xy[keep_idx]
+                poly_areas = [self._polygon_area(s[:, 0], s[:, 1]) for s in store]
+            else:
+                store = []
         ##horrible way of trying to get multiple different n-gons into one neat list
         if p_store:
-            self.raw_indices.append(p_store)
-            if p_store:
-                x = (2 + dimension) * 2
-                nan_row = [[np.nan] * dimension]
-                p_store = [
-                    a + nan_row * (x - len(a))
-                    for a in (p_store + [[]] * (x - len(p_store)))
-                ]
-                p_store = np.dot(p_store, tile_vectors)
-                p_store = [s[~np.isnan(s).any(axis=1)] for s in p_store]
-                for s in p_store:
-                    if len(s):
-                        ngon_areas.append(self._polygon_area(s[:, 0], s[:, 1]))
+            x = (2 + dimension) * 2
+            nan_row = [[np.nan] * dimension]
+            padded = [
+                a + nan_row * (x - len(a))
+                for a in (p_store + [[]] * (x - len(p_store)))
+            ]
+            p_store_xy = np.dot(padded, tile_vectors)
+            p_store_xy = [s[~np.isnan(s).any(axis=1)] for s in p_store_xy]
+
+            keep = [(orig, xy) for orig, xy in zip(p_store, p_store_xy)
+                    if len(xy) >= 3 and self._polygon_area(xy[:, 0], xy[:, 1]) > AREA_EPS]
+            if keep:
+                self.raw_indices.append([orig for orig, _ in keep])
+                p_store = [xy for _, xy in keep]
+                ngon_areas = [self._polygon_area(xy[:, 0], xy[:, 1]) for xy in p_store]
+            else:
+                p_store = []
 
         return store, p_store, poly_areas, ngon_areas

@@ -33,6 +33,7 @@ class NetworkBuilderWindow(QtWidgets.QMainWindow):
         self._rebuild_timer = QtCore.QTimer(self)
         self._rebuild_timer.setSingleShot(True)
         self._rebuild_timer.timeout.connect(self._build_network)
+        self._positioned = False
 
         vw = getattr(parent_ui, 'vertex_window', None)
         if vw is not None and vw.isVisible() and hasattr(vw, 'type_map'):
@@ -50,13 +51,19 @@ class NetworkBuilderWindow(QtWidgets.QMainWindow):
             self._worker.start()
 
         self._reposition()
+        self._positioned = True
         self.show()
 
     def _on_worker_done(self, type_map, idx_to_vert, _vert_to_tiles):
         self._type_map = type_map
         self._idx_to_vert = idx_to_vert
         self._setup_ui()
-        self._reposition()
+        # only the very first build 
+        # should reposition - a refresh of an already-open, user-moved
+        # window must stay exactly where it currently sits.
+        if not self._positioned:
+            self._reposition()
+            self._positioned = True
 
     def refresh(self):
         self._rebuild_timer.stop()
@@ -94,7 +101,9 @@ class NetworkBuilderWindow(QtWidgets.QMainWindow):
         self._type_map = type_map
         self._idx_to_vert = idx_to_vert
         self._setup_ui()
-        self._reposition()
+        if not self._positioned:
+            self._reposition()
+            self._positioned = True
 
     def _setup_loading_ui(self):
         lbl = QtWidgets.QLabel("Computing vertex types…")

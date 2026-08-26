@@ -3,6 +3,43 @@ import numpy as np
 import math
 
 
+def mirror_canonical(key):
+    """Canonical key of the mirror-reflected version of this vertex type.
+
+    A canonical key is the cyclic-minimum rotation of a sequence recorded
+    while walking around the vertex in one direction. Reflecting the vertex
+    reverses that walk direction, so the mirror's canonical key is just the
+    cyclic-minimum of the reversed sequence - true for both the dual-grid
+    (gap, owner) keys and the substitution (tile_type, span) keys, since
+    it only depends on cyclic order, not on what each element holds."""
+    m = len(key)
+    if m == 0:
+        return key
+    rev = tuple(reversed(key))
+    return min(rev[i:] + rev[:i] for i in range(m))
+
+
+def group_mirror_types(type_map):
+    """Merge each vertex type with its mirror-symmetric partner (if one
+    exists as a separate type in type_map), combining their vertex lists
+    under a single (deterministically-chosen) key. A type that's its own
+    mirror image (achiral) is left as its own single entry."""
+    grouped = {}
+    handled = set()
+    for key in type_map:
+        if key in handled:
+            continue
+        handled.add(key)
+        mkey = mirror_canonical(key)
+        if mkey in type_map and mkey != key:
+            handled.add(mkey)
+            group_key = min(key, mkey)
+            grouped[group_key] = list(type_map[key]) + list(type_map[mkey])
+        else:
+            grouped[key] = list(type_map[key])
+    return grouped
+
+
 class _VertexWorker(QtCore.QThread):
     """Runs vertex-type computation off the main thread."""
     finished = QtCore.pyqtSignal(dict, dict, dict)  # type_map, idx_to_vert, vert_to_tiles
@@ -83,7 +120,11 @@ class _VertexWorker(QtCore.QThread):
                 gap = angles[(i+1) % m] - angles[i]
                 if gap <= 0:
                     gap += 2*np.pi
-                owner = wedge_owner.get(frozenset((nbs_sorted[i], nbs_sorted[(i+1) % m])))
+                # -1 sentinel (not None): a missing owner must still be
+                # orderable against real tile sizes, or min() below raises
+                # and silently kills this QThread mid-computation - the
+                # window is left stuck on "Computing vertex types..." forever.
+                owner = wedge_owner.get(frozenset((nbs_sorted[i], nbs_sorted[(i+1) % m])), -1)
                 seq.append((round(gap, 2), owner))
             return min(tuple(seq[i:] + seq[:i]) for i in range(m))
 

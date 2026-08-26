@@ -3,7 +3,7 @@ import pyqtgraph as pg
 import numpy as np
 import math
 import colorsys
-from ..workers import _VertexWorker
+from ..workers import _VertexWorker, group_mirror_types
 from ..widgets import center_on_screen
 
 
@@ -13,6 +13,8 @@ class VertexFinderWindow(QtWidgets.QMainWindow):
         self.ui = parent_ui
         self.setWindowTitle("Vertex Types")
         self.highlight_items = {}
+        self._group_mirrors = False
+        self._raw_type_map = {}
         self._show_loading()
         self.resize(400, 150)
         ref = self.ui._active_plot_widget()
@@ -53,15 +55,44 @@ class VertexFinderWindow(QtWidgets.QMainWindow):
 
     def _build_display(self, type_map, idx_to_vert, vert_to_tiles):
 
-        ##grab all the vertex types and plot them nicely. 
+        ##grab all the vertex types and plot them nicely.
         ##TODO: does this still throw errors or flash?
         if hasattr(self, '_loading_timer') and self._loading_timer is not None:
             self._loading_timer.stop()
             self._loading_timer = None
-        total = sum(len(v) for v in type_map.values())
-        self.type_map = type_map
+        self._raw_type_map = type_map
         self.idx_to_vert = idx_to_vert
         self.vert_to_tiles = vert_to_tiles
+        self._rebuild_ui()
+
+    def _on_group_mirrors_toggled(self, checked):
+        self._group_mirrors = checked
+        plot = self.ui._active_plot_widget()
+        for item in self.highlight_items.values():
+            plot.removeItem(item)
+        self.highlight_items.clear()
+        self._rebuild_ui()
+        nw = getattr(self.ui, 'network_window', None)
+        if nw is not None and nw.isVisible():
+            nw.refresh_sub(self.type_map, self.idx_to_vert)
+
+    def _rebuild_ui(self):
+        type_map = (group_mirror_types(self._raw_type_map) if self._group_mirrors
+                    else self._raw_type_map)
+        self.type_map = type_map
+        idx_to_vert = self.idx_to_vert
+        vert_to_tiles = self.vert_to_tiles
+        total = sum(len(v) for v in type_map.values())
+
+        central = QtWidgets.QWidget()
+        outer = QtWidgets.QVBoxLayout(central)
+        outer.setContentsMargins(6, 6, 6, 6)
+        outer.setSpacing(4)
+
+        mirror_cb = QtWidgets.QCheckBox("Group mirror-symmetric types")
+        mirror_cb.setChecked(self._group_mirrors)
+        mirror_cb.toggled.connect(self._on_group_mirrors_toggled)
+        outer.addWidget(mirror_cb)
 
         scroll = QtWidgets.QScrollArea()
         scroll.setWidgetResizable(True)
@@ -69,7 +100,8 @@ class VertexFinderWindow(QtWidgets.QMainWindow):
         grid = QtWidgets.QGridLayout(container)
         grid.setSpacing(10)
         scroll.setWidget(container)
-        self.setCentralWidget(scroll)
+        outer.addWidget(scroll)
+        self.setCentralWidget(central)
 
         cols = 3
         PREVIEW_SIZE = 150
@@ -164,8 +196,6 @@ class VertexFinderWindow(QtWidgets.QMainWindow):
 
         n_rows = math.ceil(len(type_map) / cols)
         self.resize(cols * 190 + 20, min(n_rows * 260 + 20, 600))
-        ref = self.ui._active_plot_widget()
-        center_on_screen(self, ref)
         self.show()
 
     def _toggle_highlight(self, checked, key, vert_keys, type_idx):

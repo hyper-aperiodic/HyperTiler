@@ -5,7 +5,7 @@ import numpy as np
 import math
 import colorsys
 
-_PREFS_VERSION = 2   # bump when defaults change to force a reset
+_PREFS_VERSION = 3   # bump when defaults change to force a reset
 ##TODO: get sub_on_startup working at some point
 _PREFS = {
     'contextual_rendering': True,
@@ -13,6 +13,8 @@ _PREFS = {
     'low_threshold': 10000,
     'advanced_on_startup': False,
     # 'sub_on_startup': False,
+    'color_scheme': 'default',   # 'default' (colour-theory hue stepping) or 'tonal'
+    'tonal_base_color': '#4a6fa5',
 }
 ##fancy graphics changes, which can be changed if you're wanting to create HUGE tilings
 _antialias = True
@@ -34,6 +36,8 @@ def _load_prefs():
                 _PREFS[key] = int(val)
             except (ValueError, TypeError):
                 _PREFS[key] = default
+        elif isinstance(default, str):
+            _PREFS[key] = str(val)
 
 
 def _save_prefs():
@@ -273,6 +277,42 @@ class PreferencesDialog(QtWidgets.QDialog):
 
         layout.addWidget(startup_grp)
 
+        colour_grp = QtWidgets.QGroupBox("Colouring")
+        colour_lay = QtWidgets.QVBoxLayout(colour_grp)
+        self.default_colour_rb = QtWidgets.QRadioButton("Colour theory (default)")
+        self.tonal_colour_rb = QtWidgets.QRadioButton("Tonal (pick a base colour)")
+        if _PREFS['color_scheme'] == 'tonal':
+            self.tonal_colour_rb.setChecked(True)
+        else:
+            self.default_colour_rb.setChecked(True)
+        colour_lay.addWidget(self.default_colour_rb)
+        colour_lay.addWidget(self.tonal_colour_rb)
+
+        base_h = QtWidgets.QHBoxLayout()
+        self._tonal_base_color = _PREFS['tonal_base_color']
+        self.base_colour_btn = QtWidgets.QPushButton("Base colour…")
+        self.base_colour_swatch = QtWidgets.QLabel()
+        self.base_colour_swatch.setFixedSize(22, 22)
+        self._update_swatch()
+        self.base_colour_btn.clicked.connect(self._pick_base_colour)
+        base_h.addWidget(self.base_colour_btn)
+        base_h.addWidget(self.base_colour_swatch)
+        base_h.addStretch()
+        colour_lay.addLayout(base_h)
+
+        self.tonal_colour_rb.toggled.connect(self.base_colour_btn.setEnabled)
+        self.base_colour_btn.setEnabled(self.tonal_colour_rb.isChecked())
+
+        colour_note = QtWidgets.QLabel(
+            "Tonal picks tile colours as tones/shades around the base colour,\n"
+            "instead of the default colour-theory hue spacing.\n"
+            "Takes effect on the next tiling generation.")
+        colour_note.setStyleSheet("color: #888; font-size: 8pt;")
+        colour_note.setWordWrap(True)
+        colour_lay.addWidget(colour_note)
+
+        layout.addWidget(colour_grp)
+
         btn_h = QtWidgets.QHBoxLayout()
         reset_btn = QtWidgets.QPushButton("Reset to defaults")
         reset_btn.clicked.connect(self._reset_defaults)
@@ -292,6 +332,18 @@ class PreferencesDialog(QtWidgets.QDialog):
         self.medium_spin.setEnabled(_PREFS['contextual_rendering'])
         self.low_spin.setEnabled(_PREFS['contextual_rendering'])
 
+    def _update_swatch(self):
+        self.base_colour_swatch.setStyleSheet(
+            f"background-color: {self._tonal_base_color}; "
+            "border: 1px solid #c8cfd8; border-radius: 3px;")
+
+    def _pick_base_colour(self):
+        qc = QtWidgets.QColorDialog.getColor(
+            QtGui.QColor(self._tonal_base_color), self, "Base colour")
+        if qc.isValid():
+            self._tonal_base_color = qc.name()
+            self._update_swatch()
+
     def _reset_defaults(self):
         _defaults = {
             'contextual_rendering': True,
@@ -299,12 +351,17 @@ class PreferencesDialog(QtWidgets.QDialog):
             'low_threshold': 10000,
             'advanced_on_startup': False,
             # 'sub_on_startup': False,
+            'color_scheme': 'default',
+            'tonal_base_color': '#4a6fa5',
         }
         self.contextual_cb.setChecked(_defaults['contextual_rendering'])
         self.medium_spin.setValue(_defaults['medium_threshold'])
         self.low_spin.setValue(_defaults['low_threshold'])
         self.advanced_startup_cb.setChecked(_defaults['advanced_on_startup'])
         # self.sub_startup_cb.setChecked(_defaults['sub_on_startup'])
+        self.default_colour_rb.setChecked(True)
+        self._tonal_base_color = _defaults['tonal_base_color']
+        self._update_swatch()
 
     def _save_and_accept(self):
         _PREFS['contextual_rendering'] = self.contextual_cb.isChecked()
@@ -312,5 +369,7 @@ class PreferencesDialog(QtWidgets.QDialog):
         _PREFS['low_threshold'] = self.low_spin.value()
         _PREFS['advanced_on_startup'] = self.advanced_startup_cb.isChecked()
         # _PREFS['sub_on_startup'] = self.sub_startup_cb.isChecked()
+        _PREFS['color_scheme'] = 'tonal' if self.tonal_colour_rb.isChecked() else 'default'
+        _PREFS['tonal_base_color'] = self._tonal_base_color
         _save_prefs()
         self.accept()

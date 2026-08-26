@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import pyqtgraph as pg
 import numpy as np
-from ..graphics import edgePlot, pointPlot
+from ..graphics import edgePlot, pointPlot, gridPlot
 from ..widgets import TileSwatchButton
 
 ##the default colourings of tiles, points etc. is based off colour theory, 
@@ -71,6 +71,30 @@ class StyleDialog(QtWidgets.QDialog):
 
 
     def _setup_tile(self, root):
+        self._tile_edge_color = self.ui.edge_color
+
+        edge_h = QtWidgets.QHBoxLayout()
+        edge_h.addWidget(QtWidgets.QLabel("Tile edge colour:"))
+        self.tile_edge_color_btn = QtWidgets.QPushButton()
+        self.tile_edge_color_btn.setFixedSize(40, 24)
+        self._set_tile_edge_btn_color(self._tile_edge_color)
+        self.tile_edge_color_btn.clicked.connect(self._pick_tile_edge_color)
+        edge_h.addWidget(self.tile_edge_color_btn)
+        edge_h.addStretch()
+        root.addLayout(edge_h)
+
+        width_h = QtWidgets.QHBoxLayout()
+        width_h.addWidget(QtWidgets.QLabel("Tile edge width:"))
+        self.tile_width_spin = QtWidgets.QDoubleSpinBox()
+        self.tile_width_spin.setRange(0.1, 5.0)
+        self.tile_width_spin.setSingleStep(0.1)
+        self.tile_width_spin.setValue(self.ui.edge_width)
+        self.tile_width_spin.valueChanged.connect(self._update_tile_edges)
+        width_h.addWidget(self.tile_width_spin)
+        width_h.addStretch()
+        root.addLayout(width_h)
+        root.addStretch()
+
         top_h = QtWidgets.QHBoxLayout()
         top_h.addWidget(QtWidgets.QLabel("Click a tile type to change its colour."))
         top_h.addStretch()
@@ -95,6 +119,31 @@ class StyleDialog(QtWidgets.QDialog):
         ui.current_colors = ui._makeColors(len(ui.poly_unq) + len(ui.ngon_unq))
         ui._redraw_tiles()
         self._build_swatches()
+
+    def _set_tile_edge_btn_color(self, color):
+        r, g, b = color
+        self.tile_edge_color_btn.setStyleSheet(
+            f"background-color: rgb({r},{g},{b}); border: 1px solid #888;")
+
+    def _pick_tile_edge_color(self):
+        initial = QtGui.QColor(*self._tile_edge_color)
+        dialog = self._open_color_dialog(initial, self)
+        dialog.currentColorChanged.connect(self._on_tile_edge_color_changed)
+        dialog.colorSelected.connect(self._on_tile_edge_color_changed)
+        dialog.exec_()
+
+    def _on_tile_edge_color_changed(self, color):
+        if not color.isValid():
+            return
+        self._tile_edge_color = (color.red(), color.green(), color.blue())
+        self._set_tile_edge_btn_color(self._tile_edge_color)
+        self._update_tile_edges()
+
+    def _update_tile_edges(self):
+        ui = self.ui
+        ui.edge_color = self._tile_edge_color
+        ui.edge_width = self.tile_width_spin.value()
+        ui._redraw_tiles()
 
     def _build_swatches(self):
         while self.swatch_layout.count():
@@ -156,9 +205,11 @@ class StyleDialog(QtWidgets.QDialog):
         return dialog
 
 
-    def _setup_point(self, root):
+    def _setup_edge_controls(self, root):
+        """Tile-edge overlay controls (show/hide, colour, thickness) - shared
+        between point view and grid view, since both hide the filled tiles
+        and can use this as the only way to see tile boundaries."""
         self._edge_color = self.ui.edge_color
-        self._point_color = self.ui.point_color
         self.edge_check = QtWidgets.QCheckBox("Show tile edges")
         self.edge_check.setChecked(False)
         self.edge_check.toggled.connect(self._toggle_edges)
@@ -187,6 +238,13 @@ class StyleDialog(QtWidgets.QDialog):
         root.addLayout(width_h)
         root.addStretch()
 
+        self.width_spin.setValue(self.ui.edge_width)
+        self.edge_check.setChecked(self.ui.edge_was_checked)
+
+    def _setup_point(self, root):
+        self._point_color = self.ui.point_color
+        self._setup_edge_controls(root)
+
         point_h = QtWidgets.QHBoxLayout()
         point_h.addWidget(QtWidgets.QLabel("Point colour:"))
         self.point_color_btn = QtWidgets.QPushButton()
@@ -208,8 +266,6 @@ class StyleDialog(QtWidgets.QDialog):
         size_h.addStretch()
         root.addLayout(size_h)
         root.addStretch()
-        self.width_spin.setValue(self.ui.edge_width)
-        self.edge_check.setChecked(self.ui.edge_was_checked)
 
     def _set_point_btn_color(self, color):
         r, g, b = color
@@ -243,6 +299,30 @@ class StyleDialog(QtWidgets.QDialog):
 
     def _setup_grid(self, root):
         self._intersect_scatter = None
+        self._grid_color = self.ui.grid_color
+
+        color_h = QtWidgets.QHBoxLayout()
+        color_h.addWidget(QtWidgets.QLabel("Grid line colour:"))
+        self.grid_color_btn = QtWidgets.QPushButton()
+        self.grid_color_btn.setFixedSize(40, 24)
+        self._set_grid_btn_color(self._grid_color)
+        self.grid_color_btn.clicked.connect(self._pick_grid_color)
+        color_h.addWidget(self.grid_color_btn)
+        color_h.addStretch()
+        root.addLayout(color_h)
+
+        width_h = QtWidgets.QHBoxLayout()
+        width_h.addWidget(QtWidgets.QLabel("Grid line thickness:"))
+        self.grid_width_spin = QtWidgets.QDoubleSpinBox()
+        self.grid_width_spin.setRange(0.1, 5.0)
+        self.grid_width_spin.setSingleStep(0.1)
+        self.grid_width_spin.setValue(self.ui.grid_width)
+        self.grid_width_spin.valueChanged.connect(self._update_grid)
+        width_h.addWidget(self.grid_width_spin)
+        width_h.addStretch()
+        root.addLayout(width_h)
+        root.addStretch()
+
         root.addWidget(QtWidgets.QLabel(
             "Toggle intersection points and click one for details."))
         self.intersect_check = QtWidgets.QCheckBox("Show intersection points")
@@ -394,3 +474,36 @@ class StyleDialog(QtWidgets.QDialog):
         ui.edgeItem = edgePlot(ui.tiling, self._edge_color, self.width_spin.value())
         ui.tilingPlot.addItem(ui.edgeItem)
         ui.edgeItem.setZValue(ui.vertItem.zValue() - 1)
+
+    def _set_grid_btn_color(self, color):
+        r, g, b = color
+        self.grid_color_btn.setStyleSheet(
+            f"background-color: rgb({r},{g},{b}); border: 1px solid #888;")
+
+    def _pick_grid_color(self):
+        initial = QtGui.QColor(*self._grid_color)
+        dialog = self._open_color_dialog(initial, self)
+        dialog.currentColorChanged.connect(self._on_grid_color_changed)
+        dialog.colorSelected.connect(self._on_grid_color_changed)
+        dialog.exec_()
+
+    def _on_grid_color_changed(self, color):
+        if not color.isValid():
+            return
+        self._grid_color = (color.red(), color.green(), color.blue())
+        self._set_grid_btn_color(self._grid_color)
+        self._update_grid()
+
+    def _update_grid(self):
+        ui = self.ui
+        ui.grid_color = self._grid_color
+        ui.grid_width = self.grid_width_spin.value()
+        if ui.gridItem is None:
+            return
+        was_visible = ui.gridItem.isVisible()
+        ui.tilingPlot.removeItem(ui.gridItem)
+        ui.gridItem = gridPlot(ui.tiling.grid, ui.grid_color, ui.grid_width)
+        ui.tilingPlot.addItem(ui.gridItem)
+        ui.gridItem.setZValue(ui.tileItem.zValue() - 1)
+        if not was_visible:
+            ui.gridItem.hide()

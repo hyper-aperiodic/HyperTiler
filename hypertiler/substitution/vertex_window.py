@@ -6,6 +6,7 @@ import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
 import pyqtgraph as pg
 from ..widgets import center_on_screen
+from ..workers import group_mirror_types
 
 ## similar vertex window to the main window. seperate because we use a different 'mode'
 ##but could potentially be folded into the main if I can be bothered.
@@ -21,9 +22,12 @@ class SubstitutionVertexWindow(QtWidgets.QMainWindow):
         self._all_verts = None
         self._vert_type = None
         self._canon_to_indices = None
+        self._raw_canon_to_indices = None
+        self._group_mirrors = False
         self.setWindowTitle("Vertex Types — Substitution")
         self._show_loading()
         self.resize(400, 150)
+        center_on_screen(self, sub_win._plot)
         self.show()
 
 
@@ -72,8 +76,41 @@ class SubstitutionVertexWindow(QtWidgets.QMainWindow):
             if canon is not None:
                 canon_to_indices[canon].append(i)
 
+        self._raw_canon_to_indices = canon_to_indices
+        self._rebuild_ui()
+
+    def _on_group_mirrors_toggled(self, checked):
+        self._group_mirrors = checked
+        plot = self._sub_win._plot
+        for item in self._highlight_items.values():
+            plot.removeItem(item)
+        self._highlight_items.clear()
+        self._rebuild_ui()
+        ui = getattr(self._sub_win, '_ui', None)
+        nw = getattr(ui, 'network_window', None) if ui is not None else None
+        if nw is not None and nw.isVisible():
+            type_map = {c: list(idxs) for c, idxs in self._canon_to_indices.items()}
+            idx_to_vert = {i: self._all_verts[i]
+                           for idxs in self._canon_to_indices.values() for i in idxs}
+            nw.refresh_sub(type_map, idx_to_vert)
+
+    def _rebuild_ui(self):
+        canon_to_indices = (group_mirror_types(self._raw_canon_to_indices)
+                             if self._group_mirrors else self._raw_canon_to_indices)
         self._canon_to_indices = canon_to_indices
+        vert_type = self._vert_type
+        all_verts = self._all_verts
         total = sum(len(v) for v in canon_to_indices.values())
+
+        central = QtWidgets.QWidget()
+        outer = QtWidgets.QVBoxLayout(central)
+        outer.setContentsMargins(6, 6, 6, 6)
+        outer.setSpacing(4)
+
+        mirror_cb = QtWidgets.QCheckBox("Group mirror-symmetric types")
+        mirror_cb.setChecked(self._group_mirrors)
+        mirror_cb.toggled.connect(self._on_group_mirrors_toggled)
+        outer.addWidget(mirror_cb)
 
         scroll = QtWidgets.QScrollArea()
         scroll.setWidgetResizable(True)
@@ -81,7 +118,8 @@ class SubstitutionVertexWindow(QtWidgets.QMainWindow):
         grid = QtWidgets.QGridLayout(container)
         grid.setSpacing(10)
         scroll.setWidget(container)
-        self.setCentralWidget(scroll)
+        outer.addWidget(scroll)
+        self.setCentralWidget(central)
 
         cols = 3
         PREVIEW_SIZE = 150
@@ -134,8 +172,6 @@ class SubstitutionVertexWindow(QtWidgets.QMainWindow):
 
         n_rows = math.ceil(len(canon_to_indices) / cols)
         self.resize(cols * 190 + 20, min(n_rows * 260 + 20, 600))
-        ref = self._sub_win._plot
-        center_on_screen(self, ref)
         self.show()
 
     def _make_preview(self, rep_i, vert_type, all_verts, tile_colors, size):

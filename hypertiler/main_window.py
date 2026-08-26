@@ -24,6 +24,26 @@ from .tools.network import NetworkBuilderWindow
 from .substitution.window import SubstitutionWindow
 from .substitution.adapter import _SubstitutionAdapter
 
+
+def _make_tonal_colors(n, base_hex):
+    """n distinct tones/shades around a single base colour, rather than
+    the default scheme's full hue-circle spacing. Hue stays close to the
+    base; saturation and value are what vary,
+    stepped with the golden ratio so nearby indices still look distinct."""
+    base_h, _, _, _ = QtGui.QColor(base_hex).getHsvF()
+    if base_h < 0:  # QColor reports hue -1 for achromatic (grey) colours
+        base_h = 0.0
+    colors = []
+    g = 0.0
+    for i in range(n):
+        g = (g + 0.618) % 1.0
+        hue = (base_h + (g - 0.5) * 0.12) % 1.0
+        sat = 0.35 + 0.35 * ((i * 0.618) % 1.0)
+        val = 0.55 + 0.35 * (((i * 0.382) + 0.5) % 1.0)
+        r, gg, b = colorsys.hsv_to_rgb(hue, sat, val)
+        colors.append((r * 255, gg * 255, b * 255))
+    return colors
+
 ##for better or worse, all my own design, with variable names, structure etc. cleaned up by Claude. \
 # vecPlotFindItemPlease wasn't cutting it for documentation...
 
@@ -219,9 +239,11 @@ class Ui_MainWindow(object):
         self.edge_was_checked = False
         self._in_sub_mode = False
         self.edge_color = (0, 0, 0)
-        self.edge_width = 1.0
+        self.edge_width = 2.0
         self.point_color = (0, 0, 0)
         self.point_radius = 0.2
+        self.grid_color = (100, 149, 237)
+        self.grid_width = 2.0
 
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         root_h = QtWidgets.QHBoxLayout(self.centralwidget)
@@ -680,6 +702,8 @@ class Ui_MainWindow(object):
 
     @staticmethod
     def _makeColors(n):
+        if _PREFS.get('color_scheme') == 'tonal':
+            return _make_tonal_colors(n, _PREFS.get('tonal_base_color', '#4a6fa5'))
         h = np.random.rand()
         colors = []
         for _ in range(n):
@@ -782,7 +806,7 @@ class Ui_MainWindow(object):
             if i < len(self.poly_areas):
                 d['type_idx'] = int(self.poly_areas[i])
 
-        self.gridItem = gridPlot(self.tiling.grid)
+        self.gridItem = gridPlot(self.tiling.grid, self.grid_color, self.grid_width)
         self.tilingPlot.addItem(self.gridItem)
         self.gridItem.setZValue(self.tileItem.zValue() - 1)
 
@@ -833,7 +857,8 @@ class Ui_MainWindow(object):
         if self.tileItem is not None:
             self.tilingPlot.removeItem(self.tileItem)
 
-        self.tileItem = tilePlot(self.tiling, poly_color, ngon_color)
+        self.tileItem = tilePlot(self.tiling, poly_color, ngon_color,
+                                  self.edge_color, self.edge_width)
         self.tilingPlot.addItem(self.tileItem)
 
         if hide_tiles:

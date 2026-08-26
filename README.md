@@ -13,12 +13,16 @@ HyperTiler makes creating patches of quasiperiodic tilings easy!
 
 My goal for HyperTiler was to create a friendly low/no-code tool that allows anyone to generate quasiperiodic tilings. It's aimed at tiling enthusiasts both inside and outside of academia: you can just use it to create nice patterns, or to create input files for theoretical simulation.
 
-You can make tilings one of two ways: the dual-grid method **CITE**, or by substitution rules. Both have an endless amount of flexibility, based on the input parameters. 
+You can make tilings one of two ways: the dual-grid method, or by substitution rules. Both have an endless amount of flexibility, based on the input parameters. 
 
 
 ## 🚀 Usage
 
+**Recommended:** read through the user guide pdf for a more detailed explanation (soon to be a wiki) -- this is just a lightweight overview!
+
 ### Dual-grid mode
+
+![alt](./docs/grid_mode.png)
 
 ### Substitution mode
 
@@ -45,10 +49,18 @@ hypertiler
 
 Sam Coates - [University of Liverpool](https://www.liverpool.ac.uk/people/samuel-coates)
 
-Claude Code for polishing up and organisation of a physicist's code.
-
 ## 💭 Feedback and Contributing
 
-Add a link to the Discussions tab in your repo and invite users to open issues for bugs/feature requests.
+Have an idea for a contribution? Want to point out any bugs? 
 
-This is also a great place to invite others to contribute in any ways that make sense for your project. Point people to your DEVELOPMENT and/or CONTRIBUTING guides if you have them.
+[Start a discussion!](https://github.com/hyper-aperiodic/HyperTiler/discussions)
+
+Or just [email!](mailto:Samuel.Coates@liverpool.ac.uk)
+
+## ✍🏻 Acknowledgements 
+
+Work funded by EPSRC Grant No. EP/X011984/1.
+
+I started development of this code under the above grant, back in 2023. So the conceptualisation, application of mathematical methodology, design desisions, and initial back-breaking development of the codebase is all human-driven. 
+
+Claude Code was used to refactor, spell-check, organise, and polish off the UI.
