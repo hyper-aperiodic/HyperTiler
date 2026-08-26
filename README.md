@@ -37,9 +37,9 @@ The *example svgs* folder contains some sample files, otherwise, see the HyperTi
 ![The substitution window of HyperTiler, with the octagonal m,n = 1 tiling](./docs/sub_mode.png)
 
 ### Analysis
- ![alt text](analysis.png)
+ ![alt text](./docs/analysis.png)
 
- ![alt text](network.png)
+ ![alt text](./docs/network.png)
 
 ## ⬇️ Installation
 
