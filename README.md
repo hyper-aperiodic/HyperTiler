@@ -2,6 +2,8 @@
 
 HyperTiler makes creating patches of quasiperiodic tilings easy!
 
+[![GitHub release](https://img.shields.io/github/v/release/hyper-aperiodic/HyperTiler)](https://github.com/hyper-aperiodic/HyperTiler/releases/latest)
+
 ## 🌟 Highlights
 
 - Create ANY dual-grid tiling defined by custom parameters.
@@ -49,10 +51,12 @@ It can numerically compute the fast Fourier transform of the tiling's point set,
 
 Pick whichever fits how you like to work. Every method below needs Python 3.12+ installed, except the standalone executable.
 
-
-### Standalone executables
-
-[Packaged binaries.](https://github.com/hyper-aperiodic/HyperTiler/releases/tag/v1.0.0) Pick your OS, download, unzip, and run in that folder!
+### No code
+1. Download the build for your platform:
+   - [Windows](https://github.com/hyper-aperiodic/HyperTiler/releases/latest/download/hypertiler-windows-v1.0.0.zip)
+   - [macOS](https://github.com/hyper-aperiodic/HyperTiler/releases/latest/download/hypertiler-macos-v1.0.0.zip)
+   - [Linux](https://github.com/hyper-aperiodic/HyperTiler/releases/latest/download/hypertiler-linux-v1.0.0.zip)
+2. Unzip and run.
 
 ### PyPI package
 
