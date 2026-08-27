@@ -18,7 +18,7 @@ You can make tilings one of two ways: the dual-grid method, or by substitution r
 
 ## 🚀 Usage
 
-**Recommended:** read through the user guide pdf for a more detailed explanation (soon to be a wiki) - this is just a lightweight overview!
+**Recommended:** read the docs link.
 
 ### Dual-grid mode
 
