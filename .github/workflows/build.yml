@@ -14,10 +14,16 @@ jobs:
         include:
           - os: windows-latest
             artifact_name: hypertiler-windows
+            dist_path: dist/hypertiler
           - os: ubuntu-22.04
             artifact_name: hypertiler-linux
+            dist_path: dist/hypertiler
           - os: macos-latest
             artifact_name: hypertiler-macos
+            # BUNDLE() in the spec wraps the onedir output into a proper
+            # .app on macOS - that's the shippable artifact there, not the
+            # raw dist/hypertiler folder Windows/Linux produce.
+            dist_path: dist/HyperTiler.app
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -25,7 +31,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       # PyInstaller's splash screen needs tkinter on the build machine; the
       # spec skips the splash entirely on macOS (unsupported there), so only
@@ -41,13 +47,12 @@ jobs:
           pip install pyinstaller
 
       - name: Build with PyInstaller
-        run: pyinstaller hypertiler.spec --noconfirm --clean
+        run: pyinstaller packaging/hypertiler.spec --noconfirm --clean
 
-      - name: Package build output
-        shell: bash
-        run: tar -czf "${{ matrix.artifact_name }}.tar.gz" -C dist hypertiler
-
+      # upload-artifact zips whatever `path` points to on its own when you
+      # download it from the Actions UI - archiving it ourselves first would
+      # just nest one zip/tar inside the other for no reason.
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.artifact_name }}.tar.gz
+          path: ${{ matrix.dist_path }}

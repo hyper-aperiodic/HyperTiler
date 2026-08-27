@@ -47,7 +47,7 @@ It can numerically compute the fast Fourier transform of the tiling's point set,
 
 ## ⬇️ Installation
 
-Pick whichever fits how you like to work. Every method below needs Python 3.11+ installed, except the standalone executable.
+Pick whichever fits how you like to work. Every method below needs Python 3.12+ installed, except the standalone executable.
 
 
 ### Standalone executable

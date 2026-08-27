@@ -3,6 +3,26 @@
 import os
 import sys
 
+# This spec lives in packaging/, one level below the repo root where the
+# actual `hypertiler` package sits - PyInstaller injects SPECPATH as this
+# file's own directory, and every path below is built from it explicitly
+# rather than relying on whatever directory `pyinstaller` happens to be
+# invoked from.
+#
+# The entry script is named launcher.py, NOT hypertiler.py, on purpose:
+# PyInstaller adds the entry script's own directory (packaging/) to the
+# front of its module search path, ahead of _REPO_ROOT below. A script
+# named hypertiler.py sitting there would itself resolve as the module
+# `hypertiler` before the real package one level up ever gets a look in,
+# so `from hypertiler.__main__ import main` would silently bind to the
+# entry script itself and fail to find `.__main__` on it.
+_REPO_ROOT = os.path.abspath(os.path.join(SPECPATH, '..'))
+
+
+def _asset(name):
+    return os.path.join(SPECPATH, name)
+
+
 # scipy submodules confirmed (empirically, by blocking each one and actually
 # exercising KDTree/query_ball_point/query_pairs/_distance_wrap/gaussian_filter)
 # to be unused by the app's own code and NOT a transitive dependency of
@@ -15,11 +35,16 @@ _UNUSED_SCIPY_MODULES = [
     'scipy.cluster', 'scipy.odr', 'scipy.datasets', 'scipy.misc',
 ]
 
+# Linux has no equivalent to embedding an icon in the executable itself (that's
+# handled by a .desktop file's Icon= key at install time) - ship the PNG
+# alongside the binary so a .desktop file has something to point at.
+_linux_datas = [(_asset('hypertiler.png'), '.')] if sys.platform.startswith('linux') else []
+
 a = Analysis(
-    ['hypertiler.py'],
-    pathex=[],
+    [_asset('launcher.py')],
+    pathex=[_REPO_ROOT],
     binaries=[],
-    datas=[],
+    datas=_linux_datas,
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -62,7 +87,7 @@ pyz = PYZ(a.pure)
 # keep the splash as before.
 if sys.platform != 'darwin':
     splash = Splash(
-        'splash.png',
+        _asset('splash.png'),
         binaries=a.binaries,
         datas=a.datas,
         text_pos=None,
@@ -76,10 +101,14 @@ else:
     splash_args = ()
     splash_binaries = []
 
-# .ico is a Windows-only format; EXE(icon=...) on Linux is ignored, and on
-# macOS it needs a .icns instead (only used there once/if the app is wrapped
-# in a BUNDLE() for a proper .app - not done yet).
-icon_file = 'HT.ico' if sys.platform == 'win32' else None
+# .ico is Windows-only and .icns is macOS-only; EXE(icon=...) on Linux is
+# ignored outright (there's no equivalent - see _linux_datas above).
+if sys.platform == 'win32':
+    icon_file = _asset('HT.ico')
+elif sys.platform == 'darwin':
+    icon_file = _asset('HT.icns')
+else:
+    icon_file = None
 
 exe = EXE(
     pyz,
@@ -110,3 +139,15 @@ coll = COLLECT(
     upx_exclude=[],
     name='hypertiler',
 )
+
+# Without this, macOS gets the same bare onedir folder as Linux - a Unix
+# executable + _internal, not something Finder treats as a real application
+# (no dock icon, no double-click launch). BUNDLE() wraps COLLECT's output
+# into a proper HyperTiler.app carrying the .icns set above.
+if sys.platform == 'darwin':
+    app = BUNDLE(
+        coll,
+        name='HyperTiler.app',
+        icon=_asset('HT.icns'),
+        bundle_identifier='io.github.hyper-aperiodic.hypertiler',
+    )
