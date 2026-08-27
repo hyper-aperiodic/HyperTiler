@@ -79,9 +79,9 @@ then
 bash run.sh
 ```
 
-### Download + double-click (no terminal needed)
+### Download as a zip
 
-Download the repo as a zip - no git required. For Windows, double-click `scripts/setup.bat` once, then `scripts/run.bat` each time after in the same directory. For Mac/Linux:
+Download the repo as a zip - no git knowledge required. For Windows, double-click `scripts/setup.bat` once, then `scripts/run.bat` each time after in the same directory. For Mac/Linux:
 ```bash
 bash setup.sh
 ```
