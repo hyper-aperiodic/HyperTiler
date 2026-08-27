@@ -25,7 +25,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       # PyInstaller's splash screen needs tkinter on the build machine; the
       # spec skips the splash entirely on macOS (unsupported there), so only
