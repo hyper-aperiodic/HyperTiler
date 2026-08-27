@@ -61,6 +61,21 @@ jobs:
       - name: Build with PyInstaller
         run: pyinstaller packaging/hypertiler.spec --noconfirm --clean
 
+      - name: Smoke-test the .app launches
+        if: runner.os == 'macOS'
+        run: |
+          open dist/HyperTiler.app
+          sleep 5
+          # Check the process is still alive (didn't crash on launch)
+          if ! pgrep -f HyperTiler > /dev/null; then
+            echo "App failed to stay running"
+            exit 1
+          fi
+          pkill -f HyperTiler || true
+      - name: Check code signature / Gatekeeper status
+        if: runner.os == 'macOS'
+        run: spctl -a -vvv -t execute dist/HyperTiler.app || true
+
       # upload-artifact zips whatever `path` points to on its own when you
       # download it from the Actions UI - archiving it ourselves first would
       # just nest one zip/tar inside the other for no reason.
