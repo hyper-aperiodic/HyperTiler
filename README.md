@@ -6,6 +6,8 @@ HyperTiler makes creating patches of quasiperiodic tilings easy!
 
 [![Documentation Status](https://readthedocs.org/projects/hypertiler/badge/?version=latest)](https://hypertiler.readthedocs.io/en/latest/?badge=latest)
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22133798.svg)](https://doi.org/10.5281/zenodo.22133798)
+
 ## 🌟 Highlights
 
 - Create ANY dual-grid tiling defined by custom parameters.
@@ -100,7 +102,9 @@ bash run.sh
 
 Sam Coates - [University of Liverpool](https://www.liverpool.ac.uk/people/samuel-coates)
 
-## 💭 Feedback and Contributing
+## 💭 Use, Feedback, and Contributing
+
+Used HyperTiler for some academic work? Cite me! [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22133798.svg)](https://doi.org/10.5281/zenodo.22133798)
 
 Have an idea for a contribution? Want to point out any bugs? 
 
