@@ -50,9 +50,9 @@ It can numerically compute the fast Fourier transform of the tiling's point set,
 Pick whichever fits how you like to work. Every method below needs Python 3.12+ installed, except the standalone executable.
 
 
-### Standalone executable
+### Standalone executables
 
-Packaged binaries.
+[Packaged binaries.](https://github.com/hyper-aperiodic/HyperTiler/releases/tag/v1.0.0) Pick your OS, download, unzip, and run in that folder!
 
 ### PyPI package
 
