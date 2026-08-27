@@ -6,7 +6,6 @@ from pyqtgraph.exporters import ImageExporter
 import pyqtgraph as pg
 import numpy as np
 import math
-import colorsys
 import json
 import os
 
@@ -16,6 +15,7 @@ from .config import (
 )
 from .tiling import TileMaker
 from .ink2tile import write_svg
+from .helpers import regular_vectors, classify_areas, make_colors, _make_shifts
 from .graphics import tilePlot, pointPlot, vectorPlotting, edgePlot, gridPlot
 from .widgets import LockedViewBox, DecimalDelegate, TableModel, TileSwatchButton, center_on_screen
 from .workers import _VertexWorker
@@ -25,25 +25,6 @@ from .tools.network import NetworkBuilderWindow
 from .substitution.window import SubstitutionWindow
 from .substitution.adapter import _SubstitutionAdapter
 
-
-def _make_tonal_colors(n, base_hex):
-    """n distinct tones/shades around a single base colour, rather than
-    the default scheme's full hue-circle spacing. Hue stays close to the
-    base; saturation and value are what vary,
-    stepped with the golden ratio so nearby indices still look distinct."""
-    base_h, _, _, _ = QtGui.QColor(base_hex).getHsvF()
-    if base_h < 0:  # QColor reports hue -1 for achromatic (grey) colours
-        base_h = 0.0
-    colors = []
-    g = 0.0
-    for i in range(n):
-        g = (g + 0.618) % 1.0
-        hue = (base_h + (g - 0.5) * 0.12) % 1.0
-        sat = 0.35 + 0.35 * ((i * 0.618) % 1.0)
-        val = 0.55 + 0.35 * (((i * 0.382) + 0.5) % 1.0)
-        r, gg, b = colorsys.hsv_to_rgb(hue, sat, val)
-        colors.append((r * 255, gg * 255, b * 255))
-    return colors
 
 ##for better or worse, all my own design, with variable names, structure etc. cleaned up by Claude. \
 # vecPlotFindItemPlease wasn't cutting it for documentation...
@@ -713,24 +694,15 @@ class Ui_MainWindow(object):
     # vector helpers
     # ------------------------------------------------------------------
 
-    def _vectorSetup(self, fold, shift_type):
-        theta = 2 * np.pi / fold
-        angles = [round(np.degrees(theta * i), 2) for i in range(fold)]
-        shifts = self._makeShifts(fold, shift_type)
-        return np.array([(1.0, 1.0, a, s) for a, s in zip(angles, shifts)])
+    # "Grid shifts" combo box order: Regular, Zero, Random, Regular random.
+    _SHIFT_MODES = ("regular", "zero", "random", "regular_random")
 
-    @staticmethod
-    def _makeShifts(fold, shift_type):
-        if shift_type == 0:
-            return ([1 / (fold / 2), -1 / (fold / 2)] * (fold // 2)
-                    if fold % 2 == 0 else [1 / fold] * fold)
-        if shift_type == 1:
-            return [0.0] * fold
-        if shift_type == 2:
-            return list(np.round(np.random.uniform(-1, 1, fold), 3))
-        r = np.random.rand(fold)
-        r /= r.sum()
-        return list(np.round(r, 3))
+    def _vectorSetup(self, fold, shift_type):
+        return regular_vectors(fold, shift=self._SHIFT_MODES[shift_type])
+
+    @classmethod
+    def _makeShifts(cls, fold, shift_type):
+        return _make_shifts(fold, cls._SHIFT_MODES[shift_type])
 
     def _refreshVectorPlot(self):
         self.vectorPlot.clear()
@@ -765,23 +737,12 @@ class Ui_MainWindow(object):
 
     @staticmethod
     def _makeColors(n):
-        if _PREFS.get('color_scheme') == 'tonal':
-            return _make_tonal_colors(n, _PREFS.get('tonal_base_color', '#4a6fa5'))
-        h = np.random.rand()
-        colors = []
-        for _ in range(n):
-            h = (h + 0.618) % 1.0
-            r, g, b = colorsys.hsv_to_rgb(h, 0.4, 0.8)
-            colors.append((r * 255, g * 255, b * 255))
-        return colors
+        scheme = _PREFS.get('color_scheme', 'default')
+        return make_colors(n, scheme=scheme, base_color=_PREFS.get('tonal_base_color', '#4a6fa5'))
 
-    def _classifyAreas(self, areas):
-        rounded = np.round(areas, 3)
-        unq = np.unique(rounded)
-        out = np.zeros(len(areas), dtype=int)
-        for i, u in enumerate(unq):
-            out[rounded == u] = i
-        return out, unq
+    @staticmethod
+    def _classifyAreas(areas):
+        return classify_areas(areas)
 
     def _tiling_hash(self):
         return (tuple(self.vector_data.flatten()),

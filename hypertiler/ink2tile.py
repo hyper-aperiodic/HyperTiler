@@ -3,27 +3,38 @@ import xml.etree.ElementTree as ET
 import numpy as np
 from collections import defaultdict
 from scipy.spatial import KDTree
+from PIL import Image, ImageDraw
 
 
 class inkTile:
     def __init__(self, gen, start=None, tile=None,
                  seed=None):
-        """
+        """Run substitution (inflation) tiling from an Inkscape rules SVG.
+
         Parameters
         ----------
         gen   : int
-            Number of inflation generations.
+            Number of inflation generations to apply.
         start : str, optional
-            Tile type to begin from (e.g. 'T1'). Defaults to first type found.
-        mpar, npar : int, optional
-            SVG file is read from mn{mpar}{npar}.svg.
-        tile  : str, optional
-            Explicit SVG base name (without .svg).
+            Supertile type to begin from (e.g. 'T1'), used only when `seed`
+            is not given. Defaults to the first type found in the rules SVG.
+        tile  : str
+            Rules SVG base name, without the `.svg` extension - the file is
+            read from `{tile}.svg`. Required.
         seed  : str, optional
-            Seed SVG base name (without .svg). Tiles inside are inflated using
-            the rules from the main SVG.
-        idx   : bool
-            If True, build integer-lattice indices instead of float coords.
+            Seed SVG base name (without `.svg`). If given, generation starts
+            from the tiles pre-placed in this file instead of a single
+            `start` tile.
+
+        Attributes
+        ----------
+        final_tiles : list of (str, ndarray)
+            The generated tiling as a flat list of (tile_type, coords)
+            tuples, one per tile, where `coords` is an (M, 2) polygon.
+        rules : dict
+            The substitution rule extracted from the rules SVG: for each
+            supertile type, the scale/centre/rotation of every subtile
+            found inside it.
         """
         if tile is not None:
             svg_file = f"{tile}.svg"
@@ -592,3 +603,50 @@ def write_svg(filepath, polys, colors, edge_color=(0, 0, 0), edge_width=1.0):
 
     with open(filepath, 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines))
+
+
+def write_png(filepath, polys, colors, edge_color=(0, 0, 0), edge_width=1,
+               size=(1000, 1000), background=(255, 255, 255)):
+    """Rasterize polygons to a PNG image.
+
+    Unlike `write_svg`, `edge_width` here is in output pixels directly -
+    there's no data-unit-vs-pixel ambiguity for a raster image the way
+    there is for an SVG's own coordinate space.
+
+    Parameters
+    ----------
+    polys, colors : as in `write_svg`.
+    edge_color, edge_width : stroke applied to every tile, in pixels;
+        edge_width <= 0 omits the stroke entirely.
+    size : (width, height) of the output image in pixels. The tiling is
+        scaled to fit within this box (preserving aspect ratio, with a 5%
+        margin) and centred.
+    background : RGB fill for the area outside the tiling.
+    """
+    polys = [np.asarray(p, dtype=float) for p in polys if len(p)]
+    background = tuple(int(c) for c in background)
+    img = Image.new('RGB', size, background)
+    if not polys:
+        img.save(filepath)
+        return
+
+    all_pts = np.vstack(polys)
+    xmin, ymin = all_pts.min(axis=0)
+    xmax, ymax = all_pts.max(axis=0)
+    span_x = max(xmax - xmin, 1e-9)
+    span_y = max(ymax - ymin, 1e-9)
+    scale = min(size[0] / span_x, size[1] / span_y) * 0.95
+    ox = (size[0] - span_x * scale) / 2
+    oy = (size[1] - span_y * scale) / 2
+
+    draw = ImageDraw.Draw(img)
+    outline = tuple(int(c) for c in edge_color) if edge_width and edge_width > 0 else None
+    width = max(int(round(edge_width)), 1) if outline else 1
+    for coords, color in zip(polys, colors):
+        if len(coords) < 3:
+            continue
+        pts = [((x - xmin) * scale + ox, size[1] - ((y - ymin) * scale + oy))
+               for x, y in coords]
+        fill = tuple(int(c) for c in color)
+        draw.polygon(pts, fill=fill, outline=outline, width=width)
+    img.save(filepath)

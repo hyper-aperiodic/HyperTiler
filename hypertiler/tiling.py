@@ -49,7 +49,36 @@ class Grids:
 
 class TileMaker:
     def __init__(self, vector_data, grid_len):
-        """For the passed vector data, build our tiling engine."""
+        """Build a de Bruijn dual-grid tiling from a set of grid vectors.
+
+        Parameters
+        ----------
+        vector_data : array_like, shape (N, 4)
+            One row per grid vector: (tile_length, grid_length,
+            angle_degrees, shift). :func:`hypertiler.regular_vectors` builds
+            this array for the common regular-star case; see its docstring
+            for the shift convention.
+        grid_len : int
+            Number of lines each grid family contains - controls the
+            physical size/density of the resulting tiling.
+
+        Attributes
+        ----------
+        points : list of (M, 2) ndarray
+            Quadrilateral tile polygons.
+        p_points : list of (M, 2) ndarray
+            Higher-order (n-gon) tile polygons, from singular multi-line
+            crossings.
+        poly_areas : ndarray
+            Raw area of each polygon in `points`, in the same order. Tiles
+            that share a "type" share (near-)identical area - see
+            :func:`hypertiler.classify_areas`.
+        ngon_areas : ndarray
+            Raw area of each polygon in `p_points`, in the same order.
+        grid : Grids
+            The underlying grid-line construction (line endpoints, indices,
+            midpoints) this tiling was built from.
+        """
         grid, tile_vectors = self.build_grid(vector_data, grid_len)
         self.grid = grid
         ##send everything off to create out tiles!
