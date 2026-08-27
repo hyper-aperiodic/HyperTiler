@@ -67,13 +67,28 @@ hypertiler
 ```
 
 ### Git clone
-
-Clone the repo, then run `scripts/setup.sh` or `setup.bat` to create a `.venv` and install dependencies, then `scripts/run.sh` or `run.bat` to launch. Assumes familiarity with git and a terminal (.sh for Linux/MacOS, .bat for Windows).
+```git
+git clone https://github.com/hyper-aperiodic/HyperTiler.git
+```
+Then for Windows, double-click `scripts/setup.bat` once, then `scripts/run.bat` each time after in the same directory. For Mac/Linux:
+```bash
+bash setup.sh
+```
+then 
+```bash
+bash run.sh
+```
 
 ### Download + double-click (no terminal needed)
 
-Download the repo as a zip - no git required. FOr windows, double-click `scripts/setup.bat` once, then `scripts/run.bat` each time after (Mac/Linux: `setup.sh`/`run.sh`).
-
+Download the repo as a zip - no git required. For Windows, double-click `scripts/setup.bat` once, then `scripts/run.bat` each time after in the same directory. For Mac/Linux:
+```bash
+bash setup.sh
+```
+then 
+```bash
+bash run.sh
+```
 
 ### ✍️ Authors
 
