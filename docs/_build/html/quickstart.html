@@ -1,0 +1,264 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quickstart: using HyperTiler as a library &mdash; HyperTiler</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8d563738"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="The main window" href="user_guide/main_window.html" />
+    <link rel="prev" title="Theory" href="theory.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            HyperTiler
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="theory.html">Theory</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Quickstart: using HyperTiler as a library</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#dual-grid-tilings">Dual-grid tilings</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#simple-setup">Simple setup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building-the-vector-set-by-hand">Building the vector set by hand</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#making-and-colouring-the-tiling">Making and colouring the tiling</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#substitution-tilings">Substitution tilings</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/main_window.html">The main window</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/grid_tiling.html">Generating a grid tiling, step by step</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/styling.html">Styling and inspecting a tiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/vertex_types.html">Vertex Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/network_builder.html">Network Builder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/substitution.html">Substitution tiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide/shortcuts.html">Keyboard shortcuts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Python API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/index.html">Python API reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">HyperTiler</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Quickstart: using HyperTiler as a library</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/quickstart.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="quickstart-using-hypertiler-as-a-library">
+<h1>Quickstart: using HyperTiler as a library<a class="headerlink" href="#quickstart-using-hypertiler-as-a-library" title="Link to this heading"></a></h1>
+<p>Everything the desktop app does to build a tiling is available as plain
+Python. This page shows some of the functionalities, and walks you through creating tilings rather than relying on parsing the <a class="reference internal" href="api/index.html"><span class="std std-doc">API reference</span></a>.</p>
+<p>After <a class="reference internal" href="installation.html#PyPI-package"><span class="std std-ref">installation via PyPI</span></a>, we can generate and save a tiling in 6 lines. First, we’ll make a dual-grid tiling:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">hypertiler</span><span class="w"> </span><span class="kn">import</span> <span class="n">regular_vectors</span><span class="p">,</span> <span class="n">TileMaker</span><span class="p">,</span> <span class="n">classify_areas</span><span class="p">,</span> <span class="n">make_colors</span><span class="p">,</span> <span class="n">write_svg</span>
+
+<span class="n">vector_data</span> <span class="o">=</span> <span class="n">regular_vectors</span><span class="p">(</span><span class="n">fold</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="s2">"regular"</span><span class="p">)</span>
+<span class="n">tm</span> <span class="o">=</span> <span class="n">TileMaker</span><span class="p">(</span><span class="n">vector_data</span><span class="p">,</span> <span class="n">grid_len</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+<span class="n">poly_type</span><span class="p">,</span> <span class="n">unique_areas</span> <span class="o">=</span> <span class="n">classify_areas</span><span class="p">(</span><span class="n">tm</span><span class="o">.</span><span class="n">poly_areas</span><span class="p">)</span>
+<span class="n">palette</span> <span class="o">=</span> <span class="n">make_colors</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">unique_areas</span><span class="p">))</span>
+<span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="n">palette</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">poly_type</span><span class="p">]</span>
+<span class="n">write_svg</span><span class="p">(</span><span class="s2">"penrose.svg"</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">tm</span><span class="o">.</span><span class="n">points</span><span class="p">),</span> <span class="n">colors</span><span class="p">,</span> <span class="n">edge_color</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">edge_width</span><span class="o">=</span><span class="mf">0.02</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We’ll go through line-by-line to see what’s happening here.</p>
+<section id="dual-grid-tilings">
+<h2>Dual-grid tilings<a class="headerlink" href="#dual-grid-tilings" title="Link to this heading"></a></h2>
+<section id="simple-setup">
+<h3>Simple setup<a class="headerlink" href="#simple-setup" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">regular_vectors</span></code> generates a pair of isotropic vectors for a given symmetry (<code class="docutils literal notranslate"><span class="pre">fold</span></code>). These are the tiling and grid vectors, and <code class="docutils literal notranslate"><span class="pre">regular_vectors</span></code> also gives us a set of grid shifts to produce a <em>regular</em> tiling (only two grids intersecting at one point).</p>
+<p><code class="docutils literal notranslate"><span class="pre">regular_vectors(fold,</span> <span class="pre">shift=...)</span></code> accepts the same four modes as the GUI’s
+“Grid shifts” dropdown:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;regular&quot;</span></code> (default) - an evenly staggered offset that avoids degenerate
+multi-line crossings. Sensible for most tilings, sums to 1 or .</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;zero&quot;</span></code> - no offset at all - grids are constructed at the origin. Expect polygons!</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;random&quot;</span></code> - offsets drawn independently and uniformly from <code class="docutils literal notranslate"><span class="pre">(-1,</span> <span class="pre">1)</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;regular_random&quot;</span></code> - random offsets, normalised to sum to 1.</p></li>
+</ul>
+</section>
+<section id="building-the-vector-set-by-hand">
+<h3>Building the vector set by hand<a class="headerlink" href="#building-the-vector-set-by-hand" title="Link to this heading"></a></h3>
+<p>Using the simple setup is nice, and covers the common cases, but in general <code class="docutils literal notranslate"><span class="pre">TileMaker</span></code> just needs an
+<code class="docutils literal notranslate"><span class="pre">(N,</span> <span class="pre">4)</span></code> array - one row per grid vector - if you want full manual control
+(matching the GUI’s Advanced Settings table):</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Column</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>Tile-space vector length (“Tile scale” in Advanced Settings)</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>Grid-space vector length (“Grid scale”)</p></td>
+</tr>
+<tr class="row-even"><td><p>2</p></td>
+<td><p>Angle, in degrees</p></td>
+</tr>
+<tr class="row-odd"><td><p>3</p></td>
+<td><p>Shift - this family’s line offset along its own vector</p></td>
+</tr>
+</tbody>
+</table>
+<p>So we could manually re-make the Penrose-style tiling, or create a set of vectors that make a quasiperiodic hexagonal tiling:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hypertiler</span><span class="w"> </span><span class="kn">import</span> <span class="n">TileMaker</span>
+
+<span class="n">penrose_vectors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+    <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">),</span>
+    <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">72.0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">),</span>
+    <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">144.0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">),</span>
+    <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">216.0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">),</span>
+    <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">288.0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">),</span>
+<span class="p">])</span>
+<span class="n">penrose</span> <span class="o">=</span> <span class="n">TileMaker</span><span class="p">(</span><span class="n">penrose_vectors</span><span class="p">,</span> <span class="n">grid_len</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+
+<span class="n">hex_vectors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+    <span class="p">(</span><span class="mf">1.618</span><span class="p">,</span> <span class="mf">0.618</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.16</span><span class="p">),</span>
+    <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">60.0</span><span class="p">,</span> <span class="mf">0.16</span><span class="p">),</span>
+    <span class="p">(</span><span class="mf">1.618</span><span class="p">,</span> <span class="mf">0.618</span><span class="p">,</span> <span class="mf">120.0</span><span class="p">,</span> <span class="mf">0.16</span><span class="p">),</span>
+    <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">180.0</span><span class="p">,</span> <span class="mf">0.16</span><span class="p">),</span>
+    <span class="p">(</span><span class="mf">1.618</span><span class="p">,</span> <span class="mf">0.618</span><span class="p">,</span> <span class="mf">240.0</span><span class="p">,</span> <span class="mf">0.16</span><span class="p">),</span>
+    <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">300.0</span><span class="p">,</span> <span class="mf">0.16</span><span class="p">),</span>
+<span class="p">])</span>
+<span class="n">hex_tile</span> <span class="o">=</span> <span class="n">TileMaker</span><span class="p">(</span><span class="n">hex_vectors</span><span class="p">,</span> <span class="n">grid_len</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Which would give us, respectively:</p>
+<p><img alt="Left, Penrose tiling. Right, hex tiling." src="_images/examples.png" /></p>
+</section>
+<section id="making-and-colouring-the-tiling">
+<h3>Making and colouring the tiling<a class="headerlink" href="#making-and-colouring-the-tiling" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">tm</span> <span class="o">=</span> <span class="n">TileMaker</span><span class="p">(</span><span class="n">vector_data</span><span class="p">,</span> <span class="n">grid_len</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
+<span class="n">poly_type</span><span class="p">,</span> <span class="n">unique_areas</span> <span class="o">=</span> <span class="n">classify_areas</span><span class="p">(</span><span class="n">tm</span><span class="o">.</span><span class="n">poly_areas</span><span class="p">)</span>
+<span class="n">palette</span> <span class="o">=</span> <span class="n">make_colors</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">unique_areas</span><span class="p">))</span>
+<span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="n">palette</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">poly_type</span><span class="p">]</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">TileMaker</span></code> takes the <code class="docutils literal notranslate"><span class="pre">vector_data</span></code> and a <code class="docutils literal notranslate"><span class="pre">grid_len</span></code> argument, which defines the size of the patch of the tiling. Techinically this can go as high as you want, but be warned that viewing tilings will start slowing down on a standard laptop around <code class="docutils literal notranslate"><span class="pre">grid_len</span> <span class="pre">=</span> <span class="pre">50</span></code>. <code class="docutils literal notranslate"><span class="pre">TileMaker</span></code> then makes the tiles (!).</p>
+<p><code class="docutils literal notranslate"><span class="pre">classify_areas</span></code> classifies the tiles you give it based on tile area, so that we can colour each tile-type uniquely. Note that we can also pass <code class="docutils literal notranslate"><span class="pre">tm.ngon_areas</span></code> if we know we’re creating a tiling with <a class="reference internal" href="theory.html"><span class="std std-doc">singular crossings</span></a>. If you don’t know whether you’re going to make a singular tiling, and to stay consistent with the rest of our methods, one would write:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">all_points</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">tm</span><span class="o">.</span><span class="n">p_points</span><span class="p">)</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">tm</span><span class="o">.</span><span class="n">points</span><span class="p">)</span>
+<span class="n">all_areas</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">tm</span><span class="o">.</span><span class="n">ngon_areas</span><span class="p">)</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">tm</span><span class="o">.</span><span class="n">poly_areas</span><span class="p">)</span>
+<span class="n">type_idx</span><span class="p">,</span> <span class="n">unique_areas</span> <span class="o">=</span> <span class="n">classify_areas</span><span class="p">(</span><span class="n">all_areas</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">make_colors()</span></code> creates a unique set of colours for our tile set, with the next line distributing them accordingly. If you don’t like the palette generated, just call it again - the starting hue is randomised each time - or pass <code class="docutils literal notranslate"><span class="pre">scheme=&quot;tonal&quot;</span></code> with a <code class="docutils literal notranslate"><span class="pre">base_color</span></code> for shades of one colour instead of the full hue circle. You can also skip it entirely and hand-write your own list of <code class="docutils literal notranslate"><span class="pre">(r,</span> <span class="pre">g,</span> <span class="pre">b)</span></code> tuples, one per entry in <code class="docutils literal notranslate"><span class="pre">unique_areas</span></code>.</p>
+<p>Finally:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">write_svg</span><span class="p">(</span><span class="s2">"penrose.svg"</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">tm</span><span class="o">.</span><span class="n">points</span><span class="p">),</span> <span class="n">colors</span><span class="p">,</span> <span class="n">edge_color</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">edge_width</span><span class="o">=</span><span class="mf">0.02</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">write_png</span><span class="p">(</span><span class="s2">"penrose.png"</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">tm</span><span class="o">.</span><span class="n">points</span><span class="p">),</span> <span class="n">colors</span><span class="p">,</span> <span class="n">edge_color</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">edge_width</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">1000</span><span class="p">),</span> <span class="n">background</span><span class="o">=</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>will save your tiling as either an <code class="docutils literal notranslate"><span class="pre">.svg</span></code> or a <code class="docutils literal notranslate"><span class="pre">.png</span></code>.</p>
+</section>
+</section>
+<section id="substitution-tilings">
+<h2>Substitution tilings<a class="headerlink" href="#substitution-tilings" title="Link to this heading"></a></h2>
+<p>Substitution (inflation) tilings are driven by a rules SVG you prepare in
+Inkscape - see <a class="reference internal" href="user_guide/substitution.html"><span class="doc">Substitution tiling</span></a> for how to author one. Once
+you have one, <code class="docutils literal notranslate"><span class="pre">inkTile</span></code> runs the substitution and hands back a flat list of
+<code class="docutils literal notranslate"><span class="pre">(tile_type,</span> <span class="pre">coords)</span></code> tuples:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">hypertiler</span><span class="w"> </span><span class="kn">import</span> <span class="n">inkTile</span><span class="p">,</span> <span class="n">write_svg</span>
+
+<span class="n">it</span> <span class="o">=</span> <span class="n">inkTile</span><span class="p">(</span><span class="n">gen</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">tile</span><span class="o">=</span><span class="s2">"my_rules"</span><span class="p">)</span>   <span class="c1"># reads my_rules.svg</span>
+<span class="n">tiles</span> <span class="o">=</span> <span class="n">it</span><span class="o">.</span><span class="n">final_tiles</span>                 <span class="c1"># [(tile_type, coords), ...]</span>
+
+<span class="n">colors_by_type</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"T1"</span><span class="p">:</span> <span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">120</span><span class="p">),</span> <span class="s2">"T2"</span><span class="p">:</span> <span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">)}</span>
+<span class="n">polys</span> <span class="o">=</span> <span class="p">[</span><span class="n">coords</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">coords</span> <span class="ow">in</span> <span class="n">tiles</span><span class="p">]</span>
+<span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="n">colors_by_type</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">tiles</span><span class="p">]</span>
+<span class="n">write_svg</span><span class="p">(</span><span class="s2">"substitution.svg"</span><span class="p">,</span> <span class="n">polys</span><span class="p">,</span> <span class="n">colors</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>See the <a class="reference internal" href="api/index.html"><span class="doc">Python API reference</span></a> for the full parameter list of every function
+used here.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="theory.html" class="btn btn-neutral float-left" title="Theory" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="user_guide/main_window.html" class="btn btn-neutral float-right" title="The main window" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Sam Coates.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
