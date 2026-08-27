@@ -8,6 +8,7 @@ from pyqtgraph.exporters import ImageExporter
 
 from ..widgets import LockedViewBox
 from ..config import _quality_for_count, _apply_quality
+from ..ink2tile import write_svg
 from .utils import parse_rules
 from .worker import _SubstitutionItem, _SubstitutionWorker, _SubstitutionVertexWorker
 from .vertex_window import SubstitutionVertexWindow
@@ -27,7 +28,7 @@ class SubstitutionWindow(QtWidgets.QWidget):
         self._supertile_coords = {}
         self._final_tiles = None
         self._needs_autorange = True
-        self._edge_width = 1.0
+        self._edge_width = 0.5
         self._worker = None
         self._vertex_worker = None
         self._vertex_window = None
@@ -142,8 +143,8 @@ class SubstitutionWindow(QtWidgets.QWidget):
         self._ew_spin.setRange(0.0, 10.0)
         self._ew_spin.setSingleStep(0.25)
         self._ew_spin.setDecimals(2)
-        self._ew_spin.setValue(0.5)
         self._ew_spin.valueChanged.connect(self._on_edge_width_changed)
+        self._ew_spin.setValue(0.5)
         ew_h.addWidget(self._ew_spin)
         ew_h.addStretch()
         sv2.addLayout(ew_h)
@@ -220,7 +221,7 @@ class SubstitutionWindow(QtWidgets.QWidget):
             self._seed_combo.addItem(display_name)
 
         try:
-            from .. import ink2tile_v2 as _m
+            from .. import ink2tile as _m
             self._expansion_factor = 1.0 / (_m.globalScale ** 2)
         except Exception:
             self._expansion_factor = 1.0
@@ -238,7 +239,7 @@ class SubstitutionWindow(QtWidgets.QWidget):
         self._seed_svg_lbl.setStyleSheet("font-size:8pt;")
         self._rb_seed.setChecked(True)
         try:
-            from ..ink2tile_v2 import inkTile
+            from ..ink2tile import inkTile
             stem = os.path.splitext(self._rules_path)[0]
             seed_stem = os.path.splitext(path)[0]
             it = inkTile(gen=0, tile=stem, seed=seed_stem)
@@ -382,9 +383,29 @@ class SubstitutionWindow(QtWidgets.QWidget):
     def _save_as_image(self):
         if self._final_tiles is None:
             return
-        path, _ = QtWidgets.QFileDialog.getSaveFileName(
-            self, "Save Tiling", "", "PNG Image (*.png)")
+        path, selected_filter = QtWidgets.QFileDialog.getSaveFileName(
+            self, "Save Tiling", "", "PNG Image (*.png);;SVG Image (*.svg)")
         if not path:
+            return
+        if selected_filter.endswith('(*.svg)') or path.lower().endswith('.svg'):
+            if not path.endswith('.svg'):
+                path += '.svg'
+            type_colors = self._current_colors()
+            polys, colors = [], []
+            for tile_type, coords in self._final_tiles:
+                base = tile_type.rsplit('_', 1)[0] if '_' in tile_type else tile_type
+                color_str = type_colors.get(tile_type, type_colors.get(base, '#aaaaaa'))
+                qc = QtGui.QColor(color_str)
+                verts = (coords[:-1]
+                         if len(coords) > 1 and np.allclose(coords[0], coords[-1])
+                         else coords)
+                polys.append(verts)
+                colors.append((qc.red(), qc.green(), qc.blue()))
+            # _edge_width is a cosmetic (screen-pixel) pen width; convert to
+            # data-unit space via the view's current data-units-per-pixel so
+            # the exported stroke matches what's shown on screen.
+            px_w, _ = self._plot.getViewBox().viewPixelSize()
+            write_svg(path, polys, colors, (0, 0, 0), self._edge_width * px_w)
             return
         if not path.endswith('.png'):
             path += '.png'

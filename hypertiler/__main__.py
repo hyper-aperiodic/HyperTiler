@@ -4,7 +4,7 @@ import sys
 os.environ.setdefault("PYQTGRAPH_QT_LIB", "PyQt5")
 
 import pyqtgraph as pg
-from PyQt5 import QtWidgets
+from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import QSurfaceFormat
 from PyQt5.QtWidgets import QOpenGLWidget
 
@@ -40,6 +40,14 @@ def main():
             pyi_splash.close()
         except ImportError:
             pass
+
+    
+    main_win.setWindowFlags(main_win.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
+    main_win.show()
+    main_win.setWindowFlags(main_win.windowFlags() & ~QtCore.Qt.WindowStaysOnTopHint)
+    main_win.show()
+    main_win.raise_()
+    main_win.activateWindow()
 
     sys.exit(app.exec_())
 

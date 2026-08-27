@@ -40,7 +40,7 @@
      id="layer1">
     <path
        style="fill:#f96610;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-       d="M 154.57822,52.036541 190.6818,52.037072 181.6559,67.67012 163.60411,67.670405 Z"
+       d="M 143.89447,52.036541 179.99805,52.037072 170.97215,67.67012 152.92036,67.670405 Z"
        id="path11"
        sodipodi:nodetypes="ccccc" />
     <path
@@ -55,7 +55,7 @@
        sodipodi:nodetypes="ccccc" />
     <path
        style="fill:#ffcc66;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-       d="M 163.60359,103.77398 147.97056,94.747615 147.97057,112.79941 163.60359,121.82578 Z"
+       d="M 152.91984,103.77398 137.28681,94.747615 137.28682,112.79941 152.91984,121.82578 Z"
        id="path41-5"
        sodipodi:nodetypes="ccccc" />
     <path
@@ -75,12 +75,12 @@
        sodipodi:nodetypes="ccccc" />
     <path
        style="fill:#f96610;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-       d="M 163.60411,67.670405 163.60358,103.77398 147.97053,94.748086 147.97025,76.696309 Z"
+       d="M 152.92036,67.670405 152.91983,103.77398 137.28678,94.748086 137.2865,76.696309 Z"
        id="path6"
        sodipodi:nodetypes="ccccc" />
     <path
        style="fill:#f96610;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-       d="M 163.60411,67.670405 127.50053,67.669874 136.52643,52.036826 154.57822,52.036541 Z"
+       d="M 152.92036,67.670405 116.81678,67.669874 125.84268,52.036826 143.89447,52.036541 Z"
        id="path10"
        sodipodi:nodetypes="ccccc" />
   </g>

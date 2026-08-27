@@ -15,6 +15,7 @@ from .config import (
     APP_STYLESHEET, make_app_icon, PreferencesDialog,
 )
 from .tiling import TileMaker
+from .ink2tile import write_svg
 from .graphics import tilePlot, pointPlot, vectorPlotting, edgePlot, gridPlot
 from .widgets import LockedViewBox, DecimalDelegate, TableModel, TileSwatchButton, center_on_screen
 from .workers import _VertexWorker
@@ -982,9 +983,24 @@ class Ui_MainWindow(object):
     def saveAsTiling(self):
         if not self.plotted:
             return
-        path, _ = QtWidgets.QFileDialog.getSaveFileName(
-            None, "Save Tiling", "", "PNG Image (*.png)")
+        path, selected_filter = QtWidgets.QFileDialog.getSaveFileName(
+            None, "Save Tiling", "", "PNG Image (*.png);;SVG Image (*.svg)")
         if not path:
+            return
+        if selected_filter.endswith('(*.svg)') or path.lower().endswith('.svg'):
+            if not path.endswith('.svg'):
+                path += '.svg'
+            poly_color = [self.current_colors[i] for i in self.poly_areas]
+            ngon_color = [self.current_colors[i] for i in self.ngon_areas]
+            polys = list(self.tiling.p_points) + list(self.tiling.points)
+            colors = list(ngon_color) + list(poly_color)
+            # edge_width is a cosmetic (screen-pixel) pen width on screen, but
+            # SVG stroke-width lives in the same data-unit space as the tile
+            # geometry - convert via the view's current data-units-per-pixel
+            # so the exported line matches what's on screen, not a raw pixel
+            # count read straight into a differently-scaled coordinate space.
+            px_w, _ = self.tilingPlot.getViewBox().viewPixelSize()
+            write_svg(path, polys, colors, self.edge_color, self.edge_width * px_w)
             return
         if not path.endswith('.png'):
             path += '.png'

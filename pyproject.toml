@@ -24,8 +24,6 @@ dependencies = [
     "pyqtgraph==0.14.0",
     "numpy==2.5.2",
     "scipy==1.18.1",
-    "matplotlib",
-    "pandas",
 ]
 
 [project.urls]

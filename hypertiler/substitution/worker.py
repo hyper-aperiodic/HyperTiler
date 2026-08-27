@@ -152,7 +152,7 @@ class _SubstitutionVertexWorker(QtCore.QThread):
                 keep_oi = set().union(*(vert_to_tiles[j] for j in idx))
                 tiles = [self._final_tiles[oi] for oi in keep_oi]
                 # remove near-duplicate tiles (same type, centers within 0.05)
-                # that slipped through ink2tile_v2's remove_duplicates due to
+                # that slipped through ink2tile's remove_duplicates due to
                 # floating-point boundary straddling
                 dedup, seen_tc = [], []
                 for t, c in tiles:
@@ -194,7 +194,7 @@ class _SubstitutionWorker(QtCore.QThread):
 
     def run(self):
         try:
-            from ..ink2tile_v2 import inkTile
+            from ..ink2tile import inkTile
 
             stem = os.path.splitext(self._rules_path)[0]
             kwargs = {'gen': self._gen, 'tile': stem}

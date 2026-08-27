@@ -1,6 +1,3 @@
-
-<a href="url"><img src="./docs/HT.png" align="left" height="48" width="48" ></a>
-
 # ☆ HyperTiler
 
 HyperTiler makes creating patches of quasiperiodic tilings easy!
@@ -71,11 +68,11 @@ hypertiler
 
 ### Git clone
 
-Clone the repo, then run `scripts/setup.sh`/`setup.bat` to create a `.venv` and install dependencies, then `scripts/run.sh`/`run.bat` to launch. Assumes familiarity with git and a terminal.
+Clone the repo, then run `scripts/setup.sh` or `setup.bat` to create a `.venv` and install dependencies, then `scripts/run.sh` or `run.bat` to launch. Assumes familiarity with git and a terminal (.sh for Linux/MacOS, .bat for Windows).
 
 ### Download + double-click (no terminal needed)
 
-Download the repo as a zip - no git required. Double-click `scripts/setup.bat` once, then `scripts/run.bat` each time after (Mac/Linux: `setup.sh`/`run.sh`).
+Download the repo as a zip - no git required. FOr windows, double-click `scripts/setup.bat` once, then `scripts/run.bat` each time after (Mac/Linux: `setup.sh`/`run.sh`).
 
 
 ### ✍️ Authors

@@ -9,8 +9,8 @@ def parse_rules(rules_path):
       type_colors     : {display_name: css_color_string}
       supertile_coords: {display_name: np.ndarray of polygon vertices}
     """
-    from .. import ink2tile_v2 as _m
-    from ..ink2tile_v2 import inkTile
+    from .. import ink2tile as _m
+    from ..ink2tile import inkTile
 
     stem = os.path.splitext(rules_path)[0]
     it = inkTile(gen=0, tile=stem)

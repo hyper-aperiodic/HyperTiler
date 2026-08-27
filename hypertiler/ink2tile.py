@@ -1,14 +1,8 @@
 
 import xml.etree.ElementTree as ET
-import matplotlib.pyplot as plt
 import numpy as np
-import matplotlib.patches as patches
-from matplotlib.collections import PatchCollection
 from collections import defaultdict
 from scipy.spatial import KDTree
-import pandas as pd
-from itertools import product
-import pickle
 
 
 class inkTile:
@@ -540,3 +534,61 @@ class inkTile:
             tiles = self.remove_duplicates(new_tiles)
 
         return [(t, c) for t, c in tiles]
+
+
+# -----------------------------------------------------------------------------
+# SVG writing - the reverse of parse_svg/parse_seed_svg above: instead of
+# reading fill-coloured <path> polygons out of an SVG, write a flat list of
+# polygons back out as one <path> per tile. The y-axis is negated on the way
+# out, mirroring the negation parse_svg/parse_seed_svg apply on the way in, so
+# a tiling exported here reads back in with the same orientation it was drawn.
+# -----------------------------------------------------------------------------
+
+def write_svg(filepath, polys, colors, edge_color=(0, 0, 0), edge_width=1.0):
+    """Write polygons as fill-coloured SVG paths.
+
+    Parameters
+    ----------
+    polys  : list of (N, 2) coordinate arrays, one polygon per tile.
+    colors : list of (r, g, b) 0-255 tuples, one per polygon in `polys`.
+    edge_color, edge_width : stroke applied to every tile; edge_width <= 0
+        omits the stroke entirely.
+    """
+    polys = [np.asarray(p, dtype=float) for p in polys if len(p)]
+    if polys:
+        all_pts = np.vstack(polys)
+        xmin, ymin = all_pts.min(axis=0)
+        xmax, ymax = all_pts.max(axis=0)
+    else:
+        xmin = ymin = 0.0
+        xmax = ymax = 1.0
+    margin = 0.02 * max(xmax - xmin, ymax - ymin, 1.0)
+    width = (xmax - xmin) + 2 * margin
+    height = (ymax - ymin) + 2 * margin
+
+    def path_d(coords):
+        pts = [(x - xmin + margin, (ymax - y) + margin) for x, y in coords]
+        head = f"M {pts[0][0]:.6f} {pts[0][1]:.6f}"
+        tail = " ".join(f"L {x:.6f} {y:.6f}" for x, y in pts[1:])
+        return f"{head} {tail} Z".strip()
+
+    stroke = (f'stroke="rgb({edge_color[0]},{edge_color[1]},{edge_color[2]})" '
+              f'stroke-width="{edge_width}" stroke-linejoin="round"'
+              if edge_width and edge_width > 0
+              else 'stroke="none"')
+
+    lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        f'<svg xmlns="http://www.w3.org/2000/svg" '
+        f'width="{width:.6f}" height="{height:.6f}" '
+        f'viewBox="0 0 {width:.6f} {height:.6f}">',
+    ]
+    for coords, color in zip(polys, colors):
+        if len(coords) < 3:
+            continue
+        fill = f"rgb({int(color[0])},{int(color[1])},{int(color[2])})"
+        lines.append(f'<path d="{path_d(coords)}" fill="{fill}" {stroke}/>')
+    lines.append('</svg>')
+
+    with open(filepath, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(lines))
