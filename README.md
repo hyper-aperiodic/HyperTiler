@@ -52,7 +52,7 @@ Pick whichever fits how you like to work. Every method below needs Python 3.12+ 
 
 ### Standalone executable
 
-A packaged `.exe` - no Python install required at all. Not built yet; coming soon.
+Packaged binaries.
 
 ### PyPI package
 
