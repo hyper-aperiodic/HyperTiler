@@ -39,7 +39,19 @@ jobs:
       - name: Install tkinter (Linux splash-screen dependency)
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y python3-tk
-
+      - name: Install xcb runtime libraries (Linux Qt platform plugin dependency)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update && sudo apt-get install -y \
+            libxcb-cursor0 \
+            libxcb-icccm4 \
+            libxcb-image0 \
+            libxcb-keysyms1 \
+            libxcb-randr0 \
+            libxcb-render-util0 \
+            libxcb-xinerama0 \
+            libxcb-xfixes0 \
+            libxkbcommon-x11-0
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -48,6 +60,21 @@ jobs:
 
       - name: Build with PyInstaller
         run: pyinstaller packaging/hypertiler.spec --noconfirm --clean
+
+      - name: Smoke-test the .app launches
+        if: runner.os == 'macOS'
+        run: |
+          open dist/HyperTiler.app
+          sleep 5
+          # Check the process is still alive (didn't crash on launch)
+          if ! pgrep -f HyperTiler > /dev/null; then
+            echo "App failed to stay running"
+            exit 1
+          fi
+          pkill -f HyperTiler || true
+      - name: Check code signature / Gatekeeper status
+        if: runner.os == 'macOS'
+        run: spctl -a -vvv -t execute dist/HyperTiler.app || true
 
       # upload-artifact zips whatever `path` points to on its own when you
       # download it from the Actions UI - archiving it ourselves first would
