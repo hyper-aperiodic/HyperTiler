@@ -1,5 +1,7 @@
 # Substitution tiling
 
+**28/08/26: Currently updating, will be finished by next week!**
+
 ## Rules SVG, seed, and generations
 
 Substitution tiling is driven entirely by an SVG file you prepare in
