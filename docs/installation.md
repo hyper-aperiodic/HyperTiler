@@ -3,6 +3,13 @@
 Pick whichever fits how you like to work. Every method below needs Python
 3.12+ installed, except the standalone executable.
 
+## Standalone executables
+
+Packaged executables - no Python install required at all. Download, unzip, and run in folder!
+
+[Available for Windows, with Linux and macOS.](https://github.com/hyper-aperiodic/HyperTiler/releases)
+
+
 ## PyPI package
 
 ```bash
@@ -32,6 +39,3 @@ Download the repo as a zip - no git required. On Windows, double-click
 `scripts/setup.bat` once, then `scripts/run.bat` each time after (Mac/Linux:
 `setup.sh`/`run.sh`).
 
-## Standalone executable
-
-A packaged executable - no Python install required at all. Available for Windows, with Linux and macOS.
