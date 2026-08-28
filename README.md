@@ -73,6 +73,7 @@ Then launch it with (from that same environment - activate it first if you used 
 ```bash
 hypertiler
 ```
+Or [use it as a library](https://hypertiler.readthedocs.io/en/latest/quickstart.html) in your preferred IDE.
 
 ### Git clone
 ```git
