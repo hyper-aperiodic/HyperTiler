@@ -66,6 +66,40 @@ though they look like closed straight-edged shapes - they're a different
 kind of SVG element internally. Convert any of those to a plain path first
 via `Path → Object to Path` (`Shift+Ctrl+C`).
 
+#### Vertex order and the reference edge
+
+A path's vertices are numbered in the order you drew them: wherever you
+clicked first is vertex `0`, the next point you placed is vertex `1`, and
+so on around the shape. HyperTiler doesn't infer a tile's orientation or
+scale from its shape as a whole - it reads them off one specific edge, the
+**reference edge** running from vertex `0` to vertex `1`. That edge does
+several jobs at once:
+
+- For each supertile, its reference edge's angle is the "zero rotation"
+  baseline for that tile type. Every subtile drawn inside it has its own
+  reference edge measured relative to that baseline, and that relative
+  angle is what gets replayed on every generation.
+- Comparing a supertile's reference-edge length to its own type's subtile
+  counterpart's reference-edge length gives the inflation ratio - how much
+  smaller each generation's tiles are than the last.
+- When a rule is applied to an actual placed tile (rather than the
+  template), HyperTiler compares that live tile's reference edge to its
+  template's reference edge to recover the scale and rotation already
+  applied, so the rule keeps reproducing correctly however many
+  generations deep the tile already is.
+
+Because of this, draw the reference edge (points `0` → `1`) the same way
+for every tile of a given type - start at the same corner and place the
+same neighbouring vertex second. If it's inconsistent between two tiles of
+the same type, HyperTiler ends up comparing the wrong edges and the scale
+or rotation it derives will be wrong.
+
+Separately from any one tile's own reference edge, HyperTiler also scans
+every supertile in the file for its single shortest edge and treats that
+as one unit of length - a one-off normalisation that puts all the tiles'
+coordinates on a consistent scale before any of the reference-edge ratios
+above are computed.
+
 #### Transforms are real
 
 Any transform applied to a path or its containing group - move, rotate,

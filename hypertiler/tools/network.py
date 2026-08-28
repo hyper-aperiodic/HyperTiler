@@ -10,7 +10,7 @@ from ..widgets import LockedViewBox, center_on_screen
 ###a self-contained little thing which allows the creation, visualisation, and
 ##exportation of a network of connected sites
 ##TODO: must double triple check on the dedup-ing of sites!!
-
+##TODO: update the export options to give the option between json and csvs
 class NetworkBuilderWindow(QtWidgets.QMainWindow):
     """Spatial network from selected vertex types — build, visualise, export."""
 
@@ -370,7 +370,7 @@ class NetworkBuilderWindow(QtWidgets.QMainWindow):
                 xs += [verts[i, 0], verts[j, 0], float('nan')]
                 ys += [verts[i, 1], verts[j, 1], float('nan')]
             self._plot.addItem(pg.PlotDataItem(
-                x=xs, y=ys,
+                x=xs, y=ys, connect='finite',
                 pen=pg.mkPen((120, 120, 120, 160), width=1)))
 
         for tidx in np.unique(self._type_idxs):

@@ -61,6 +61,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#supertile-groups">Supertile groups</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#subtile-groups">Subtile groups</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#path-requirements">Path requirements</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#vertex-order-and-the-reference-edge">Vertex order and the reference edge</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#transforms-are-real">Transforms are real</a></li>
 </ul>
 </li>
@@ -165,6 +166,39 @@ automatically, which is simpler than closing it after the fact.</p>
 though they look like closed straight-edged shapes - they’re a different
 kind of SVG element internally. Convert any of those to a plain path first
 via <code class="docutils literal notranslate"><span class="pre">Path</span> <span class="pre">→</span> <span class="pre">Object</span> <span class="pre">to</span> <span class="pre">Path</span></code> (<code class="docutils literal notranslate"><span class="pre">Shift+Ctrl+C</span></code>).</p>
+</section>
+<section id="vertex-order-and-the-reference-edge">
+<h4>Vertex order and the reference edge<a class="headerlink" href="#vertex-order-and-the-reference-edge" title="Link to this heading"></a></h4>
+<p>A path’s vertices are numbered in the order you drew them: wherever you
+clicked first is vertex <code class="docutils literal notranslate"><span class="pre">0</span></code>, the next point you placed is vertex <code class="docutils literal notranslate"><span class="pre">1</span></code>, and
+so on around the shape. HyperTiler doesn’t infer a tile’s orientation or
+scale from its shape as a whole - it reads them off one specific edge, the
+<strong>reference edge</strong> running from vertex <code class="docutils literal notranslate"><span class="pre">0</span></code> to vertex <code class="docutils literal notranslate"><span class="pre">1</span></code>. That edge does
+several jobs at once:</p>
+<ul class="simple">
+<li><p>For each supertile, its reference edge’s angle is the “zero rotation”
+baseline for that tile type. Every subtile drawn inside it has its own
+reference edge measured relative to that baseline, and that relative
+angle is what gets replayed on every generation.</p></li>
+<li><p>Comparing a supertile’s reference-edge length to its own type’s subtile
+counterpart’s reference-edge length gives the inflation ratio - how much
+smaller each generation’s tiles are than the last.</p></li>
+<li><p>When a rule is applied to an actual placed tile (rather than the
+template), HyperTiler compares that live tile’s reference edge to its
+template’s reference edge to recover the scale and rotation already
+applied, so the rule keeps reproducing correctly however many
+generations deep the tile already is.</p></li>
+</ul>
+<p>Because of this, draw the reference edge (points <code class="docutils literal notranslate"><span class="pre">0</span></code> → <code class="docutils literal notranslate"><span class="pre">1</span></code>) the same way
+for every tile of a given type - start at the same corner and place the
+same neighbouring vertex second. If it’s inconsistent between two tiles of
+the same type, HyperTiler ends up comparing the wrong edges and the scale
+or rotation it derives will be wrong.</p>
+<p>Separately from any one tile’s own reference edge, HyperTiler also scans
+every supertile in the file for its single shortest edge and treats that
+as one unit of length - a one-off normalisation that puts all the tiles’
+coordinates on a consistent scale before any of the reference-edge ratios
+above are computed.</p>
 </section>
 <section id="transforms-are-real">
 <h4>Transforms are real<a class="headerlink" href="#transforms-are-real" title="Link to this heading"></a></h4>
