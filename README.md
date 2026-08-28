@@ -118,6 +118,6 @@ Work funded by EPSRC Grant No. EP/X011984/1.
 
 With thanks to Ellie Weightman for stress-testing!
 
-I started development of this code under the above grant, back in 2023. So the conceptualisation, application of mathematical methodology, design desisions, and initial back-breaking development of the codebase is all human-driven. 
+I started development of this code under the above grant, back in 2023. So the conceptualisation, application of mathematical methodology, design decisions, and initial back-breaking development of the codebase is all human-driven. 
 
 Claude Code was used to refactor, spell-check, organise, and polish off the UI.
