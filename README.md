@@ -38,7 +38,7 @@ Advanced mode drops those defaults and lets you customise every vector individua
 
 Substitution mode builds tilings with substitution rules that are supplied in the form of a structured svg file. Tilings can be initiated with a single tile, or a seed svg file with an initial design.
 
-The *example svgs* folder contains some sample files, otherwise, see the HyperTiler guide on how to create your own svgs.
+The *example svgs* folder contains some sample files, otherwise, [see the HyperTiler guide on how to create your own svgs](https://hypertiler.readthedocs.io/en/latest/user_guide/substitution.html).
 
 ![The substitution window of HyperTiler, with the octagonal m,n = 1 tiling](./images/sub_mode.png)
 
