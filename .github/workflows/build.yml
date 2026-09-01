@@ -1,11 +1,9 @@
 name: Build executables
-
 on:
   push:
     tags:
       - 'v*'
   workflow_dispatch:
-
 jobs:
   build:
     strategy:
@@ -18,25 +16,21 @@ jobs:
           - os: ubuntu-22.04
             artifact_name: hypertiler-linux
             dist_path: dist/hypertiler
+          - os: macos-13
+            artifact_name: hypertiler-macos-intel
+            dist_path: dist/HyperTiler.app
           - os: macos-latest
-            artifact_name: hypertiler-macos
-            # BUNDLE() in the spec wraps the onedir output into a proper
-            # .app on macOS - that's the shippable artifact there, not the
-            # raw dist/hypertiler folder Windows/Linux produce.
+            artifact_name: hypertiler-macos-arm64
             dist_path: dist/HyperTiler.app
     runs-on: ${{ matrix.os }}
-
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
       # PyInstaller's splash screen needs tkinter on the build machine; the
       # spec skips the splash entirely on macOS (unsupported there), so only
       # Linux needs this - Windows/macOS setup-python builds already bundle it.
-      
       - name: Install tkinter (Linux splash-screen dependency)
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y python3-tk
@@ -59,10 +53,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pyinstaller
-
       - name: Build with PyInstaller
         run: pyinstaller packaging/hypertiler.spec --noconfirm --clean
-
       - name: Smoke-test the .app launches
         if: runner.os == 'macOS'
         run: |
@@ -77,7 +69,6 @@ jobs:
       - name: Check code signature / Gatekeeper status
         if: runner.os == 'macOS'
         run: spctl -a -vvv -t execute dist/HyperTiler.app || true
-
       # upload-artifact zips whatever `path` points to on its own when you
       # download it from the Actions UI - archiving it ourselves first would
       # just nest one zip/tar inside the other for no reason.
@@ -85,3 +76,14 @@ jobs:
         with:
           name: ${{ matrix.artifact_name }}
           path: ${{ matrix.dist_path }}
+      - name: Zip build for release
+        run: |
+          cd $(dirname "${{ matrix.dist_path }}")
+          zip -r "${{ github.workspace }}/${{ matrix.artifact_name }}.zip" "$(basename "${{ matrix.dist_path }}")"
+      - name: Attach to rolling 'latest' release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest build
+          prerelease: true
+          files: ${{ matrix.artifact_name }}.zip
