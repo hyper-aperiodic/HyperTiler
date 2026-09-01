@@ -53,7 +53,7 @@ It can numerically compute the fast Fourier transform of the tiling's point set,
 
 ## ⬇️ Installation
 
-Pick whichever fits how you like to work. Every method below needs Python 3.12+ installed, except the standalone executable.
+Pick whichever fits how you like to work. Every method below needs Python 3.12+ installed, except the no-code options.
 
 ### No code
 1. Download the build for your platform:
@@ -61,6 +61,9 @@ Pick whichever fits how you like to work. Every method below needs Python 3.12+ 
    - [macOS](https://github.com/hyper-aperiodic/HyperTiler/releases/latest/download/hypertiler-macos-v1.0.0.zip)
    - [Linux](https://github.com/hyper-aperiodic/HyperTiler/releases/latest/download/hypertiler-linux-v1.0.0.zip)
 2. Unzip and run.
+
+>[!NOTE]
+>The builds aren't signed, so on first launch Windows needs: **More info → Run anyway** and macOS needs: **System Settings → > Privacy & Security → Open Anyway**.
 
 ### PyPI package
 
@@ -74,29 +77,27 @@ Then launch it with (from that same environment - activate it first if you used 
 hypertiler
 ```
 
-### Git clone
-```git
+### Git clone/download as a zip
+
+If you're comfortable using git:
+
+```bash
 git clone https://github.com/hyper-aperiodic/HyperTiler.git
+cd HyperTiler
 ```
-Then for Windows, double-click `scripts/setup.bat` once, then `scripts/run.bat` each time after in the same directory. For Mac/Linux:
+Then for Windows, double-click `scripts/setup.bat` once, then `scripts/run.bat` when you want to run HyperTiler. 
+
+For Mac/Linux, setup using:
+
 ```bash
-bash setup.sh
+bash scripts/setup.sh
 ```
-then 
+then run using:
 ```bash
-bash run.sh
+bash scripts/run.sh
 ```
 
-### Download as a zip
-
-Download the repo as a zip - no git knowledge required. For Windows, double-click `scripts/setup.bat` once, then `scripts/run.bat` each time after in the same directory. For Mac/Linux:
-```bash
-bash setup.sh
-```
-then 
-```bash
-bash run.sh
-```
+If you're not comfortable with git, download the repo as a zip, unzip it, and follow the same steps from inside the unzipped folder.
 
 ### ✍️ Authors
 
