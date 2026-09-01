@@ -62,8 +62,8 @@ Pick whichever fits how you like to work. Every method below needs Python 3.12+ 
    - [Linux](https://github.com/hyper-aperiodic/HyperTiler/releases/latest/download/hypertiler-linux-v1.0.0.zip)
 2. Unzip and run.
 
-[!NOTE]
-The builds aren't signed, so on first launch Windows needs: **More info → Run anyway** and macOS needs: **System Settings → > Privacy & Security → Open Anyway**.
+>[!NOTE]
+>The builds aren't signed, so on first launch Windows needs: **More info → Run anyway** and macOS needs: **System Settings → > Privacy & Security → Open Anyway**.
 
 ### PyPI package
 
