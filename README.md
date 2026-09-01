@@ -57,9 +57,9 @@ Pick whichever fits how you like to work. Every method below needs Python 3.12+ 
 
 ### No code
 1. Download the build for your platform:
-   - [Windows](https://github.com/hyper-aperiodic/HyperTiler/releases/latest/download/hypertiler-windows-v1.0.0.zip)
-   - [macOS](https://github.com/hyper-aperiodic/HyperTiler/releases/latest/download/hypertiler-macos-v1.0.0.zip)
-   - [Linux](https://github.com/hyper-aperiodic/HyperTiler/releases/latest/download/hypertiler-linux-v1.0.0.zip)
+   - [Windows](https://github.com/hyper-aperiodic/HyperTiler/releases/tag/latest/download/hypertiler-windows.zip)
+   - [macOS](https://github.com/hyper-aperiodic/HyperTiler/releases/tag/latest/download/hypertiler-macos.zip)
+   - [Linux](https://github.com/hyper-aperiodic/HyperTiler/releases/tag/latest/download/hypertiler-linux.zip)
 2. Unzip and run.
 
 >[!NOTE]
