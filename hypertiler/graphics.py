@@ -59,6 +59,39 @@ class tilePlot(pg.GraphicsObject):
         return self._bounding_rect
 
 
+class linkPlot(pg.GraphicsObject):
+    """Draws straight connections between vertex pairs (Network Builder's
+    edges). Built the same plain moveTo/lineTo way as edgePlot/gridPlot,
+    rather than via pyqtgraph's PlotDataItem(connect='finite') - that path
+    builds its QPainterPath through a QDataStream/QByteArray binary trick
+    that's sensitive to the exact Qt build in use, and has been seen to
+    silently produce an empty path (no error, just nothing drawn) under a
+    PyInstaller-frozen build while working fine from source."""
+    def __init__(self, verts, edges, color=(120, 120, 120, 160), width=1):
+        pg.GraphicsObject.__init__(self)
+        self._build(verts, edges, color, width)
+        self._bounding_rect = QtCore.QRectF(self.picture.boundingRect())
+
+    def _build(self, verts, edges, color, width):
+        self.picture = QtGui.QPicture()
+        p = QtGui.QPainter(self.picture)
+        if config._antialias:
+            p.setRenderHint(QtGui.QPainter.Antialiasing)
+        p.setPen(pg.mkPen(color, width=width))
+        path = QtGui.QPainterPath()
+        for i, j in edges:
+            path.moveTo(QtCore.QPointF(*verts[i]))
+            path.lineTo(QtCore.QPointF(*verts[j]))
+        p.drawPath(path)
+        p.end()
+
+    def paint(self, p, *args):
+        p.drawPicture(0, 0, self.picture)
+
+    def boundingRect(self):
+        return self._bounding_rect
+
+
 class pointPlot(pg.GraphicsObject):
     def __init__(self, verts, radius=0.2, color=(0, 0, 0)):
         pg.GraphicsObject.__init__(self)

@@ -1,0 +1,304 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The main window &mdash; HyperTiler</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Generating a grid tiling, step by step" href="grid_tiling.html" />
+    <link rel="prev" title="Quickstart: using HyperTiler as a library" href="../quickstart.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            HyperTiler
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../theory.html">Theory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart: using HyperTiler as a library</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">The main window</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#layout">Layout</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#menu-bar">Menu bar</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#grid-multigrid-tilings">Grid (multigrid) tilings</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#left-panel-tiling-parameters">Left panel - tiling parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#advanced-settings">Advanced Settings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#right-panel-the-plot">Right panel - the plot</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#substitution-inflation-tilings">Substitution (inflation) tilings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#design-and-analysis">Design and analysis</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="grid_tiling.html">Generating a grid tiling, step by step</a></li>
+<li class="toctree-l1"><a class="reference internal" href="styling.html">Styling and inspecting a tiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vertex_types.html">Vertex Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="network_builder.html">Network Builder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="substitution.html">Substitution tiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="shortcuts.html">Keyboard shortcuts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Python API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">Python API reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">HyperTiler</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">The main window</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user_guide/main_window.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="the-main-window">
+<h1>The main window<a class="headerlink" href="#the-main-window" title="Link to this heading"></a></h1>
+<p>HyperTiler generates 2D tilings using two different methods, and lets you
+analyse the result the same way regardless of which method produced it.</p>
+<p>This guide won’t go deep into the mathematics behind these methods - a brief guide can be found <a class="reference internal" href="../theory.html"><span class="std std-doc">here</span></a> - but assumes the reader either is
+familiar with them or doesn’t care <em>how</em> they work and just wants to make
+some patterns.</p>
+<section id="layout">
+<h2>Layout<a class="headerlink" href="#layout" title="Link to this heading"></a></h2>
+<p>The window is split into a parameter panel on the left and a plot on the
+right, with a menu bar above both. HyperTiler starts in grid tiling mode, and you can access substitution mode through the tools menu.</p>
+<section id="menu-bar">
+<h3>Menu bar<a class="headerlink" href="#menu-bar" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Menu</p></th>
+<th class="head"><p>Item</p></th>
+<th class="head"><p>Does</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>File</p></td>
+<td><p>Save parameters… <kbd>Ctrl+S</kbd></p></td>
+<td><p>Saves the current tiling <strong>recipe</strong> - vectors, grid count, <br>shift type, colours - not the rendered image.</p></td>
+</tr>
+<tr class="row-odd"><td><p></p></td>
+<td><p>Load parameters… <kbd>Ctrl+O</kbd></p></td>
+<td><p>Reloads a saved recipe, exactly reproducing that tiling setup.</p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p>Preferences…</p></td>
+<td><p>Opens rendering-quality and startup settings (<a class="reference internal" href="preferences.html"><span class="doc">Preferences</span></a>).</p></td>
+</tr>
+<tr class="row-odd"><td><p>Tools</p></td>
+<td><p>Compute FFT</p></td>
+<td><p>Fourier-transforms the current tiling’s vertex points.</p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p>Vertex types</p></td>
+<td><p>Opens the Vertex Types window (<a class="reference internal" href="vertex_types.html"><span class="doc">Vertex Types</span></a>).</p></td>
+</tr>
+<tr class="row-odd"><td><p></p></td>
+<td><p>Network builder</p></td>
+<td><p>Opens the Network Builder window (<a class="reference internal" href="network_builder.html"><span class="doc">Network Builder</span></a>).</p></td>
+</tr>
+<tr class="row-even"><td><p></p></td>
+<td><p>Substitution tiling…</p></td>
+<td><p>Switches the whole window into Substitution mode <br>(<a class="reference internal" href="substitution.html"><span class="doc">Substitution tiling</span></a>). The label changes to “Grid tiling…” <br>so you can switch back.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="grid-multigrid-tilings">
+<h2>Grid (multigrid) tilings<a class="headerlink" href="#grid-multigrid-tilings" title="Link to this heading"></a></h2>
+<p>You specify a small star of <strong>vectors</strong> - for example five vectors
+arranged with 5-fold symmetry, the classic setup behind Penrose tilings.
+HyperTiler builds a family of evenly spaced parallel lines for each vector
+(a “grid”), finds every intersection between lines from different families,
+and turns each intersection into a tile in the resulting tiling. This is the
+de Bruijn multigrid / “dual grid” construction.
+<img alt="grid mode" src="../_images/grid_mode_lite.png" /></p>
+<p>Changing the number of
+vectors, how each grid is shifted, and how many lines each grid contains
+changes the tiling’s symmetry, density and character. For example, the above uses <code class="docutils literal notranslate"><span class="pre">Grid</span> <span class="pre">shifts</span> <span class="pre">-</span> <span class="pre">Regular</span></code>, but if we switch to <code class="docutils literal notranslate"><span class="pre">Grid</span> <span class="pre">shifts</span> <span class="pre">-</span> <span class="pre">Random</span></code>, then we get:
+<img alt="random" src="../_images/penrose_shift.png" /></p>
+<p>Or if we add another two vectors:
+<img alt="" src="../_images/seven.png" /></p>
+<section id="left-panel-tiling-parameters">
+<h3>Left panel - tiling parameters<a class="headerlink" href="#left-panel-tiling-parameters" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Vector preview</strong> - a small plot showing the current vector star as
+arrows from the origin.</p></li>
+<li><p><strong>Grid shifts</strong> - how each grid’s lines are offset from the origin:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">Regular</span></code> - an evenly staggered offset that avoids degenerate
+multi-line crossings. The sensible default.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Zero</span></code> - no offset - produces a more symmetric tiling with many lines
+crossing at single points.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Random</span></code> - offsets drawn randomly.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Regular</span> <span class="pre">random</span></code> - random offsets, normalised to sum to 1.</p></li>
+</ul>
+</li>
+<li><p><strong>No. of vectors</strong> - the symmetry order of the grid star (5 for a
+Penrose-style tiling, for example). Changing this rebuilds the vector set
+from scratch.</p></li>
+<li><p><strong>No. of grids</strong> - how many lines each grid family contains, i.e. the
+physical size/density of the tiling. Larger values mean more tiles and
+slower rendering.</p></li>
+<li><p><strong>Advanced…</strong> - opens the Advanced Settings dock, below.</p></li>
+<li><p><strong>Tile!</strong> - builds and draws the tiling from the current settings.</p></li>
+</ul>
+</section>
+<section id="advanced-settings">
+<h3>Advanced Settings<a class="headerlink" href="#advanced-settings" title="Link to this heading"></a></h3>
+<p>A dockable panel for hand-editing the raw vector data, rather than only the
+symmetry-order/shift shortcuts above.</p>
+<ul class="simple">
+<li><p>A form with four spin-box fields for the selected vector: <code class="docutils literal notranslate"><span class="pre">Tile</span> <span class="pre">scale</span></code>,
+<code class="docutils literal notranslate"><span class="pre">Grid</span> <span class="pre">scale</span></code>, <code class="docutils literal notranslate"><span class="pre">Angle</span></code>, <code class="docutils literal notranslate"><span class="pre">Grid</span> <span class="pre">shift</span></code>. Scrolling or typing into these
+updates a live preview of the vector plot immediately, and (after a short
+pause) regenerates the full tiling.</p></li>
+<li><p>A second small plot showing the “grid” (dual-space) vectors, as opposed
+to the real-space vectors in the main preview.</p></li>
+<li><p>A table listing every vector as a row, with the same four fields
+editable in place via spin boxes.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">New</span></code> / <code class="docutils literal notranslate"><span class="pre">Delete</span></code> buttons to add or remove individual vectors.</p></li>
+</ul>
+<p>For example, here the tile and grid vectors have been scaled by the golden mean (tile vectors are larger, grid vectors are smaller), with shifts applied to produce the H<sub>00</sub> tiling:
+<img alt="" src="../_images/H00.png" /></p>
+</section>
+<section id="right-panel-the-plot">
+<h3>Right panel - the plot<a class="headerlink" href="#right-panel-the-plot" title="Link to this heading"></a></h3>
+<p>A 700×700 interactive plot: left-drag to pan, scroll wheel to zoom. Below
+it:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Button</p></th>
+<th class="head"><p>Does</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Grid view</p></td>
+<td><p>Shows the raw multigrid lines instead of the filled tiling.</p></td>
+</tr>
+<tr class="row-odd"><td><p>Point view</p></td>
+<td><p>Shows only the tiling’s vertices as points instead of filled tiles. The button’s own label <br>flips between “Point view” and “Tile view”.</p></td>
+</tr>
+<tr class="row-even"><td><p>Edit style…</p></td>
+<td><p>Opens the Style Dialog for whichever view (tile / point / grid) is active <br>(<a class="reference internal" href="styling.html"><span class="doc">Styling and inspecting a tiling</span></a>).</p></td>
+</tr>
+<tr class="row-odd"><td><p>Save as…</p></td>
+<td><p>Exports the current view as a PNG or SVG image (pick the format in the save dialog). <br>PNG renders the current view at 1000px wide; SVG writes one vector path per tile at <br>the tiling’s own coordinate scale, so it stays crisp at any zoom.</p></td>
+</tr>
+</tbody>
+</table>
+<p>Grid view and Point view are mutually exclusive - turning one on turns the
+other off. With both off, you see filled, coloured tiles. A small quality
+label above the buttons shows the current auto-adjusted rendering quality
+for large tilings (see <a class="reference internal" href="preferences.html"><span class="doc">Preferences</span></a>).</p>
+</section>
+</section>
+<section id="substitution-inflation-tilings">
+<h2>Substitution (inflation) tilings<a class="headerlink" href="#substitution-inflation-tilings" title="Link to this heading"></a></h2>
+<p>You provide a hand-drawn SVG file (made in Inkscape or any other
+vector-based illustrator) that shows one or more “supertiles” and how each
+one subdivides into smaller copies of itself and other tile types.
+HyperTiler starts from a single tile (or a hand-arranged patch you can also
+supply as an SVG) and repeatedly applies that subdivision rule - each
+repetition is a “generation”. This is the substitution/inflation method. See <a class="reference internal" href="substitution.html"><span class="std std-doc">Substitution tiling</span></a> for a much more detailed explanation of how to create the .svg files needed.</p>
+</section>
+<section id="design-and-analysis">
+<h2>Design and analysis<a class="headerlink" href="#design-and-analysis" title="Link to this heading"></a></h2>
+<p>Once you have a tiling you can:</p>
+<ul class="simple">
+<li><p>Recolour tiles by type, and inspect individual tiles, points, or
+grid-line intersections</p></li>
+<li><p><a class="reference internal" href="vertex_types.html"><span class="std std-doc">Classify vertices</span></a> into distinct local “vertex types” - groups of
+vertices whose surrounding tiles are arranged identically</p></li>
+<li><p>Build a <a class="reference internal" href="network_builder.html"><span class="std std-doc">neighbour network</span></a> between vertices, banded into distance
+“shells” - useful as lattice/graph data for physics simulations</p></li>
+<li><p>Compute a quick FFT of the point set</p></li>
+<li><p>Export images (PNG or SVG), vertex/neighbour data, and the tiling’s own
+parameters for later reuse</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../quickstart.html" class="btn btn-neutral float-left" title="Quickstart: using HyperTiler as a library" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="grid_tiling.html" class="btn btn-neutral float-right" title="Generating a grid tiling, step by step" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Sam Coates.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

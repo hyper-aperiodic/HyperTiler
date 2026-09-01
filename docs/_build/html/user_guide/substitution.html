@@ -1,0 +1,266 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Substitution tiling &mdash; HyperTiler</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Preferences" href="preferences.html" />
+    <link rel="prev" title="Network Builder" href="network_builder.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            HyperTiler
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../theory.html">Theory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart: using HyperTiler as a library</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="main_window.html">The main window</a></li>
+<li class="toctree-l1"><a class="reference internal" href="grid_tiling.html">Generating a grid tiling, step by step</a></li>
+<li class="toctree-l1"><a class="reference internal" href="styling.html">Styling and inspecting a tiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vertex_types.html">Vertex Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="network_builder.html">Network Builder</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Substitution tiling</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#rules-svg-seed-and-generations">Rules SVG, seed, and generations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#the-rules-svg">The Rules SVG</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#supertile-groups">Supertile groups</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#subtile-groups">Subtile groups</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#path-requirements">Path requirements</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#transforms-are-real">Transforms are real</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#seed">Seed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generations">Generations</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#using-the-substitution-window">Using the Substitution window</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#doing-the-same-thing-from-python">Doing the same thing from Python</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="shortcuts.html">Keyboard shortcuts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Python API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/index.html">Python API reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">HyperTiler</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Substitution tiling</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user_guide/substitution.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="substitution-tiling">
+<h1>Substitution tiling<a class="headerlink" href="#substitution-tiling" title="Link to this heading"></a></h1>
+<section id="rules-svg-seed-and-generations">
+<h2>Rules SVG, seed, and generations<a class="headerlink" href="#rules-svg-seed-and-generations" title="Link to this heading"></a></h2>
+<p>Substitution tiling is driven entirely by an SVG file you prepare in
+Inkscape beforehand.</p>
+<section id="the-rules-svg">
+<h3>The Rules SVG<a class="headerlink" href="#the-rules-svg" title="Link to this heading"></a></h3>
+<p>Defines every supertile type and how it subdivides. In other words: draw
+the shape once as a supertile, then draw the same shape again subdivided
+into smaller labelled pieces - that subdivision is the inflation rule
+HyperTiler will apply repeatedly.</p>
+<section id="supertile-groups">
+<h4>Supertile groups<a class="headerlink" href="#supertile-groups" title="Link to this heading"></a></h4>
+<p>Draw the supertile’s outline as a single closed path, then select it and
+group it (<code class="docutils literal notranslate"><span class="pre">Ctrl+G</span></code>, or <code class="docutils literal notranslate"><span class="pre">Cmd+G</span></code> on Mac - grouping a single object still
+works and is required, since HyperTiler reads the <em>group’s</em> label, not the
+path’s).</p>
+<p>That group needs to be <strong>labelled</strong> <code class="docutils literal notranslate"><span class="pre">super&lt;Type&gt;</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">superT1</span></code>) - not
+just named internally, but given that label so HyperTiler can find it.
+Inkscape shows two different names for every object (<code class="docutils literal notranslate"><span class="pre">id</span></code>, an internal
+identifier you rarely touch, and <code class="docutils literal notranslate"><span class="pre">label</span></code>, the human-readable one) - the
+label is what to set. Open the <strong>Objects panel</strong> (<code class="docutils literal notranslate"><span class="pre">Object</span> <span class="pre">→</span> <span class="pre">Objects...</span></code>)
+or the <strong>XML editor</strong> (<code class="docutils literal notranslate"><span class="pre">Ctrl+Shift+X</span></code>), find your new group, double-click
+its name, and type <code class="docutils literal notranslate"><span class="pre">superT1</span></code> (or whichever type name you’re using).</p>
+<p>Set that path’s fill and stroke to the <strong>same colour</strong> - open
+<strong>Fill and Stroke</strong> (<code class="docutils literal notranslate"><span class="pre">Ctrl+Shift+F</span></code>), or just left-click a palette swatch
+to set fill and <code class="docutils literal notranslate"><span class="pre">Shift</span></code>-left-click the same swatch to set stroke. That
+shared colour becomes <code class="docutils literal notranslate"><span class="pre">&lt;Type&gt;</span></code>’s identifying colour for the rest of the
+file. This isn’t a cosmetic convention: HyperTiler reads the <em>stroke</em>
+colour off the supertile path to learn “this colour means type T1”, then
+looks for that same colour on every other path’s <em>fill</em> to decide what
+type it is. If a path’s fill doesn’t match any supertile’s colour,
+HyperTiler won’t know what to do with it.</p>
+</section>
+<section id="subtile-groups">
+<h4>Subtile groups<a class="headerlink" href="#subtile-groups" title="Link to this heading"></a></h4>
+<p>Draw the smaller tiles the supertile subdivides into, positioned and
+scaled to fit exactly inside the supertile’s own outline. Select all of
+them and group them (<code class="docutils literal notranslate"><span class="pre">Ctrl+G</span></code>), then label that group <code class="docutils literal notranslate"><span class="pre">sub&lt;Type&gt;</span></code> (e.g.
+<code class="docutils literal notranslate"><span class="pre">subT1</span></code>) the same way, via the Objects panel or XML editor.</p>
+<p>Each subtile path’s own <strong>fill colour</strong> identifies its type - a subtile
+filled with <code class="docutils literal notranslate"><span class="pre">superT2</span></code>’s colour will be treated as a <code class="docutils literal notranslate"><span class="pre">T2</span></code> tile once
+inflated, regardless of which supertile’s <code class="docutils literal notranslate"><span class="pre">sub</span></code> group it was drawn inside.
+Set fill the same way (left-click a palette swatch with the path
+selected). A subtile’s stroke colour doesn’t matter for parsing and can be
+anything - useful for just seeing the tile outlines clearly while you
+draw.</p>
+</section>
+<section id="path-requirements">
+<h4>Path requirements<a class="headerlink" href="#path-requirements" title="Link to this heading"></a></h4>
+<p>Every tile - supertile or subtile - needs to be a single path made of
+<strong>straight line segments only</strong>. Draw with the Bezier/straight-line tool
+(<code class="docutils literal notranslate"><span class="pre">B</span></code>) rather than the pencil/freehand tool, and don’t drag while clicking
+(dragging creates curved nodes). Close the shape as you draw by clicking
+back on the starting node - Inkscape will snap to it and close the path
+automatically, which is simpler than closing it after the fact.</p>
+<p>Shapes drawn with the rectangle, ellipse, or star tools won’t parse, even
+though they look like closed straight-edged shapes - they’re a different
+kind of SVG element internally. Convert any of those to a plain path first
+via <code class="docutils literal notranslate"><span class="pre">Path</span> <span class="pre">→</span> <span class="pre">Object</span> <span class="pre">to</span> <span class="pre">Path</span></code> (<code class="docutils literal notranslate"><span class="pre">Shift+Ctrl+C</span></code>).</p>
+</section>
+<section id="transforms-are-real">
+<h4>Transforms are real<a class="headerlink" href="#transforms-are-real" title="Link to this heading"></a></h4>
+<p>Any transform applied to a path or its containing group - move, rotate,
+scale, mirror - is baked directly into the coordinates HyperTiler reads,
+not just a display-time effect. So the natural Inkscape workflow of
+drawing one subtile, then duplicating it (<code class="docutils literal notranslate"><span class="pre">Ctrl+D</span></code>) and using
+<code class="docutils literal notranslate"><span class="pre">Object</span> <span class="pre">→</span> <span class="pre">Flip</span> <span class="pre">Horizontal/Vertical</span></code> (<code class="docutils literal notranslate"><span class="pre">H</span></code>/<code class="docutils literal notranslate"><span class="pre">V</span></code>) or the rotate handles to
+place the rest, works exactly as you’d want - whatever mirroring or
+rotation you apply is exactly what ends up in the substitution rule, and
+will be reproduced faithfully on every generation.</p>
+</section>
+</section>
+<section id="seed">
+<h3>Seed<a class="headerlink" href="#seed" title="Link to this heading"></a></h3>
+<p>What generation starts from:</p>
+<ul class="simple">
+<li><p><strong>Single tile</strong> - one instance of a chosen supertile type, centred at the
+origin. Pick the type from the dropdown.</p></li>
+<li><p><strong>From SVG</strong> - a separate hand-arranged SVG containing a specific
+starting patch of one or more tiles, if you want to inflate outward from
+a particular arrangement rather than a lone tile.</p></li>
+</ul>
+</section>
+<section id="generations">
+<h3>Generations<a class="headerlink" href="#generations" title="Link to this heading"></a></h3>
+<p>How many times the subdivision rule is applied. Each generation replaces
+every current tile with its rule-defined subtiles, then removes
+near-duplicate tiles introduced along shared edges. Tile count grows
+quickly with generation count, so HyperTiler estimates the result size in
+advance and lowers rendering quality automatically for large generations.</p>
+</section>
+</section>
+<section id="using-the-substitution-window">
+<h2>Using the Substitution window<a class="headerlink" href="#using-the-substitution-window" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p>Open it via <strong>Tools → Substitution tiling…</strong> - the main window
+switches into a dedicated substitution workspace (switch back any time
+via the same menu item, now labelled “Grid tiling…”).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Browse...</span></code> next to <code class="docutils literal notranslate"><span class="pre">Rules</span> <span class="pre">SVG</span></code> and select your rules file. Discovered
+tile types are listed and previewed as coloured swatches.</p></li>
+<li><p>Choose a seed: either <code class="docutils literal notranslate"><span class="pre">Single</span> <span class="pre">tile</span></code> plus a type from the dropdown, or
+<code class="docutils literal notranslate"><span class="pre">From</span> <span class="pre">SVG</span></code> plus a seed file via its own <code class="docutils literal notranslate"><span class="pre">Browse...</span></code>.</p></li>
+<li><p>Set <code class="docutils literal notranslate"><span class="pre">Generations</span></code> (1-10).</p></li>
+<li><p>Click <code class="docutils literal notranslate"><span class="pre">Generate</span></code>. Progress and tile counts are reported as it runs.</p></li>
+<li><p>Once generated, a style panel appears: click any tile-type swatch to
+recolour it, and adjust <code class="docutils literal notranslate"><span class="pre">Edge</span> <span class="pre">width</span></code> (set to 0 to hide tile edges
+entirely).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Save</span> <span class="pre">as...</span></code> exports the current view as a PNG or SVG image, the same
+as in grid tiling mode.</p></li>
+</ol>
+<p>Vertex Types, Network Builder, and Compute FFT all work on substitution
+results exactly as they do for grid tilings - use the same Tools menu
+items. The vertex classification here reasons directly about the angles
+between tiles at each vertex, since substitution tiles don’t carry the
+integer-lattice structure grid tilings do, but the results are presented
+identically, including the mirror-symmetric grouping option (see
+<a class="reference internal" href="vertex_types.html"><span class="doc">Vertex Types</span></a>).</p>
+</section>
+<section id="doing-the-same-thing-from-python">
+<h2>Doing the same thing from Python<a class="headerlink" href="#doing-the-same-thing-from-python" title="Link to this heading"></a></h2>
+<p>If you want to script substitution generation rather than clicking through
+the window, see <a class="reference internal" href="../quickstart.html"><span class="doc">Quickstart: using HyperTiler as a library</span></a> - <code class="docutils literal notranslate"><span class="pre">hypertiler.inkTile</span></code> is the same
+substitution engine the window uses underneath.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="network_builder.html" class="btn btn-neutral float-left" title="Network Builder" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="preferences.html" class="btn btn-neutral float-right" title="Preferences" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Sam Coates.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

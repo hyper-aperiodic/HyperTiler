@@ -1,0 +1,525 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hypertiler.tiling &mdash; HyperTiler</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            HyperTiler
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart: using HyperTiler as a library</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide/main_window.html">The main window</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide/grid_tiling.html">Generating a grid tiling, step by step</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide/styling.html">Styling and inspecting a tiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide/vertex_types.html">Vertex Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide/network_builder.html">Network Builder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide/substitution.html">Substitution tiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide/preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide/shortcuts.html">Keyboard shortcuts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Python API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api/index.html">Python API reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">HyperTiler</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">hypertiler.tiling</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hypertiler.tiling</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.spatial.distance</span><span class="w"> </span><span class="kn">import</span> <span class="n">_distance_wrap</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Grids</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vectors</span><span class="p">,</span> <span class="n">line_len</span><span class="p">,</span> <span class="n">grid_len</span><span class="p">,</span> <span class="n">shifts</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid_vectors</span> <span class="o">=</span> <span class="n">vectors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line_len</span> <span class="o">=</span> <span class="n">line_len</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid_len</span> <span class="o">=</span> <span class="n">grid_len</span> <span class="o">*</span> <span class="mi">2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shifts</span> <span class="o">=</span> <span class="n">shifts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">val</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">angles</span> <span class="o">=</span> <span class="p">[</span><span class="n">math</span><span class="o">.</span><span class="n">atan2</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vectors</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grids</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">midpoints</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate</span><span class="p">(</span>
+            <span class="n">vectors</span><span class="p">,</span> <span class="n">line_len</span><span class="p">,</span> <span class="n">grid_len</span><span class="p">,</span> <span class="n">shifts</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">idx_min</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">idx_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_perp</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_generate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vectors</span><span class="p">,</span> <span class="n">line_len</span><span class="p">,</span> <span class="n">grid_len</span><span class="p">,</span> <span class="n">shifts</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Create the endpoints of the 'infinite' grid lines, and </span>
+<span class="sd">        apply the relevant shifts to each family.</span>
+<span class="sd">        </span>
+<span class="sd">        Label each grid line with the correct index, and calculate its midpoint."""</span>
+
+
+        <span class="n">store</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">midpoints</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="n">grid_len</span><span class="p">,</span> <span class="n">grid_len</span><span class="p">))</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">grid_len</span> <span class="o">*</span> <span class="mi">2</span>
+        <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">vec</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">vectors</span><span class="p">):</span>
+            <span class="n">pvec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perp</span><span class="p">(</span><span class="n">vec</span><span class="p">)</span>
+            <span class="n">cx</span> <span class="o">=</span> <span class="p">(</span><span class="n">n</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">vec</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">cy</span> <span class="o">=</span> <span class="p">(</span><span class="n">n</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">vec</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">shifts</span><span class="p">[</span><span class="n">a</span><span class="p">]</span>
+            <span class="n">p1</span> <span class="o">=</span> <span class="p">[((</span><span class="n">x</span> <span class="o">+</span> <span class="n">s</span><span class="p">)</span> <span class="o">*</span> <span class="n">vec</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">cx</span> <span class="o">+</span> <span class="n">pvec</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">line_len</span><span class="p">,</span>
+                   <span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">s</span><span class="p">)</span> <span class="o">*</span> <span class="n">vec</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">cy</span> <span class="o">+</span> <span class="n">pvec</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">line_len</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)]</span>
+            <span class="n">p2</span> <span class="o">=</span> <span class="p">[((</span><span class="n">x</span> <span class="o">+</span> <span class="n">s</span><span class="p">)</span> <span class="o">*</span> <span class="n">vec</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">cx</span> <span class="o">-</span> <span class="n">pvec</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">line_len</span><span class="p">,</span>
+                   <span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">s</span><span class="p">)</span> <span class="o">*</span> <span class="n">vec</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">cy</span> <span class="o">-</span> <span class="n">pvec</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">line_len</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)]</span>
+            <span class="n">mid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([(</span><span class="n">p1</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">vec</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">p1</span><span class="p">[</span><span class="n">x</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">vec</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)])</span>
+            <span class="n">store</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">])</span>
+            <span class="n">indices</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">idx</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)])</span>
+            <span class="n">midpoints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mid</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">store</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">midpoints</span>
+
+
+<div class="viewcode-block" id="TileMaker">
+<a class="viewcode-back" href="../../api/index.html#hypertiler.TileMaker">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TileMaker</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vector_data</span><span class="p">,</span> <span class="n">grid_len</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Build a de Bruijn dual-grid tiling from a set of grid vectors.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        vector_data : array_like, shape (N, 4)</span>
+<span class="sd">            One row per grid vector: (tile_length, grid_length,</span>
+<span class="sd">            angle_degrees, shift). :func:`hypertiler.regular_vectors` builds</span>
+<span class="sd">            this array for the common regular-star case; see its docstring</span>
+<span class="sd">            for the shift convention.</span>
+<span class="sd">        grid_len : int</span>
+<span class="sd">            Number of lines each grid family contains - controls the</span>
+<span class="sd">            physical size/density of the resulting tiling.</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        points : list of (M, 2) ndarray</span>
+<span class="sd">            Quadrilateral tile polygons.</span>
+<span class="sd">        p_points : list of (M, 2) ndarray</span>
+<span class="sd">            Higher-order (n-gon) tile polygons, from singular multi-line</span>
+<span class="sd">            crossings.</span>
+<span class="sd">        poly_areas : ndarray</span>
+<span class="sd">            Raw area of each polygon in `points`, in the same order. Tiles</span>
+<span class="sd">            that share a "type" share (near-)identical area - see</span>
+<span class="sd">            :func:`hypertiler.classify_areas`.</span>
+<span class="sd">        ngon_areas : ndarray</span>
+<span class="sd">            Raw area of each polygon in `p_points`, in the same order.</span>
+<span class="sd">        grid : Grids</span>
+<span class="sd">            The underlying grid-line construction (line endpoints, indices,</span>
+<span class="sd">            midpoints) this tiling was built from.</span>
+<span class="sd">        """</span>
+        <span class="n">grid</span><span class="p">,</span> <span class="n">tile_vectors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_grid</span><span class="p">(</span><span class="n">vector_data</span><span class="p">,</span> <span class="n">grid_len</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">=</span> <span class="n">grid</span>
+        <span class="c1">##send everything off to create out tiles!</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">points</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_points</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">poly_areas</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ngon_areas</span> <span class="o">=</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">_make_tile</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">tile_vectors</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TileMaker.build_grid">
+<a class="viewcode-back" href="../../api/index.html#hypertiler.TileMaker.build_grid">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_grid</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">vector_data</span><span class="p">,</span> <span class="n">grid_len</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Just the grid-line construction (dedupe + sort + Grids), with no</span>
+<span class="sd">        tile/intersection computation at all. """</span>
+        <span class="n">tile_vectors</span><span class="p">,</span> <span class="n">grid_vectors</span><span class="p">,</span> <span class="n">shifts</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">vector_data</span><span class="p">:</span>
+            <span class="n">angle_rad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">tile_vectors</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle_rad</span><span class="p">),</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle_rad</span><span class="p">)))</span>
+            <span class="n">grid_vectors</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angle_rad</span><span class="p">),</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angle_rad</span><span class="p">)))</span>
+            <span class="n">shifts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+
+        <span class="n">grid_vectors</span><span class="p">,</span> <span class="n">tile_vectors</span><span class="p">,</span> <span class="n">shifts</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_dedupe_vectors</span><span class="p">(</span>
+            <span class="n">grid_vectors</span><span class="p">,</span> <span class="n">tile_vectors</span><span class="p">,</span> <span class="n">shifts</span><span class="p">)</span>
+
+        <span class="n">ang</span> <span class="o">=</span> <span class="p">[</span><span class="n">math</span><span class="o">.</span><span class="n">atan2</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">grid_vectors</span><span class="p">]</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">ang</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">ang</span> <span class="o">=</span> <span class="p">[(</span><span class="n">a</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">ang</span><span class="p">]</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">ang</span><span class="p">)</span>
+        <span class="n">grid_vectors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">grid_vectors</span><span class="p">)[</span><span class="n">order</span><span class="p">]</span>
+        <span class="n">tile_vectors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">tile_vectors</span><span class="p">)[</span><span class="n">order</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">Grids</span><span class="p">(</span><span class="n">grid_vectors</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">grid_len</span><span class="p">,</span> <span class="n">shifts</span><span class="p">,</span> <span class="n">val</span><span class="p">),</span> <span class="n">tile_vectors</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_dedupe_vectors</span><span class="p">(</span><span class="n">grid_vectors</span><span class="p">,</span> <span class="n">tile_vectors</span><span class="p">,</span> <span class="n">shifts</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Some vector sets describe the same infinite line family more than</span>
+<span class="sd">        once - e.g. an 8-vector set at zero shift is really just 4 true</span>
+<span class="sd">        directions, each listed twice . A family's line</span>
+<span class="sd">        at label L sits at scalar offset (L + shift) along its own vector,</span>
+<span class="sd">        so two families are exact duplicates when they're parallel with</span>
+<span class="sd">        matching shift (mod 1), or antiparallel with shifts summing to an</span>
+<span class="sd">        integer.</span>
+
+<span class="sd">        Keeping a redundant duplicate forces the intersection code to treat</span>
+<span class="sd">        every ordinary crossing as if an extra grid meets there too,</span>
+<span class="sd">        producing degenerate zero-area tiles and fake high-vertex-count</span>
+<span class="sd">        n-gons for what are really plain rhombi. Collapse each duplicate</span>
+<span class="sd">        group down to a single representative before any of that runs -</span>
+<span class="sd">        a 6-vector zero-shift set becomes the 3-vector, 120-degree family</span>
+<span class="sd">        it actually is; 8 vectors at zero shift becomes 4 vectors at</span>
+<span class="sd">        45 degrees."""</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">grid_vectors</span><span class="p">)</span>
+        <span class="n">angles</span> <span class="o">=</span> <span class="p">[</span><span class="n">math</span><span class="o">.</span><span class="n">atan2</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">grid_vectors</span><span class="p">]</span>
+        <span class="n">dropped</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">dropped</span> <span class="ow">or</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">dropped</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">da</span> <span class="o">=</span> <span class="p">(</span><span class="n">angles</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="n">angles</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+            <span class="n">parallel</span> <span class="o">=</span> <span class="n">da</span> <span class="o">&lt;</span> <span class="n">tol</span> <span class="ow">or</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">-</span> <span class="n">da</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tol</span>
+            <span class="n">antiparallel</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">da</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tol</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">parallel</span> <span class="ow">or</span> <span class="n">antiparallel</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">combined</span> <span class="o">=</span> <span class="n">shifts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">shifts</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="k">if</span> <span class="n">antiparallel</span> <span class="k">else</span> <span class="n">shifts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">shifts</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="n">combined</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">%</span> <span class="mi">1</span> <span class="o">-</span> <span class="mf">0.5</span>
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tol</span><span class="p">:</span>
+                <span class="n">dropped</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">dropped</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">grid_vectors</span><span class="p">,</span> <span class="n">tile_vectors</span><span class="p">,</span> <span class="n">shifts</span>
+        <span class="n">keep</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dropped</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">([</span><span class="n">grid_vectors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">keep</span><span class="p">],</span>
+                <span class="p">[</span><span class="n">tile_vectors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">keep</span><span class="p">],</span>
+                <span class="p">[</span><span class="n">shifts</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">keep</span><span class="p">])</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_intersect</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">D</span><span class="p">):</span>
+        <span class="c1">##where do our grid lines intersect</span>
+        <span class="n">dAB</span> <span class="o">=</span> <span class="p">(</span><span class="n">B</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">B</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">A</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">dCD</span> <span class="o">=</span> <span class="p">(</span><span class="n">D</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">C</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">D</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">C</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">denom</span> <span class="o">=</span> <span class="n">dAB</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">dCD</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="n">dAB</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">dCD</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">denom</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">dx</span> <span class="o">=</span> <span class="n">C</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">dy</span> <span class="o">=</span> <span class="n">C</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">A</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="p">(</span><span class="n">dx</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">dCD</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="n">dy</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">dCD</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">/</span> <span class="n">denom</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="p">(</span><span class="n">dx</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">dAB</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="n">dy</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">dAB</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">/</span> <span class="n">denom</span>
+        <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">t</span> <span class="o">&lt;=</span> <span class="mi">1</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">u</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">t</span> <span class="o">*</span> <span class="n">dAB</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">A</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">t</span> <span class="o">*</span> <span class="n">dAB</span><span class="p">[</span><span class="mi">1</span><span class="p">]]])</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cdist</span><span class="p">(</span><span class="n">XA</span><span class="p">,</span> <span class="n">XB</span><span class="p">,</span> <span class="n">dm</span><span class="p">):</span>
+        <span class="c1">##I can't remember why I did this, but it sped something up somewhere...</span>
+        <span class="n">_distance_wrap</span><span class="o">.</span><span class="n">cdist_euclidean_double_wrap</span><span class="p">(</span><span class="n">XA</span><span class="p">,</span> <span class="n">XB</span><span class="p">,</span> <span class="n">dm</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dm</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_collinear_filter</span><span class="p">(</span><span class="n">combs</span><span class="p">,</span> <span class="n">vectors</span><span class="p">):</span>
+        <span class="c1">##no point including grid vector combinations that won't intersect</span>
+        <span class="n">vecs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vectors</span><span class="p">)</span>
+        <span class="n">keep</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">combs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">vecs</span><span class="p">[</span><span class="n">a</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">vecs</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">vecs</span><span class="p">[</span><span class="n">a</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">vecs</span><span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">keep</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">keep</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_polygon_area</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">correction</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">y</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">x</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">y</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span> <span class="o">+</span> <span class="n">correction</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cyclic</span><span class="p">(</span><span class="n">size</span><span class="p">):</span>
+        <span class="c1">##stepping around for polygon solving</span>
+        <span class="n">j</span><span class="p">,</span> <span class="n">j_step</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">i_step</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span>
+        <span class="n">store</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">size</span><span class="p">):</span>
+            <span class="n">store</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">)))</span>
+            <span class="k">if</span> <span class="n">a</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">==</span> <span class="n">size</span> <span class="o">/</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">i_step</span><span class="p">,</span> <span class="n">j_step</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="n">i_step</span>
+            <span class="n">j</span> <span class="o">+=</span> <span class="n">j_step</span>
+        <span class="k">return</span> <span class="n">store</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_n_gon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index_set</span><span class="p">,</span> <span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">grid</span><span class="p">,</span> <span class="n">list2</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Creates an n-gon based on the intersection of multiple </span>
+<span class="sd">        grids meeting at the same intersection point.</span>
+<span class="sd">        </span>
+<span class="sd">        The idea is to gather the grids that are involved, start at an origin, </span>
+<span class="sd">        and cyclically build the n-gon according to the dual-grid spaces that we cross.</span>
+<span class="sd">        Each crossing only ever changes one of the vector indices, so it's easy</span>
+<span class="sd">        enough to build in a loop."""</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">angles</span> <span class="o">=</span> <span class="p">[</span><span class="n">grid</span><span class="o">.</span><span class="n">angles</span><span class="p">[</span><span class="n">g1</span><span class="p">],</span> <span class="n">grid</span><span class="o">.</span><span class="n">angles</span><span class="p">[</span><span class="n">g2</span><span class="p">]]</span>
+        <span class="n">vectors</span> <span class="o">=</span> <span class="p">[</span><span class="n">grid</span><span class="o">.</span><span class="n">grid_vectors</span><span class="p">[</span><span class="n">g1</span><span class="p">],</span> <span class="n">grid</span><span class="o">.</span><span class="n">grid_vectors</span><span class="p">[</span><span class="n">g2</span><span class="p">]]</span>
+        <span class="n">factor</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">all_grids</span> <span class="o">=</span> <span class="p">[</span><span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">]</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_process</span><span class="p">(</span><span class="n">gi</span><span class="p">,</span> <span class="n">idx_pos</span><span class="p">,</span> <span class="n">idx_neg</span><span class="p">):</span>
+            <span class="k">nonlocal</span> <span class="n">factor</span>
+            <span class="k">if</span> <span class="n">gi</span> <span class="o">&gt;=</span> <span class="n">val</span><span class="p">:</span>
+                <span class="n">index_set</span><span class="p">[</span><span class="n">gi</span><span class="p">]</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[</span><span class="n">idx_pos</span><span class="p">]</span>
+                <span class="n">angles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">angles</span><span class="p">[</span><span class="n">gi</span><span class="p">]</span> <span class="o">+</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+                <span class="n">vectors</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="o">-</span><span class="n">grid</span><span class="o">.</span><span class="n">grid_vectors</span><span class="p">[</span><span class="n">gi</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">grid</span><span class="o">.</span><span class="n">grid_vectors</span><span class="p">[</span><span class="n">gi</span><span class="p">][</span><span class="mi">1</span><span class="p">]))</span>
+                <span class="n">factor</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">index_set</span><span class="p">[</span><span class="n">gi</span><span class="p">]</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[</span><span class="n">idx_neg</span><span class="p">]</span>
+                <span class="n">angles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">angles</span><span class="p">[</span><span class="n">gi</span><span class="p">])</span>
+                <span class="n">vectors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">grid_vectors</span><span class="p">[</span><span class="n">gi</span><span class="p">])</span>
+                <span class="n">factor</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">g1</span> <span class="o">&gt;=</span> <span class="n">val</span><span class="p">:</span>
+            <span class="n">index_set</span><span class="p">[</span><span class="n">g1</span><span class="p">]</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>  <span class="n">angles</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span>
+            <span class="n">vectors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">vectors</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">vectors</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]);</span>  <span class="n">factor</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">index_set</span><span class="p">[</span><span class="n">g1</span><span class="p">]</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">];</span>  <span class="n">factor</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">g2</span> <span class="o">&gt;=</span> <span class="n">val</span><span class="p">:</span>
+            <span class="n">index_set</span><span class="p">[</span><span class="n">g2</span><span class="p">]</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[</span><span class="n">k</span><span class="p">];</span>  <span class="n">angles</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span>
+            <span class="n">vectors</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">vectors</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="n">vectors</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]);</span>  <span class="n">factor</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">index_set</span><span class="p">[</span><span class="n">g2</span><span class="p">]</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[</span><span class="n">k</span> <span class="o">-</span> <span class="mi">1</span><span class="p">];</span>  <span class="n">factor</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">gc</span><span class="p">,</span> <span class="n">i1</span><span class="p">,</span> <span class="n">i2</span> <span class="ow">in</span> <span class="n">list2</span><span class="p">:</span>
+            <span class="n">all_grids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gc</span><span class="p">)</span>
+            <span class="n">_process</span><span class="p">(</span><span class="n">gc</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">i1</span><span class="p">,</span> <span class="n">i2</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">i1</span><span class="p">,</span> <span class="n">i2</span><span class="p">))</span>
+
+        <span class="n">construct</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cyclic</span><span class="p">((</span><span class="mi">2</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">list2</span><span class="p">))</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">ang_sort</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">angles</span><span class="p">)</span>
+        <span class="n">all_grids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">all_grids</span><span class="p">)[</span><span class="n">ang_sort</span><span class="p">]</span>
+        <span class="n">factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">factor</span><span class="p">)[</span><span class="n">ang_sort</span><span class="p">]</span>
+
+        <span class="n">origin</span> <span class="o">=</span> <span class="n">index_set</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">store</span> <span class="o">=</span> <span class="p">[</span><span class="n">origin</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">construct</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">ext</span> <span class="o">=</span> <span class="n">origin</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">step</span><span class="p">:</span>
+                <span class="n">ext</span><span class="p">[</span><span class="n">all_grids</span><span class="p">[</span><span class="n">s</span><span class="p">]]</span> <span class="o">+=</span> <span class="n">factor</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>
+            <span class="n">store</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ext</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">store</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_make_tile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">grid</span><span class="p">,</span> <span class="n">tile_vectors</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Does what is says! Takes our combinations of grid families and finds</span>
+<span class="sd">        where they intersect. These crossings are gated behind the collinear filter</span>
+<span class="sd">        and the radius stopper.</span>
+
+<span class="sd">        If it's a singular crossing, we build the tile and create its properties:</span>
+<span class="sd">        - intersection coordinates</span>
+<span class="sd">        - tile vertices</span>
+<span class="sd">        - indices</span>
+<span class="sd">        - type</span>
+<span class="sd">        </span>
+<span class="sd">        The multiple intersection logic is crude, but if there exists a point within a tiny</span>
+<span class="sd">        tolerance that multiple grids pass through, we throw it to the n-gon generator."""</span>
+
+
+        <span class="n">dimension</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">grid_vectors</span><span class="p">)</span>
+        <span class="n">ind_mult</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)]</span>
+        <span class="n">vec_no</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">dimension</span><span class="p">))</span>
+        <span class="n">radius_sq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">grid_len</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">val</span>
+        <span class="n">dm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">grid_len</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">double</span><span class="p">)</span>
+
+        <span class="n">combs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collinear_filter</span><span class="p">(</span>
+            <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">vec_no</span><span class="p">,</span> <span class="mi">2</span><span class="p">)),</span> <span class="n">grid</span><span class="o">.</span><span class="n">grid_vectors</span><span class="p">)</span>
+
+        <span class="n">store</span><span class="p">,</span> <span class="n">p_store</span><span class="p">,</span> <span class="n">p_store_interx</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">dimension</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">intersection_data</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">g1</span><span class="p">,</span> <span class="n">g2</span> <span class="ow">in</span> <span class="n">combs</span><span class="p">:</span>
+            <span class="n">vec_query</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vec_no</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">)]</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">grid_len</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">grid_len</span><span class="p">):</span>
+                    <span class="n">interx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intersect</span><span class="p">(</span>
+                        <span class="n">grid</span><span class="o">.</span><span class="n">grids</span><span class="p">[</span><span class="n">g1</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="n">j</span><span class="p">],</span> <span class="n">grid</span><span class="o">.</span><span class="n">grids</span><span class="p">[</span><span class="n">g1</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="n">j</span><span class="p">],</span>
+                        <span class="n">grid</span><span class="o">.</span><span class="n">grids</span><span class="p">[</span><span class="n">g2</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="n">k</span><span class="p">],</span> <span class="n">grid</span><span class="o">.</span><span class="n">grids</span><span class="p">[</span><span class="n">g2</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="n">k</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">interx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="k">if</span> <span class="n">interx</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">interx</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">&gt;</span> <span class="n">radius_sq</span><span class="p">:</span>
+                        <span class="k">continue</span>
+
+                    <span class="n">index_set</span> <span class="o">=</span> <span class="n">indices</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                    <span class="n">index_set</span><span class="p">[</span><span class="n">g1</span><span class="p">]</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">g1</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+                    <span class="n">index_set</span><span class="p">[</span><span class="n">g2</span><span class="p">]</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">g2</span><span class="p">][</span><span class="n">k</span><span class="p">]</span>
+
+                    <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="n">list2</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="k">for</span> <span class="n">gc</span> <span class="ow">in</span> <span class="n">vec_query</span><span class="p">:</span>
+                        <span class="n">dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cdist</span><span class="p">(</span><span class="n">interx</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">midpoints</span><span class="p">[</span><span class="n">gc</span><span class="p">],</span> <span class="n">dm</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="n">dist_idx</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="n">dist</span><span class="p">[</span><span class="n">dist_idx</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">-</span> <span class="n">dist</span><span class="p">[</span><span class="n">dist_idx</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">&lt;</span> <span class="mf">1e-8</span><span class="p">:</span>
+                            <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+                            <span class="n">list2</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">gc</span><span class="p">,</span> <span class="n">dist_idx</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dist_idx</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">index_set</span><span class="p">[</span><span class="n">gc</span><span class="p">]</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">gc</span><span class="p">][</span><span class="n">dist_idx</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+
+                    <span class="k">if</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">tile</span> <span class="o">=</span> <span class="p">[</span><span class="n">index_set</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">dm0</span><span class="p">,</span> <span class="n">dm1</span> <span class="ow">in</span> <span class="n">ind_mult</span><span class="p">:</span>
+                            <span class="n">tv</span> <span class="o">=</span> <span class="n">index_set</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                            <span class="n">tv</span><span class="p">[</span><span class="n">g1</span><span class="p">]</span> <span class="o">-=</span> <span class="n">dm0</span>
+                            <span class="n">tv</span><span class="p">[</span><span class="n">g2</span><span class="p">]</span> <span class="o">-=</span> <span class="n">dm1</span>
+                            <span class="n">tile</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tv</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">intersection_data</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                            <span class="s1">'x'</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">interx</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]),</span>
+                            <span class="s1">'y'</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">interx</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]),</span>
+                            <span class="s1">'index_set'</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">index_set</span><span class="p">),</span>
+                            <span class="s1">'vertex_indices'</span><span class="p">:</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">tile</span><span class="p">],</span>
+                            <span class="s1">'g1'</span><span class="p">:</span> <span class="n">g1</span><span class="p">,</span> <span class="s1">'g2'</span><span class="p">:</span> <span class="n">g2</span><span class="p">,</span>
+                            <span class="s1">'type_idx'</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span>
+                        <span class="p">})</span>
+                        <span class="n">store</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tile</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">p_store</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_n_gon</span><span class="p">(</span><span class="n">index_set</span><span class="p">,</span> <span class="n">g1</span><span class="p">,</span> <span class="n">g2</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">grid</span><span class="p">,</span> <span class="n">list2</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
+                     
+                        <span class="n">p_store_interx</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="nb">float</span><span class="p">(</span><span class="n">interx</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">interx</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">])))</span>
+
+        <span class="k">if</span> <span class="n">p_store</span><span class="p">:</span>
+            <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="n">deduped</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">deduped_interx</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">ngon</span><span class="p">,</span> <span class="n">ix</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">p_store</span><span class="p">,</span> <span class="n">p_store_interx</span><span class="p">):</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ngon</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                    <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                    <span class="n">deduped</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ngon</span><span class="p">)</span>
+                    <span class="n">deduped_interx</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ix</span><span class="p">)</span>
+            <span class="n">p_store</span> <span class="o">=</span> <span class="n">deduped</span>
+            <span class="n">p_store_interx</span> <span class="o">=</span> <span class="n">deduped_interx</span>
+
+        <span class="n">poly_areas</span><span class="p">,</span> <span class="n">ngon_areas</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raw_indices</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># coincident grid families (e.g. antipodal directions in even-fold</span>
+        <span class="c1"># sets) can produce degenerate, zero-area "tiles" that are really</span>
+        <span class="c1"># just collapsed lines - drop them here so nothing downstream</span>
+        <span class="c1"># (plotting, vertex-type wedge lookup) ever sees them.</span>
+        <span class="n">AREA_EPS</span> <span class="o">=</span> <span class="mf">1e-9</span>
+
+        <span class="k">if</span> <span class="n">store</span><span class="p">:</span>
+            <span class="n">store_xy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">tile_vectors</span><span class="p">)</span>
+            <span class="n">keep_idx</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">store_xy</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_polygon_area</span><span class="p">(</span><span class="n">s</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">s</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">&gt;</span> <span class="n">AREA_EPS</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">keep_idx</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">raw_indices</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">store</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">keep_idx</span><span class="p">]</span>
+                <span class="n">store</span> <span class="o">=</span> <span class="n">store_xy</span><span class="p">[</span><span class="n">keep_idx</span><span class="p">]</span>
+                <span class="n">poly_areas</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_polygon_area</span><span class="p">(</span><span class="n">s</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">s</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">store</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">store</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1">##horrible way of trying to get multiple different n-gons into one neat list</span>
+        <span class="k">if</span> <span class="n">p_store</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">+</span> <span class="n">dimension</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span>
+            <span class="n">nan_row</span> <span class="o">=</span> <span class="p">[[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">]</span> <span class="o">*</span> <span class="n">dimension</span><span class="p">]</span>
+            <span class="n">padded</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">a</span> <span class="o">+</span> <span class="n">nan_row</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="p">(</span><span class="n">p_store</span> <span class="o">+</span> <span class="p">[[]]</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_store</span><span class="p">)))</span>
+            <span class="p">]</span>
+            <span class="n">p_store_xy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">padded</span><span class="p">,</span> <span class="n">tile_vectors</span><span class="p">)</span>
+            <span class="n">p_store_xy</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">p_store_xy</span><span class="p">]</span>
+
+            <span class="n">keep</span> <span class="o">=</span> <span class="p">[(</span><span class="n">orig</span><span class="p">,</span> <span class="n">xy</span><span class="p">,</span> <span class="n">ix</span><span class="p">)</span> <span class="k">for</span> <span class="n">orig</span><span class="p">,</span> <span class="n">xy</span><span class="p">,</span> <span class="n">ix</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">p_store</span><span class="p">,</span> <span class="n">p_store_xy</span><span class="p">,</span> <span class="n">p_store_interx</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">xy</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">3</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_polygon_area</span><span class="p">(</span><span class="n">xy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">xy</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">&gt;</span> <span class="n">AREA_EPS</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">keep</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">raw_indices</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">orig</span> <span class="k">for</span> <span class="n">orig</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">keep</span><span class="p">])</span>
+                <span class="n">p_store</span> <span class="o">=</span> <span class="p">[</span><span class="n">xy</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">xy</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">keep</span><span class="p">]</span>
+                <span class="n">ngon_areas</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_polygon_area</span><span class="p">(</span><span class="n">xy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">xy</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">xy</span> <span class="ow">in</span> <span class="n">p_store</span><span class="p">]</span>
+                <span class="c1"># n-gons involve more than 2 grid families crossing at once,</span>
+                <span class="c1"># so unlike the quad branch above there's no single (g1, g2)</span>
+                <span class="c1"># to report - g1/g2 are left as -1 to mark that. The crossing</span>
+                <span class="c1"># point is `ix`, carried from the intersect() call that found</span>
+                <span class="c1"># it - none of _n_gon's own vertices are the crossing point</span>
+                <span class="c1"># itself (they're corners offset from it by construction).</span>
+                <span class="k">for</span> <span class="n">orig</span><span class="p">,</span> <span class="n">xy</span><span class="p">,</span> <span class="n">ix</span> <span class="ow">in</span> <span class="n">keep</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">intersection_data</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                        <span class="s1">'x'</span><span class="p">:</span> <span class="n">ix</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                        <span class="s1">'y'</span><span class="p">:</span> <span class="n">ix</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                        <span class="s1">'index_set'</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">orig</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                        <span class="s1">'vertex_indices'</span><span class="p">:</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">orig</span><span class="p">],</span>
+                        <span class="s1">'g1'</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s1">'g2'</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                        <span class="s1">'type_idx'</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                    <span class="p">})</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">p_store</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">return</span> <span class="n">store</span><span class="p">,</span> <span class="n">p_store</span><span class="p">,</span> <span class="n">poly_areas</span><span class="p">,</span> <span class="n">ngon_areas</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Sam Coates.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

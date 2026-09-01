@@ -1,0 +1,404 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Python API reference &mdash; HyperTiler</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Keyboard shortcuts" href="../user_guide/shortcuts.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            HyperTiler
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../theory.html">Theory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart: using HyperTiler as a library</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">User guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/main_window.html">The main window</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/grid_tiling.html">Generating a grid tiling, step by step</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/styling.html">Styling and inspecting a tiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/vertex_types.html">Vertex Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/network_builder.html">Network Builder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/substitution.html">Substitution tiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/preferences.html">Preferences</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user_guide/shortcuts.html">Keyboard shortcuts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Python API</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Python API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#building-tilings">Building tilings</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hypertiler.regular_vectors"><code class="docutils literal notranslate"><span class="pre">regular_vectors()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hypertiler.TileMaker"><code class="docutils literal notranslate"><span class="pre">TileMaker</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#hypertiler.TileMaker.build_grid"><code class="docutils literal notranslate"><span class="pre">TileMaker.build_grid()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#substitution-inflation-tilings">Substitution (inflation) tilings</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hypertiler.inkTile"><code class="docutils literal notranslate"><span class="pre">inkTile</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#hypertiler.inkTile.rot"><code class="docutils literal notranslate"><span class="pre">inkTile.rot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hypertiler.inkTile.incenter"><code class="docutils literal notranslate"><span class="pre">inkTile.incenter()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hypertiler.inkTile.parse_path_d"><code class="docutils literal notranslate"><span class="pre">inkTile.parse_path_d()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hypertiler.inkTile.extract_style"><code class="docutils literal notranslate"><span class="pre">inkTile.extract_style()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hypertiler.inkTile.parse_tuple_string"><code class="docutils literal notranslate"><span class="pre">inkTile.parse_tuple_string()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hypertiler.inkTile.parse_transform_string"><code class="docutils literal notranslate"><span class="pre">inkTile.parse_transform_string()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hypertiler.inkTile.apply_matrix"><code class="docutils literal notranslate"><span class="pre">inkTile.apply_matrix()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hypertiler.inkTile.apply_rotation"><code class="docutils literal notranslate"><span class="pre">inkTile.apply_rotation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hypertiler.inkTile.apply_transform_to_points"><code class="docutils literal notranslate"><span class="pre">inkTile.apply_transform_to_points()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hypertiler.inkTile.parse_svg"><code class="docutils literal notranslate"><span class="pre">inkTile.parse_svg()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hypertiler.inkTile.parse_seed_svg"><code class="docutils literal notranslate"><span class="pre">inkTile.parse_seed_svg()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hypertiler.inkTile.rename_tiles_by_type"><code class="docutils literal notranslate"><span class="pre">inkTile.rename_tiles_by_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hypertiler.inkTile.find_min_edge_length"><code class="docutils literal notranslate"><span class="pre">inkTile.find_min_edge_length()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hypertiler.inkTile.normalize_tiles"><code class="docutils literal notranslate"><span class="pre">inkTile.normalize_tiles()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hypertiler.inkTile.extract_rules"><code class="docutils literal notranslate"><span class="pre">inkTile.extract_rules()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hypertiler.inkTile.apply_rule"><code class="docutils literal notranslate"><span class="pre">inkTile.apply_rule()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hypertiler.inkTile.remove_duplicates"><code class="docutils literal notranslate"><span class="pre">inkTile.remove_duplicates()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hypertiler.inkTile.substitute"><code class="docutils literal notranslate"><span class="pre">inkTile.substitute()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#helpers">Helpers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hypertiler.classify_areas"><code class="docutils literal notranslate"><span class="pre">classify_areas()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hypertiler.make_colors"><code class="docutils literal notranslate"><span class="pre">make_colors()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hypertiler.write_svg"><code class="docutils literal notranslate"><span class="pre">write_svg()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hypertiler.write_png"><code class="docutils literal notranslate"><span class="pre">write_png()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">HyperTiler</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Python API reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/index.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="python-api-reference">
+<h1>Python API reference<a class="headerlink" href="#python-api-reference" title="Link to this heading"></a></h1>
+<p>Everything below is importable directly from the top-level package:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">hypertiler</span><span class="w"> </span><span class="kn">import</span> <span class="n">TileMaker</span><span class="p">,</span> <span class="n">inkTile</span><span class="p">,</span> <span class="n">write_svg</span><span class="p">,</span> <span class="n">write_png</span><span class="p">,</span> <span class="n">regular_vectors</span><span class="p">,</span> <span class="n">classify_areas</span><span class="p">,</span> <span class="n">make_colors</span>
+</pre></div>
+</div>
+<p>See <a class="reference internal" href="../quickstart.html"><span class="doc">Quickstart: using HyperTiler as a library</span></a> for worked examples using each of these together.</p>
+<section id="building-tilings">
+<h2>Building tilings<a class="headerlink" href="#building-tilings" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="hypertiler.regular_vectors">
+<span class="sig-prename descclassname"><span class="pre">hypertiler.</span></span><span class="sig-name descname"><span class="pre">regular_vectors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shift</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'regular'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/helpers.html#regular_vectors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.regular_vectors" title="Link to this definition"></a></dt>
+<dd><p>Build a <cite>vector_data</cite> array for a regular <cite>fold</cite>-fold grid.</p>
+<p>Each row is (tile_length, grid_length, angle_degrees, shift) - the
+format TileMaker expects, with angles evenly spaced around the circle.
+<cite>shift</cite> matches the GUI’s “Grid shifts” options:</p>
+<ul class="simple">
+<li><p>‘regular’: alternating +/-1/(fold/2) for even fold, or 1/fold for odd
+fold - the default, and what most named regular tilings use.</p></li>
+<li><p>‘zero’: no shift at all - the degenerate/singular case.</p></li>
+<li><p>‘random’: shifts drawn uniformly from (-1, 1), independent per vector.</p></li>
+<li><p>‘regular_random’: random shifts that sum to 1 across the whole set.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="hypertiler.TileMaker">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hypertiler.</span></span><span class="sig-name descname"><span class="pre">TileMaker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vector_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_len</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/tiling.html#TileMaker"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.TileMaker" title="Link to this definition"></a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="hypertiler.TileMaker.build_grid">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">build_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vector_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_len</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/tiling.html#TileMaker.build_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.TileMaker.build_grid" title="Link to this definition"></a></dt>
+<dd><p>Just the grid-line construction (dedupe + sort + Grids), with no
+tile/intersection computation at all.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="substitution-inflation-tilings">
+<h2>Substitution (inflation) tilings<a class="headerlink" href="#substitution-inflation-tilings" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="hypertiler.inkTile">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">hypertiler.</span></span><span class="sig-name descname"><span class="pre">inkTile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gen</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/ink2tile.html#inkTile"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.inkTile" title="Link to this definition"></a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="hypertiler.inkTile.rot">
+<span class="sig-name descname"><span class="pre">rot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ang</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/ink2tile.html#inkTile.rot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.inkTile.rot" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hypertiler.inkTile.incenter">
+<span class="sig-name descname"><span class="pre">incenter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coords</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/ink2tile.html#inkTile.incenter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.inkTile.incenter" title="Link to this definition"></a></dt>
+<dd><p>Incenter of a triangle (exact centre for equilateral, weighted for others).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hypertiler.inkTile.parse_path_d">
+<span class="sig-name descname"><span class="pre">parse_path_d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/ink2tile.html#inkTile.parse_path_d"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.inkTile.parse_path_d" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hypertiler.inkTile.extract_style">
+<span class="sig-name descname"><span class="pre">extract_style</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">element</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/ink2tile.html#inkTile.extract_style"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.inkTile.extract_style" title="Link to this definition"></a></dt>
+<dd><p>Extract (fill, stroke, stroke_width) from any SVG element.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hypertiler.inkTile.parse_tuple_string">
+<span class="sig-name descname"><span class="pre">parse_tuple_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/ink2tile.html#inkTile.parse_tuple_string"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.inkTile.parse_tuple_string" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hypertiler.inkTile.parse_transform_string">
+<span class="sig-name descname"><span class="pre">parse_transform_string</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transform_str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/ink2tile.html#inkTile.parse_transform_string"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.inkTile.parse_transform_string" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hypertiler.inkTile.apply_matrix">
+<span class="sig-name descname"><span class="pre">apply_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">matrix_vals</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/ink2tile.html#inkTile.apply_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.inkTile.apply_matrix" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hypertiler.inkTile.apply_rotation">
+<span class="sig-name descname"><span class="pre">apply_rotation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">angle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/ink2tile.html#inkTile.apply_rotation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.inkTile.apply_rotation" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hypertiler.inkTile.apply_transform_to_points">
+<span class="sig-name descname"><span class="pre">apply_transform_to_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nums</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/ink2tile.html#inkTile.apply_transform_to_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.inkTile.apply_transform_to_points" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hypertiler.inkTile.parse_svg">
+<span class="sig-name descname"><span class="pre">parse_svg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/ink2tile.html#inkTile.parse_svg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.inkTile.parse_svg" title="Link to this definition"></a></dt>
+<dd><p>Parse an inflation-rules SVG file.</p>
+<p>Layers labelled ‘super&lt;type&gt;’ define supertile templates; layers labelled
+‘sub&lt;type&gt;’ define subtile placements.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>tiling</strong> (<em>dict  - raw group data</em>)</p></li>
+<li><p><strong>types</strong> (<em>dict  - stroke-color -&gt; tile-type</em>)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hypertiler.inkTile.parse_seed_svg">
+<span class="sig-name descname"><span class="pre">parse_seed_svg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">types</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supertiles</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/ink2tile.html#inkTile.parse_seed_svg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.inkTile.parse_seed_svg" title="Link to this definition"></a></dt>
+<dd><p>Parse a seed SVG containing pre-placed tiles.</p>
+<p>Tiles are identified by fill color (using the types mapping from the
+rules SVG). The seed may be drawn at any consistent scale (supertile
+size, subtile size, or otherwise) – the actual scale factor is
+inferred by comparing the first seed tile’s own edge length to its
+type’s already-normalized (unity-edge) template in <cite>supertiles</cite>, the
+same trick <cite>globalScale</cite> itself is derived with. Group transforms are
+applied recursively.</p>
+<p>Returns a list of (tile_type, coords) tuples.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hypertiler.inkTile.rename_tiles_by_type">
+<span class="sig-name descname"><span class="pre">rename_tiles_by_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tiling</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/ink2tile.html#inkTile.rename_tiles_by_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.inkTile.rename_tiles_by_type" title="Link to this definition"></a></dt>
+<dd><p>Rename tile keys to standardised type_N form using fill-color mapping.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hypertiler.inkTile.find_min_edge_length">
+<span class="sig-name descname"><span class="pre">find_min_edge_length</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tiles</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/ink2tile.html#inkTile.find_min_edge_length"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.inkTile.find_min_edge_length" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hypertiler.inkTile.normalize_tiles">
+<span class="sig-name descname"><span class="pre">normalize_tiles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tiles</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/ink2tile.html#inkTile.normalize_tiles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.inkTile.normalize_tiles" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hypertiler.inkTile.extract_rules">
+<span class="sig-name descname"><span class="pre">extract_rules</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">supertile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subtiles</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/ink2tile.html#inkTile.extract_rules"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.inkTile.extract_rules" title="Link to this definition"></a></dt>
+<dd><p>Build substitution rules: each entry is [sub_scale, sub_center, angle].</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hypertiler.inkTile.apply_rule">
+<span class="sig-name descname"><span class="pre">apply_rule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tile_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supertiles</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/ink2tile.html#inkTile.apply_rule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.inkTile.apply_rule" title="Link to this definition"></a></dt>
+<dd><p>Inflate one tile into its subtiles. Returns list of (new_type, new_coords) tuples.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hypertiler.inkTile.remove_duplicates">
+<span class="sig-name descname"><span class="pre">remove_duplicates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tiles</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/ink2tile.html#inkTile.remove_duplicates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.inkTile.remove_duplicates" title="Link to this definition"></a></dt>
+<dd><p>Remove duplicate tiles based on centre position.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hypertiler.inkTile.substitute">
+<span class="sig-name descname"><span class="pre">substitute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_tiles</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rules</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supertiles</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/ink2tile.html#inkTile.substitute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.inkTile.substitute" title="Link to this definition"></a></dt>
+<dd><p>Apply recursive substitution; returns [(tile_type, coords), …].</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="helpers">
+<h2>Helpers<a class="headerlink" href="#helpers" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="hypertiler.classify_areas">
+<span class="sig-prename descclassname"><span class="pre">hypertiler.</span></span><span class="sig-name descname"><span class="pre">classify_areas</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">areas</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/helpers.html#classify_areas"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.classify_areas" title="Link to this definition"></a></dt>
+<dd><p>Bucket raw tile areas into integer type indices.</p>
+<p>Tiles of the same underlying shape/type share (near-)identical area in
+these tilings, so rounding to 3 decimal places and taking the unique
+values gives a stable type label per tile - this is the same logic the
+GUI uses to decide how many colours a tiling needs.</p>
+<p>Returns (type_idx, unique_areas): <cite>type_idx</cite> is an int array parallel
+to <cite>areas</cite>, and <cite>unique_areas</cite> are the distinct rounded area values.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hypertiler.make_colors">
+<span class="sig-prename descclassname"><span class="pre">hypertiler.</span></span><span class="sig-name descname"><span class="pre">make_colors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'#4a6fa5'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/helpers.html#make_colors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.make_colors" title="Link to this definition"></a></dt>
+<dd><p>Generate <cite>n</cite> visually distinct RGB colours for colouring tile types.</p>
+<p>This is the same colour generation the GUI uses to pick tile colours
+when you don’t hand-pick your own - handy for a quick palette without
+designing one yourself.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of colours to generate.</p></li>
+<li><p><strong>scheme</strong> (<em>{'default'</em><em>, </em><em>'tonal'}</em>) – ‘default’ steps hue around the full colour wheel (golden-ratio
+spacing from a random starting hue) - what the GUI uses unless you
+switch its colour scheme preference. ‘tonal’ instead generates <cite>n</cite>
+tones/shades of a single base colour.</p></li>
+<li><p><strong>base_color</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>) – Hex colour (e.g. ‘#4a6fa5’), only used when scheme=’tonal’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)">list</a> of (r, g, b) tuples, each channel in 0-255.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hypertiler.write_svg">
+<span class="sig-prename descclassname"><span class="pre">hypertiler.</span></span><span class="sig-name descname"><span class="pre">write_svg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">polys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edge_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">0,</span> <span class="pre">0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edge_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/ink2tile.html#write_svg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.write_svg" title="Link to this definition"></a></dt>
+<dd><p>Write polygons as fill-coloured SVG paths.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>polys</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em> of </em><em>(</em><em>N</em><em>, </em><em>2</em><em>) </em><em>coordinate arrays</em><em>, </em><em>one polygon per tile.</em>)</p></li>
+<li><p><strong>colors</strong> (list of (r, g, b) 0-255 tuples, one per polygon in <cite>polys</cite>.)</p></li>
+<li><p><strong>edge_color</strong> (<em>stroke applied to every tile; edge_width &lt;= 0</em>) – omits the stroke entirely.</p></li>
+<li><p><strong>edge_width</strong> (<em>stroke applied to every tile; edge_width &lt;= 0</em>) – omits the stroke entirely.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hypertiler.write_png">
+<span class="sig-prename descclassname"><span class="pre">hypertiler.</span></span><span class="sig-name descname"><span class="pre">write_png</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">polys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edge_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">0,</span> <span class="pre">0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">edge_width</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(1000,</span> <span class="pre">1000)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">background</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(255,</span> <span class="pre">255,</span> <span class="pre">255)</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/hypertiler/ink2tile.html#write_png"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#hypertiler.write_png" title="Link to this definition"></a></dt>
+<dd><p>Rasterize polygons to a PNG image.</p>
+<p>Unlike <cite>write_svg</cite>, <cite>edge_width</cite> here is in output pixels directly -
+there’s no data-unit-vs-pixel ambiguity for a raster image the way
+there is for an SVG’s own coordinate space.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>polys</strong> (as in <cite>write_svg</cite>.)</p></li>
+<li><p><strong>colors</strong> (as in <cite>write_svg</cite>.)</p></li>
+<li><p><strong>edge_color</strong> (<em>stroke applied to every tile</em><em>, </em><em>in pixels;</em>) – edge_width &lt;= 0 omits the stroke entirely.</p></li>
+<li><p><strong>edge_width</strong> (<em>stroke applied to every tile</em><em>, </em><em>in pixels;</em>) – edge_width &lt;= 0 omits the stroke entirely.</p></li>
+<li><p><strong>size</strong> (<em>(</em><em>width</em><em>, </em><em>height</em><em>) of </em><em>the output image in pixels. The tiling is</em>) – scaled to fit within this box (preserving aspect ratio, with a 5%
+margin) and centred.</p></li>
+<li><p><strong>background</strong> (<em>RGB fill for the area outside the tiling.</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../user_guide/shortcuts.html" class="btn btn-neutral float-left" title="Keyboard shortcuts" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Sam Coates.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
