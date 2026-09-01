@@ -83,7 +83,6 @@ If you're comfortable using git:
 
 ```bash
 git clone https://github.com/hyper-aperiodic/HyperTiler.git
-cd HyperTiler
 ```
 Then for Windows, double-click `scripts/setup.bat` once, then `scripts/run.bat` when you want to run HyperTiler. 
 
