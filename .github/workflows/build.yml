@@ -18,11 +18,11 @@ jobs:
           - os: ubuntu-22.04
             artifact_name: hypertiler-linux
             dist_path: dist/hypertiler
-          - os: macos-13
-            artifact_name: hypertiler-macos-intel
-            dist_path: dist/HyperTiler.app
           - os: macos-latest
-            artifact_name: hypertiler-macos-arm64
+            artifact_name: hypertiler-macos
+            # BUNDLE() in the spec wraps the onedir output into a proper
+            # .app on macOS - that's the shippable artifact there, not the
+            # raw dist/hypertiler folder Windows/Linux produce.
             dist_path: dist/HyperTiler.app
     runs-on: ${{ matrix.os }}
     steps:
@@ -78,14 +78,19 @@ jobs:
         with:
           name: ${{ matrix.artifact_name }}
           path: ${{ matrix.dist_path }}
-      - name: Zip build for release
+      - name: Zip build for release (Unix)
+        if: runner.os != 'Windows'
         run: |
           cd $(dirname "${{ matrix.dist_path }}")
           zip -r "${{ github.workspace }}/${{ matrix.artifact_name }}.zip" "$(basename "${{ matrix.dist_path }}")"
+      - name: Zip build for release (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "${{ matrix.dist_path }}" -DestinationPath "${{ matrix.artifact_name }}.zip"
       - name: Attach to rolling 'latest' release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
           name: Latest build
-          prerelease: true
           files: ${{ matrix.artifact_name }}.zip
