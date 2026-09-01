@@ -10,7 +10,7 @@ from ..widgets import LockedViewBox, center_on_screen
 ###a self-contained little thing which allows the creation, visualisation, and
 ##exportation of a network of connected sites
 ##TODO: must double triple check on the dedup-ing of sites!!
-##TODO: update the export options to give the option between json and csvs
+
 class NetworkBuilderWindow(QtWidgets.QMainWindow):
     """Spatial network from selected vertex types — build, visualise, export."""
 

@@ -39,13 +39,11 @@ _UNUSED_SCIPY_MODULES = [
 # handled by a .desktop file's Icon= key at install time) - ship the PNG
 # alongside the binary so a .desktop file has something to point at.
 _linux_datas = [(_asset('hypertiler.png'), '.')] if sys.platform.startswith('linux') else []
-_linux_binaries = [
-    ('/usr/lib/x86_64-linux-gnu/libxcb-shape.so.0', '.'),
-] if sys.platform.startswith('linux') else []
+
 a = Analysis(
     [_asset('launcher.py')],
     pathex=[_REPO_ROOT],
-    binaries=_linux_binaries,
+    binaries=[],
     datas=_linux_datas,
     hiddenimports=[],
     hookspath=[],
