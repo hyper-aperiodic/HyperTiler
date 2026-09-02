@@ -1,5 +1,3 @@
-# -*- mode: python ; coding: utf-8 -*-
-
 import os
 import sys
 
@@ -76,7 +74,25 @@ def _is_unused_qt_plugin(dest_path):
             return True
     return False
 
-a.binaries = [b for b in a.binaries if not _is_unused_qt_plugin(b[0])]
+# libstdc++/libgcc_s must come from the target system, not be bundled -
+# confirmed via a real bug: the build machine's (Ubuntu 22.04) libstdc++.so.6
+# only exports up to GLIBCXX_3.4.30, while a Linux Mint 22 test machine's own
+# system libstdc++ exports up to 3.4.33 and is perfectly capable, but the
+# bundled onedir folder's $ORIGIN-relative loading shadowed it with the older
+# bundled copy - Mesa's DRI driver needed 3.4.32, found only the older bundled
+# one, and failed with a confusing downstream "Could not initialize GLX" /
+# qglx_findConfig FBConfig-matching error that looked like a graphics-driver
+# problem but was actually this. 
+_LINUX_EXCLUDE_LIB_PREFIXES = ('libstdc++.so', 'libgcc_s.so')
+def _is_excluded_system_lib(dest_path):
+    name = os.path.basename(dest_path).lower()
+    return any(name.startswith(p) for p in _LINUX_EXCLUDE_LIB_PREFIXES)
+
+a.binaries = [
+    b for b in a.binaries
+    if not _is_unused_qt_plugin(b[0])
+    and not (sys.platform.startswith('linux') and _is_excluded_system_lib(b[0]))
+]
 
 pyz = PYZ(a.pure)
 
