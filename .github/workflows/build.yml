@@ -57,10 +57,17 @@ jobs:
           pip install pyinstaller
       - name: Build with PyInstaller
         run: pyinstaller packaging/hypertiler.spec --noconfirm --clean
-      - name: Copy example svgs alongside the build output (macOS only)
-        if: runner.os == 'macOS'
+      - name: Copy example svgs into place
         shell: bash
-        run: cp -r "example svgs" "$(dirname "${{ matrix.dist_path }}")/example svgs"
+        run: |
+          if [ "${{ runner.os }}" == "macOS" ]; then
+            # Sibling of HyperTiler.app - Contents/MacOS/ is hidden inside the
+            # bundle, so it needs to live outside the .app entirely.
+            cp -r "example svgs" "$(dirname "${{ matrix.dist_path }}")/example svgs"
+          else
+            # Inside the 'hypertiler' onedir folder, alongside the exe and _internal.
+            cp -r "example svgs" "${{ matrix.dist_path }}/example svgs"
+          fi
       - name: Smoke-test the .app launches
         if: runner.os == 'macOS'
         run: |
