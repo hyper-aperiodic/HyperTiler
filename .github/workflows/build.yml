@@ -20,9 +20,7 @@ jobs:
             dist_path: dist/hypertiler
           - os: macos-latest
             artifact_name: hypertiler-macos
-            # BUNDLE() in the spec wraps the onedir output into a proper
-            # .app on macOS - that's the shippable artifact there, not the
-            # raw dist/hypertiler folder Windows/Linux produce.
+
             dist_path: dist/HyperTiler.app
     runs-on: ${{ matrix.os }}
     steps:
@@ -30,9 +28,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      # PyInstaller's splash screen needs tkinter on the build machine; the
-      # spec skips the splash entirely on macOS (unsupported there), so only
-      # Linux needs this - Windows/macOS setup-python builds already bundle it.
+
       - name: Install tkinter (Linux splash-screen dependency)
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y python3-tk
@@ -74,23 +70,23 @@ jobs:
       - name: Check code signature / Gatekeeper status
         if: runner.os == 'macOS'
         run: spctl -a -vvv -t execute dist/HyperTiler.app || true
-      # upload-artifact zips whatever `path` points to on its own when you
-      # download it from the Actions UI - archiving it ourselves first would
-      # just nest one zip/tar inside the other for no reason.
+
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: ${{ matrix.dist_path }}
+          path: |
+            ${{ matrix.dist_path }}
+            ${{ github.workspace }}/dist/example svgs
       - name: Zip build for release (Unix)
         if: runner.os != 'Windows'
         run: |
           cd $(dirname "${{ matrix.dist_path }}")
-          zip -r "${{ github.workspace }}/${{ matrix.artifact_name }}.zip" "$(basename "${{ matrix.dist_path }}")"
+          zip -r "${{ github.workspace }}/${{ matrix.artifact_name }}.zip" "$(basename "${{ matrix.dist_path }}")" "example svgs"
       - name: Zip build for release (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Compress-Archive -Path "${{ matrix.dist_path }}" -DestinationPath "${{ matrix.artifact_name }}.zip"
+          Compress-Archive -Path "${{ matrix.dist_path }}", "dist/example svgs" -DestinationPath "${{ matrix.artifact_name }}.zip"
       - name: Attach to rolling 'latest' release
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
