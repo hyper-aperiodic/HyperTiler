@@ -1,3 +1,5 @@
+# -*- mode: python ; coding: utf-8 -*-
+
 import os
 import sys
 
@@ -37,12 +39,12 @@ _UNUSED_SCIPY_MODULES = [
 # handled by a .desktop file's Icon= key at install time) - ship the PNG
 # alongside the binary so a .desktop file has something to point at.
 _linux_datas = [(_asset('hypertiler.png'), '.')] if sys.platform.startswith('linux') else []
-_example_svgs = [(os.path.join(_REPO_ROOT, 'example svgs'), 'example svgs')]
+
 a = Analysis(
     [_asset('launcher.py')],
     pathex=[_REPO_ROOT],
     binaries=[],
-    datas=_linux_datas + _example_svgs,
+    datas=_linux_datas,
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -82,7 +84,7 @@ def _is_unused_qt_plugin(dest_path):
 # bundled copy - Mesa's DRI driver needed 3.4.32, found only the older bundled
 # one, and failed with a confusing downstream "Could not initialize GLX" /
 # qglx_findConfig FBConfig-matching error that looked like a graphics-driver
-# problem but was actually this. 
+# problem but was actually this.
 _LINUX_EXCLUDE_LIB_PREFIXES = ('libstdc++.so', 'libgcc_s.so')
 def _is_excluded_system_lib(dest_path):
     name = os.path.basename(dest_path).lower()
@@ -145,6 +147,14 @@ exe = EXE(
     entitlements_file=None,
     icon=icon_file,
 )
+
+# 'example svgs' is NOT bundled here on purpose. On Windows/Linux it needs to
+# sit next to dist/hypertiler/ (sibling of the onedir folder), and on macOS
+# it needs to sit next to HyperTiler.app (sibling of the .app bundle, not
+# inside Contents/MacOS/ where BUNDLE() output is hidden from Finder). Both
+# of those are "outside what PyInstaller collects" by definition, so this is
+# copied into place by the GitHub Actions workflow after the build step
+# instead of through Analysis/COLLECT.
 coll = COLLECT(
     exe,
     a.binaries,
