@@ -37,12 +37,12 @@ _UNUSED_SCIPY_MODULES = [
 # handled by a .desktop file's Icon= key at install time) - ship the PNG
 # alongside the binary so a .desktop file has something to point at.
 _linux_datas = [(_asset('hypertiler.png'), '.')] if sys.platform.startswith('linux') else []
-
+_example_svgs = [(os.path.join(_REPO_ROOT, 'example svgs'), 'example svgs')]
 a = Analysis(
     [_asset('launcher.py')],
     pathex=[_REPO_ROOT],
     binaries=[],
-    datas=_linux_datas,
+    datas=_linux_datas + _example_svgs,
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
