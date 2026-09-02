@@ -89,6 +89,7 @@ jobs:
         run: |
           Compress-Archive -Path "${{ matrix.dist_path }}" -DestinationPath "${{ matrix.artifact_name }}.zip"
       - name: Attach to rolling 'latest' release
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
