@@ -8,6 +8,9 @@ HyperTiler makes creating patches of quasiperiodic tilings easy!
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22133798.svg)](https://doi.org/10.5281/zenodo.22133798)
 
+>[!NOTE]
+>Documentation is stable, but unfinished!
+
 ## 🌟 Highlights
 
 - Create ANY dual-grid tiling defined by custom parameters.
