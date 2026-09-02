@@ -1,3 +1,4 @@
+# -*- mode: python ; coding: utf-8 -*-
 
 import os
 import sys
@@ -147,27 +148,11 @@ exe = EXE(
     icon=icon_file,
 )
 
-# 'example svgs' needs to sit inside the 'hypertiler' onedir folder, alongside
-# the exe and _internal - Tree() at the COLLECT stage places a folder there
-# directly, unlike Analysis(datas=...) which nests everything under _internal.
-# On macOS this is skipped: BUNDLE() below wraps coll's contents into
-# HyperTiler.app/Contents/MacOS/, which Finder treats as opaque - putting it
-# here would bury it where users browsing via a file dialog won't find it.
-# Instead, on macOS it's copied in by the GitHub Actions workflow as a
-# sibling of HyperTiler.app itself, after the build step.
-_collect_extra = []
-if not sys.platform == 'darwin':
-    _collect_extra.append(Tree(
-        os.path.join(_REPO_ROOT, 'example svgs'),
-        prefix='example svgs',
-    ))
-
 coll = COLLECT(
     exe,
     a.binaries,
     a.datas,
     *splash_binaries,
-    *_collect_extra,
     strip=False,
     upx=True,
     upx_exclude=[],
