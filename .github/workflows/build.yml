@@ -57,6 +57,9 @@ jobs:
           pip install pyinstaller
       - name: Build with PyInstaller
         run: pyinstaller packaging/hypertiler.spec --noconfirm --clean
+      - name: Copy example svgs alongside the build output
+        shell: bash
+        run: cp -r "example svgs" "$(dirname "${{ matrix.dist_path }}")/example svgs"
       - name: Smoke-test the .app launches
         if: runner.os == 'macOS'
         run: |
