@@ -22,6 +22,7 @@ from .workers import _VertexWorker
 from .tools.style_dialog import StyleDialog
 from .tools.vertex_finder import VertexFinderWindow
 from .tools.network import NetworkBuilderWindow
+from .tools.dual_tiling import DualTilingWindow, _DualAdapter
 from .substitution.window import SubstitutionWindow
 from .substitution.adapter import _SubstitutionAdapter
 
@@ -262,15 +263,19 @@ class Ui_MainWindow(object):
         self._main_window = MainWindow
 
         MainWindow.setObjectName("HyperTiler")
-        MainWindow.resize(1050, 800)
-        sp = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred,
-                                   QtWidgets.QSizePolicy.Preferred)
-        MainWindow.setSizePolicy(sp)
-        MainWindow.setFixedSize(1050, 800)
 
-        screen = QtWidgets.QApplication.desktop().screenGeometry()
-        MainWindow.move((screen.width() - 1050) // 2 - 200,
-                        (screen.height() - 800) // 3)
+        # base design size (1050x800) was tuned for a ~1920x1080 display;
+        # scale it up on higher-resolution screens so the window isn't
+        # tiny on e.g. a 4K monitor
+        screen = QtWidgets.QApplication.primaryScreen().availableGeometry()
+        scale = max(1.0, min(screen.width() / 1920, screen.height() / 1080, 2.5))
+        init_w = min(int(1050 * scale), screen.width() - 100)
+        init_h = min(int(800 * scale), screen.height() - 100)
+        MainWindow.resize(init_w, init_h)
+        MainWindow.setMinimumSize(850, 650)
+
+        MainWindow.move(screen.x() + (screen.width() - init_w) // 2 - int(200 * scale),
+                        screen.y() + (screen.height() - init_h) // 3)
 
         font8 = QFont()
         font8.setPointSize(8)
@@ -281,6 +286,7 @@ class Ui_MainWindow(object):
         self.edgeItem = None
         self.gridItem = None
         self.edge_was_checked = False
+        self._dual_active = False
         self._in_sub_mode = False
         self.edge_color = (0, 0, 0)
         self.edge_width = 2.0
@@ -295,6 +301,8 @@ class Ui_MainWindow(object):
         # ---- left panel ----
         self.parameterArea = QtWidgets.QFrame()
         self.parameterArea.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.parameterArea.setSizePolicy(
+            QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
         left_v = QtWidgets.QVBoxLayout(self.parameterArea)
         left_v.setContentsMargins(-1, 10, -1, -1)
 
@@ -365,7 +373,7 @@ class Ui_MainWindow(object):
         self.tileButton = QtWidgets.QPushButton("Tile!")
         left_v.addWidget(self.tileButton)
         left_v.addItem(QtWidgets.QSpacerItem(20, 240, QtWidgets.QSizePolicy.Minimum,
-                                             QtWidgets.QSizePolicy.Fixed))
+                                             QtWidgets.QSizePolicy.Expanding))
 
         self.vector_data = self._vectorSetup(5, 0)
         self.symmetryValue.setValue(5)
@@ -384,7 +392,7 @@ class Ui_MainWindow(object):
         if _PREFS.get('advanced_on_startup', False):
             self.advancedDock.show()
             w = self.original_size.width() + self.advancedDock.sizeHint().width()
-            MainWindow.setFixedSize(w, self.original_size.height())
+            MainWindow.resize(w, self.original_size.height())
         else:
             self.advancedDock.hide()
 
@@ -402,11 +410,15 @@ class Ui_MainWindow(object):
         # ---- right panel ----
         self.plotArea = QtWidgets.QFrame()
         self.plotArea.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.plotArea.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         right_v = QtWidgets.QVBoxLayout(self.plotArea)
         right_v.setContentsMargins(7, 0, -1, 0)
 
         self.tilingPlot = pg.PlotWidget(self.plotArea, viewBox=LockedViewBox())
-        self.tilingPlot.setFixedSize(700, 700)
+        self.tilingPlot.setMinimumSize(400, 400)
+        self.tilingPlot.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.tilingPlot.setBackground('w')
         self.tilingPlot.getPlotItem().hideAxis('bottom')
         self.tilingPlot.getPlotItem().hideAxis('left')
@@ -414,6 +426,10 @@ class Ui_MainWindow(object):
         right_v.addWidget(self.tilingPlot)
         self.tilingPlot.setMouseEnabled(x=True, y=True)
         self.tilingPlot.getViewBox().setMouseMode(pg.ViewBox.PanMode)
+        # the plot's data range is kept square (see generateTiling's
+        # setLimits/setRange calls); lock the aspect ratio so a
+        # non-square window doesn't stretch the tiling when resized
+        self.tilingPlot.getViewBox().setAspectLocked(True)
         self.tilingPlot.getViewBox().menu = None
         self.tilingPlot.scene().contextMenuEvent = lambda e: None
         def filtered_mouse_press(event):
@@ -452,8 +468,6 @@ class Ui_MainWindow(object):
         right_v.setStretch(1, 1)
 
         root_h.addWidget(self.plotArea)
-        root_h.setStretch(0, 3)
-        root_h.setStretch(1, 7)
 
         self._view_stack = QtWidgets.QStackedWidget()
         self._view_stack.addWidget(self.centralwidget)
@@ -487,6 +501,10 @@ class Ui_MainWindow(object):
         self.networkAction.triggered.connect(self.computeNetworkBuilder)
         self.menuTools.addAction(self.networkAction)
 
+        self.dualTiling = QtWidgets.QAction("Dual tiling", MainWindow)
+        self.dualTiling.triggered.connect(self.computeDualTiling)
+        self.menuTools.addAction(self.dualTiling)
+
         self.menuTools.addSeparator()
         self.subAction = QtWidgets.QAction("Substitution tiling…", MainWindow)
         self.subAction.triggered.connect(self.computeSubstitution)
@@ -511,17 +529,26 @@ class Ui_MainWindow(object):
     # dock helpers
     # ------------------------------------------------------------------
 
+    def _dock_closed_width(self):
+        """Window width with the advanced dock's contribution removed,
+        never shrinking below the no-dock baseline captured at startup."""
+        dock_w = self.advancedDock.sizeHint().width()
+        return max(self.original_size.width(), self._main_window.width() - dock_w)
+
     def toggleAdvancedDock(self):
         if self.advancedDock.isVisible():
+            new_w = self._dock_closed_width()
             self.advancedDock.hide()
-            self._main_window.setFixedSize(self.original_size)
+            self._main_window.resize(new_w, self._main_window.height())
         else:
+            dock_w = self.advancedDock.sizeHint().width()
             self.advancedDock.show()
-            w = self.original_size.width() + self.advancedDock.sizeHint().width()
-            self._main_window.setFixedSize(w, self.original_size.height())
+            self._main_window.resize(self._main_window.width() + dock_w,
+                                     self._main_window.height())
 
     def closeAdvancedDock(self, event):
-        self._main_window.setFixedSize(self.original_size)
+        new_w = self._dock_closed_width()
+        self._main_window.resize(new_w, self._main_window.height())
 
     def updateWindowState(self, name):
         self.windows_open[name] = False
@@ -570,10 +597,31 @@ class Ui_MainWindow(object):
             return
         elif not self.plotted:
             return
+        self._show_vertex_types_window()
+
+    def _show_vertex_types_window(self):
+        """Split out from computeVertexTypes() so DualTilingWindow's
+        toolbar can open this directly against whatever self.tiling
+        currently is, bypassing the _in_sub_mode branch above (which
+        would otherwise show substitution vertex types instead of the
+        dual tiling's, even after the dual swap was just re-asserted)."""
         if hasattr(self, 'vertex_window') and self.vertex_window is not None:
             self.vertex_window.close()
         self.vertex_window = VertexFinderWindow(self)
         self.vertex_window.show()
+
+    def computeDualTiling(self):
+        if self._in_sub_mode:
+            if not self._populate_from_substitution():
+                return
+        elif not self.plotted:
+            return
+        if hasattr(self, 'dual_window') and self.dual_window is not None:
+            self.dual_window.close()
+        self.dual_window = DualTilingWindow(self)
+        self.dual_window.show()
+        self.windows_open['dual_window'] = True
+        self.dual_window.destroyed.connect(lambda: self.updateWindowState('dual_window'))
 
     def computeNetworkBuilder(self):
         if self._in_sub_mode:
@@ -603,6 +651,14 @@ class Ui_MainWindow(object):
                 return
         elif not self.plotted:
             return
+        self._show_network_builder_window()
+
+    def _show_network_builder_window(self):
+        """Split out from computeNetworkBuilder() so DualTilingWindow's
+        toolbar can open this directly against whatever self.tiling
+        currently is, bypassing the _in_sub_mode branch above (which has
+        its own substitution-specific vertex-type bridging that would
+        otherwise clobber a dual-tiling swap)."""
         if hasattr(self, 'network_window') and self.network_window is not None:
             self.network_window.close()
         self.network_window = NetworkBuilderWindow(self)
@@ -621,23 +677,27 @@ class Ui_MainWindow(object):
                 self.network_window = None
             self._view_stack.setCurrentIndex(0)
             self._in_sub_mode = False
+            self._dual_active = False
             self.subAction.setText("Substitution tiling…")
             self._main_window.setWindowTitle("HyperTiler")
+            if not isinstance(getattr(self, 'tiling', None), TileMaker):
+                self.generateTiling()
+
+            restore_size = getattr(self, '_pre_sub_size', self.original_size)
             if getattr(self, '_adv_was_visible', False):
                 self.advancedDock.show()
-                w = self.original_size.width() + self.advancedDock.sizeHint().width()
-                self._main_window.setFixedSize(w, self.original_size.height())
+                w = restore_size.width() + self.advancedDock.sizeHint().width()
+                self._main_window.resize(w, restore_size.height())
             else:
-                self._main_window.setFixedSize(self.original_size)
+                self._main_window.resize(restore_size)
         else:
             if self._view_stack.count() < 2:
                 self.substitution_window = SubstitutionWindow(self)
                 self._view_stack.addWidget(self.substitution_window)
+            self._pre_sub_size = self._main_window.size()
             self._adv_was_visible = self.advancedDock.isVisible()
             if self._adv_was_visible:
                 self.advancedDock.hide()
-            self._main_window.setMinimumSize(self.original_size)
-            self._main_window.setMaximumSize(QtCore.QSize(16777215, 16777215))
             self._view_stack.setCurrentIndex(1)
             self._in_sub_mode = True
             self.subAction.setText("Grid tiling…")
@@ -689,7 +749,33 @@ class Ui_MainWindow(object):
         self.vertices = np.vstack([c for _, c in final_tiles])
         self.plotted = True
         return True
+    
+    def _activate_dual_tiling(self, centroids, faces, face_tile_ids):
+        """Swap the dual tiling's faces in as the active tiling instance, the
+        same way _populate_from_substitution() does for substitution output -
+        FFT/Network builder/Vertex types/Edit style read self.tiling/
+        self.poly_areas/self.current_colors/self.vertices generically and
+        don't need to know a swap happened."""
+        if faces:
+            areas = [TileMaker._polygon_area(f[:, 0], f[:, 1]) for f in faces]
+            type_idx, unique_areas = classify_areas(areas)
+        else:
+            type_idx, unique_areas = np.array([], dtype=int), []
 
+        adapter = _DualAdapter(faces, face_tile_ids)
+        adapter.ngon_areas = type_idx
+
+        self.tiling = adapter
+        self.poly_areas = np.array([], dtype=int)
+        self.ngon_areas = type_idx
+        self.current_colors = self._makeColors(len(unique_areas))
+        self.poly_unq = []
+        self.ngon_unq = list(range(len(unique_areas)))
+        self.vertices = centroids
+        self.plotted = True
+        self._dual_active = True
+        self._main_window.setWindowTitle("HyperTiler — Dual tiling active")
+        
     # ------------------------------------------------------------------
     # vector helpers
     # ------------------------------------------------------------------
@@ -754,7 +840,11 @@ class Ui_MainWindow(object):
     # ------------------------------------------------------------------
 
     def generateTiling(self):
-        if self.shiftSelect.currentIndex() not in (2, 3):
+        if not isinstance(getattr(self, 'tiling', None), TileMaker):
+
+            self._dual_active = False
+            self._main_window.setWindowTitle("HyperTiler")
+        elif self.shiftSelect.currentIndex() not in (2, 3):
             current_hash = self._tiling_hash()
             if hasattr(self, '_last_tiling_hash') and current_hash == self._last_tiling_hash:
                 return
@@ -975,7 +1065,14 @@ class Ui_MainWindow(object):
                 return
         elif not self.plotted:
             return
+        self._show_fft_window()
 
+    def _show_fft_window(self):
+        """The actual FFT computation/window, split out from computeFFT()
+        so DualTilingWindow's toolbar can run it directly against whatever
+        self.vertices currently is, without going through the
+        _in_sub_mode branch (which would re-populate from substitution
+        and clobber a dual-tiling swap)."""
         coords = self.vertices
         xmin, xmax = coords[:, 0].min(), coords[:, 0].max()
         ymin, ymax = coords[:, 1].min(), coords[:, 1].max()
