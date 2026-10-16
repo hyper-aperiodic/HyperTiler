@@ -482,6 +482,11 @@ class Ui_MainWindow(object):
         MainWindow.setMenuBar(self.menubar)
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuTools.menuAction())
+
+        self.subAction = QtWidgets.QAction("Substitution Mode", MainWindow)
+        self.subAction.triggered.connect(self.computeSubstitution)
+        self.menubar.addAction(self.subAction)
+
         MainWindow.setWindowTitle("HyperTiler")
         MainWindow.setWindowIcon(make_app_icon())
         QtWidgets.QApplication.instance().setStyleSheet(APP_STYLESHEET)
@@ -505,10 +510,15 @@ class Ui_MainWindow(object):
         self.dualTiling.triggered.connect(self.computeDualTiling)
         self.menuTools.addAction(self.dualTiling)
 
-        self.menuTools.addSeparator()
-        self.subAction = QtWidgets.QAction("Substitution tiling…", MainWindow)
-        self.subAction.triggered.connect(self.computeSubstitution)
-        self.menuTools.addAction(self.subAction)
+        self.analyseSvgAction = QtWidgets.QAction("Analyse SVG…", MainWindow)
+        self.analyseSvgAction.triggered.connect(self.computeAnalyseSvg)
+        self.analyseSvgAction.setVisible(False)
+        self.menuTools.addAction(self.analyseSvgAction)
+
+        self.perpSpaceAction = QtWidgets.QAction("Perpendicular space…", MainWindow)
+        self.perpSpaceAction.triggered.connect(self.computePerpSpace)
+        self.perpSpaceAction.setVisible(False)
+        self.menuTools.addAction(self.perpSpaceAction)
 
         self.saveParamsAction = QtWidgets.QAction("Save parameters...", MainWindow)
         self.saveParamsAction.setShortcut("Ctrl+S")
@@ -678,7 +688,9 @@ class Ui_MainWindow(object):
             self._view_stack.setCurrentIndex(0)
             self._in_sub_mode = False
             self._dual_active = False
-            self.subAction.setText("Substitution tiling…")
+            self.subAction.setText("Substitution Mode")
+            self.analyseSvgAction.setVisible(False)
+            self.perpSpaceAction.setVisible(False)
             self._main_window.setWindowTitle("HyperTiler")
             if not isinstance(getattr(self, 'tiling', None), TileMaker):
                 self.generateTiling()
@@ -700,8 +712,18 @@ class Ui_MainWindow(object):
                 self.advancedDock.hide()
             self._view_stack.setCurrentIndex(1)
             self._in_sub_mode = True
-            self.subAction.setText("Grid tiling…")
+            self.subAction.setText("Grid Mode")
+            self.analyseSvgAction.setVisible(True)
+            self.perpSpaceAction.setVisible(True)
             self._main_window.setWindowTitle("HyperTiler — Substitution mode")
+
+    def computeAnalyseSvg(self):
+        if self._in_sub_mode and hasattr(self, 'substitution_window'):
+            self.substitution_window._analyse_svg()
+
+    def computePerpSpace(self):
+        if self._in_sub_mode and hasattr(self, 'substitution_window'):
+            self.substitution_window._show_perp_space()
 
     # ------------------------------------------------------------------
     # substitution ↔ tool bridge
