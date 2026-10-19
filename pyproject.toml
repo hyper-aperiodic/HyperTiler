@@ -28,7 +28,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/hyper-aperiodic/0.0"
+Homepage = "https://github.com/hyper-aperiodic/HyperTiler"
 
 [project.gui-scripts]
 hypertiler = "hypertiler.__main__:main"
