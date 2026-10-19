@@ -8,7 +8,7 @@
    version="1.1"
    id="svg1"
    sodipodi:docname="AB.svg"
-   inkscape:version="1.4 (86a8ad7, 2024-10-11)"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -24,12 +24,12 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      inkscape:zoom="1.7544854"
-     inkscape:cx="373.89881"
-     inkscape:cy="190.08423"
+     inkscape:cx="226.84714"
+     inkscape:cy="280.70909"
      inkscape:window-width="1920"
-     inkscape:window-height="991"
-     inkscape:window-x="-9"
-     inkscape:window-y="-9"
+     inkscape:window-height="1009"
+     inkscape:window-x="1912"
+     inkscape:window-y="-8"
      inkscape:window-maximized="1"
      inkscape:current-layer="layer1" />
   <defs
@@ -106,11 +106,11 @@
          sodipodi:nodetypes="ccccc" />
       <path
          style="fill:#dce0d9;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-         d="M 59.729303,100.16411 55.007489,88.765179 66.407553,84.043836 71.127903,95.442459 Z"
+         d="M 66.407111,84.0433 71.128922,95.442231 59.728861,100.16357 55.008511,88.764951 Z"
          id="path217" />
       <path
          style="fill:#dce0d9;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-         d="M 66.407553,84.043836 55.008468,79.322398 59.731034,67.922849 71.128869,72.645098 Z"
+         d="M 59.729681,67.92341 71.128766,72.644848 66.4062,84.044397 55.008365,79.322148 Z"
          id="path219" />
       <path
          style="fill:#fbf6ef;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
@@ -119,11 +119,11 @@
          sodipodi:nodetypes="ccccc" />
       <path
          style="fill:#dce0d9;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-         d="M 82.52891,67.923556 87.25072,79.322485 75.85066,84.043828 71.13031,72.645205 Z"
+         d="M 75.8511,84.044362 71.12929,72.645433 82.52935,67.92409 87.2497,79.322713 Z"
          id="path14" />
       <path
          style="fill:#dce0d9;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-         d="M 75.85066,84.043828 87.249744,88.765271 82.527178,100.16482 71.129338,95.442571 Z"
+         d="M 82.528524,100.16426 71.12944,95.442819 75.852006,84.04327 87.249847,88.765519 Z"
          id="path15" />
       <path
          style="fill:#fbf6ef;fill-opacity:1;stroke:#000000;stroke-width:0.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"

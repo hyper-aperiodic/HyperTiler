@@ -214,3 +214,37 @@ class gridPlot(pg.GraphicsObject):
 
     def boundingRect(self):
         return self._bounding_rect
+
+class coloredPointPlot(pg.GraphicsObject):
+    """Like pointPlot, but each vertex gets its own colour (parallel list),
+    grouped into one QPainterPath per colour for efficient batch drawing -
+    same approach tilePlot uses for per-tile colours."""
+
+    def __init__(self, verts, colors, radius=0.2):
+        pg.GraphicsObject.__init__(self)
+        self._build(verts, colors, radius)
+        self._bounding_rect = QtCore.QRectF(self.picture.boundingRect())
+
+    def _build(self, verts, colors, radius):
+        self.picture = QtGui.QPicture()
+        p = QtGui.QPainter(self.picture)
+        if config._antialias:
+            p.setRenderHint(QtGui.QPainter.Antialiasing)
+        p.setPen(pg.mkPen(None))
+
+        color_groups = {}
+        for v, c in zip(verts, colors):
+            color_groups.setdefault(tuple(c), []).append(v)
+
+        for color_key, vs in color_groups.items():
+            p.setBrush(pg.mkBrush(*color_key))
+            for v in vs:
+                p.drawEllipse(QtCore.QPointF(v[0], v[1]), radius, radius)
+
+        p.end()
+
+    def paint(self, p, *args):
+        p.drawPicture(0, 0, self.picture)
+
+    def boundingRect(self):
+        return self._bounding_rect

@@ -40,6 +40,113 @@ def group_mirror_types(type_map):
     return grouped
 
 
+def dual_vertex_type_map(tiling, poly_color=None, ngon_color=None, radius_frac=0.8):
+    """Canonical dual-grid vertex-type analysis: which raw-index vertices
+    share the same local tile arrangement. Shared by the main vertex-
+    finder window (_VertexWorker, with real tile colours for rendering)
+    and the dual-grid perp-space window's "colour by vertex type" action
+    (_DualPerpVertexTypesWorker, substitution/worker.py - colours not
+    needed there, so left None) - both call this directly rather than
+    keeping their own copies, so they can never silently disagree about
+    what counts as a vertex type or which vertices count as interior.
+
+    poly_color/ngon_color, if given, are per-tile colours parallel to
+    tiling.points/tiling.p_points; `color` is never read by `canonical()`
+    itself (only a tile's vertex count matters, as the "wedge owner" size
+    marker) - it's carried through purely for vert_to_tiles' renderers.
+
+    Returns (type_map, idx_to_vert, vert_to_tiles): type_map maps a
+    canonical signature to the list of raw-index keys sharing it;
+    idx_to_vert maps each raw-index key to its physical position;
+    vert_to_tiles maps each key to every (raw_tile, proj_tile, color)
+    touching it.
+    """
+    n_polys = len(tiling.points)
+    poly_color = poly_color if poly_color is not None else [None] * n_polys
+    tiles = list(zip(tiling.raw_indices[:n_polys], tiling.points, poly_color))
+    if len(tiling.raw_indices) > n_polys:
+        ngon_color = ngon_color if ngon_color is not None else [None] * len(tiling.p_points)
+        tiles += list(zip(tiling.raw_indices[n_polys], tiling.p_points, ngon_color))
+
+    idx_to_vert = {}
+    vert_to_tiles = {}
+    for raw_tile, proj_tile, color in tiles:
+        for raw_vert, proj_vert in zip(raw_tile, proj_tile):
+            key = tuple(raw_vert)
+            if key not in idx_to_vert:
+                idx_to_vert[key] = proj_vert
+            if key not in vert_to_tiles:
+                vert_to_tiles[key] = []
+            vert_to_tiles[key].append((raw_tile, proj_tile, color))
+
+    pos_arr = np.array(list(idx_to_vert.values()))
+    center = np.mean(pos_arr, axis=0)
+    all_pos = pos_arr - center
+    norms = np.sqrt(all_pos[:, 0]**2 + all_pos[:, 1]**2)
+    radius = norms.max() * radius_frac
+
+    set_a_keys = [
+        k for k, v in idx_to_vert.items()
+        if np.sqrt((v[0] - center[0])**2 + (v[1] - center[1])**2) <= radius
+        and len(vert_to_tiles.get(k, [])) > 0
+    ]
+
+    def canonical(key):
+        k = np.array(key)
+        tiles = vert_to_tiles[key]
+        neighbour_keys = set()
+        wedge_owner = {}
+        for tile_raw, tile_proj, _ in tiles:
+            n = len(tile_raw)
+            for i in range(n):
+                if tuple(tile_raw[i]) != key:
+                    continue
+                prev_key = tuple(tile_raw[(i-1) % n])
+                next_key = tuple(tile_raw[(i+1) % n])
+                for nb in (prev_key, next_key):
+                    if nb != key:
+                        neighbour_keys.add(nb)
+                if prev_key != key and next_key != key:
+                    wedge_owner[frozenset((prev_key, next_key))] = n
+        if not neighbour_keys:
+            return None
+        diffs = [tuple(np.array(nk) - k) for nk in neighbour_keys]
+        v = idx_to_vert[key]
+        def proj_angle(diff):
+            nb_key = tuple(k + np.array(diff))
+            nb_pos = idx_to_vert.get(nb_key)
+            if nb_pos is None:
+                return 0
+            return np.arctan2(nb_pos[1]-v[1], nb_pos[0]-v[0])
+        diffs_sorted = sorted(diffs, key=proj_angle)
+        nbs_sorted = [tuple(k + np.array(d)) for d in diffs_sorted]
+        angles = [proj_angle(d) for d in diffs_sorted]
+        m = len(angles)
+        seq = []
+        for i in range(m):
+            gap = angles[(i+1) % m] - angles[i]
+            if gap <= 0:
+                gap += 2*np.pi
+            # -1 sentinel (not None): a missing owner must still be
+            # orderable against real tile sizes, or min() below raises
+            # and silently kills this QThread mid-computation - the
+            # window is left stuck on "Computing vertex types..." forever.
+            owner = wedge_owner.get(frozenset((nbs_sorted[i], nbs_sorted[(i+1) % m])), -1)
+            seq.append((round(gap, 2), owner))
+        return min(tuple(seq[i:] + seq[:i]) for i in range(m))
+
+    type_map = {}
+    for k in set_a_keys:
+        c = canonical(k)
+        if c is None:
+            continue
+        if c not in type_map:
+            type_map[c] = []
+        type_map[c].append(k)
+
+    return type_map, idx_to_vert, vert_to_tiles
+
+
 class _VertexWorker(QtCore.QThread):
     """Runs vertex-type computation off the main thread."""
     finished = QtCore.pyqtSignal(dict, dict, dict)  # type_map, idx_to_vert, vert_to_tiles
@@ -54,87 +161,8 @@ class _VertexWorker(QtCore.QThread):
     def run(self):
         tiling = self._tiling
         poly_color = [self._current_colors[i] for i in self._poly_areas]
-        n_polys = len(tiling.points)
-
-        tiles = list(zip(tiling.raw_indices[:n_polys], tiling.points, poly_color))
-        if len(self._ngon_areas) > 0 and len(tiling.raw_indices) > n_polys:
-            ngon_color = [self._current_colors[i] for i in self._ngon_areas]
-            tiles += list(zip(tiling.raw_indices[n_polys], tiling.p_points, ngon_color))
-
-        idx_to_vert = {}
-        vert_to_tiles = {}
-        for raw_tile, proj_tile, color in tiles:
-            for raw_vert, proj_vert in zip(raw_tile, proj_tile):
-                key = tuple(raw_vert)
-                if key not in idx_to_vert:
-                    idx_to_vert[key] = proj_vert
-                if key not in vert_to_tiles:
-                    vert_to_tiles[key] = []
-                vert_to_tiles[key].append((raw_tile, proj_tile, color))
-
-        pos_arr = np.array(list(idx_to_vert.values()))
-        center = np.mean(pos_arr, axis=0)
-        all_pos = pos_arr - center
-        norms = np.sqrt(all_pos[:, 0]**2 + all_pos[:, 1]**2)
-        radius = norms.max() * 0.8
-
-        set_a_keys = [
-            k for k, v in idx_to_vert.items()
-            if np.sqrt((v[0] - center[0])**2 + (v[1] - center[1])**2) <= radius
-            and len(vert_to_tiles.get(k, [])) > 0
-        ]
-
-        def canonical(key):
-            k = np.array(key)
-            tiles = vert_to_tiles[key]
-            neighbour_keys = set()
-            wedge_owner = {}
-            for tile_raw, tile_proj, _ in tiles:
-                n = len(tile_raw)
-                for i in range(n):
-                    if tuple(tile_raw[i]) != key:
-                        continue
-                    prev_key = tuple(tile_raw[(i-1) % n])
-                    next_key = tuple(tile_raw[(i+1) % n])
-                    for nb in (prev_key, next_key):
-                        if nb != key:
-                            neighbour_keys.add(nb)
-                    if prev_key != key and next_key != key:
-                        wedge_owner[frozenset((prev_key, next_key))] = n
-            if not neighbour_keys:
-                return None
-            diffs = [tuple(np.array(nk) - k) for nk in neighbour_keys]
-            v = idx_to_vert[key]
-            def proj_angle(diff):
-                nb_key = tuple(k + np.array(diff))
-                nb_pos = idx_to_vert.get(nb_key)
-                if nb_pos is None:
-                    return 0
-                return np.arctan2(nb_pos[1]-v[1], nb_pos[0]-v[0])
-            diffs_sorted = sorted(diffs, key=proj_angle)
-            nbs_sorted = [tuple(k + np.array(d)) for d in diffs_sorted]
-            angles = [proj_angle(d) for d in diffs_sorted]
-            m = len(angles)
-            seq = []
-            for i in range(m):
-                gap = angles[(i+1) % m] - angles[i]
-                if gap <= 0:
-                    gap += 2*np.pi
-                # -1 sentinel (not None): a missing owner must still be
-                # orderable against real tile sizes, or min() below raises
-                # and silently kills this QThread mid-computation - the
-                # window is left stuck on "Computing vertex types..." forever.
-                owner = wedge_owner.get(frozenset((nbs_sorted[i], nbs_sorted[(i+1) % m])), -1)
-                seq.append((round(gap, 2), owner))
-            return min(tuple(seq[i:] + seq[:i]) for i in range(m))
-
-        type_map = {}
-        for k in set_a_keys:
-            c = canonical(k)
-            if c is None:
-                continue
-            if c not in type_map:
-                type_map[c] = []
-            type_map[c].append(k)
-
+        ngon_color = ([self._current_colors[i] for i in self._ngon_areas]
+                      if len(self._ngon_areas) > 0 else None)
+        type_map, idx_to_vert, vert_to_tiles = dual_vertex_type_map(
+            tiling, poly_color=poly_color, ngon_color=ngon_color)
         self.finished.emit(type_map, idx_to_vert, vert_to_tiles)

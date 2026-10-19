@@ -42,9 +42,10 @@ class DecimalDelegate(QtWidgets.QStyledItemDelegate):
     line-edit editor."""
 
     def __init__(self, decimals=2, minimum=-1e10, maximum=1e10, step=0.1,
-                 parent=None, live_callback=None):
+                 parent=None, live_callback=None, display_decimals=None):
         super().__init__(parent)
         self.decimals = decimals
+        self.display_decimals = decimals if display_decimals is None else display_decimals
         self.minimum = minimum
         self.maximum = maximum
         self.step = step
@@ -55,7 +56,7 @@ class DecimalDelegate(QtWidgets.QStyledItemDelegate):
 
     def displayText(self, value, locale):
         try:
-            return f"{float(value):.{self.decimals}f}"
+            return f"{float(value):.{self.display_decimals}f}"
         except (ValueError, TypeError):
             return str(value)
 
@@ -77,6 +78,14 @@ class DecimalDelegate(QtWidgets.QStyledItemDelegate):
             editor.setValue(0.0)
 
     def setModelData(self, editor, model, index):
+
+        current = index.model().data(index, Qt.EditRole)
+        try:
+            unchanged = abs(editor.value() - float(current)) < 1e-9
+        except (TypeError, ValueError):
+            unchanged = False
+        if unchanged:
+            return
         editor.interpretText()
         model.setData(index, editor.value(), Qt.EditRole)
 

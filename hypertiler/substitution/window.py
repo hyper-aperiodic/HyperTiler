@@ -10,8 +10,11 @@ from ..widgets import LockedViewBox
 from ..config import _quality_for_count, _apply_quality
 from ..ink2tile import write_svg
 from .utils import parse_rules
-from .worker import _SubstitutionItem, _SubstitutionWorker, _SubstitutionVertexWorker
+from .worker import (_SubstitutionItem, _SubstitutionWorker,
+                     _SubstitutionVertexWorker, _PerpSpaceWorker)
 from .vertex_window import SubstitutionVertexWindow
+from .clean_window import AnalyseSvgWindow
+from .perp_window import PerpSpaceWindow
 
 ## a window dedicated to showing off our substitution tiles, and resultant tiling.
 class SubstitutionWindow(QtWidgets.QWidget):
@@ -27,6 +30,12 @@ class SubstitutionWindow(QtWidgets.QWidget):
         self._actual_start_keys = {}
         self._supertile_coords = {}
         self._final_tiles = None
+        self._built_tile = None
+        self._built_key = None
+        self._analyse_window = None
+        self._perp_worker = None
+        self._perp_window = None
+        self._perp_cache = None   # (key, it, vert_canon, all_perp)
         self._needs_autorange = True
         self._edge_width = 0.5
         self._worker = None
@@ -112,7 +121,7 @@ class SubstitutionWindow(QtWidgets.QWidget):
 
         lv.addSpacing(4)
         self._gen_btn = QtWidgets.QPushButton("Generate")
-        self._gen_btn.clicked.connect(self._generate)
+        self._gen_btn.clicked.connect(self._on_gen_btn_clicked)
         lv.addWidget(self._gen_btn)
 
         self._style_widget = QtWidgets.QWidget()
@@ -198,7 +207,7 @@ class SubstitutionWindow(QtWidgets.QWidget):
     def _load_rules_from_path(self, path):
         try:
             QtWidgets.QApplication.setOverrideCursor(Qt.WaitCursor)
-            actual_keys, type_colors, supertile_coords = parse_rules(path)
+            actual_keys, type_colors, supertile_coords, lam = parse_rules(path)
         except Exception as e:
             QtWidgets.QApplication.restoreOverrideCursor()
             self._status_lbl.setText(f"Load error: {e}")
@@ -221,8 +230,7 @@ class SubstitutionWindow(QtWidgets.QWidget):
             self._seed_combo.addItem(display_name)
 
         try:
-            from .. import ink2tile as _m
-            self._expansion_factor = 1.0 / (_m.globalScale ** 2)
+            self._expansion_factor = 1.0 / (lam ** 2)
         except Exception:
             self._expansion_factor = 1.0
 
@@ -483,6 +491,117 @@ class SubstitutionWindow(QtWidgets.QWidget):
         nw.refresh_sub(type_map, idx_to_vert)
 
     # ------------------------------------------------------------------
+    # clean rules SVG
+    # ------------------------------------------------------------------
+
+    def _cache_key(self, seed_path):
+        """Cache key for the built (corrected) inkTile: rules/seed path
+        plus their mtimes, so editing and saving the SVG is picked up on
+        the next Generate without having to switch files and back."""
+        mtime = lambda p: os.path.getmtime(p) if p else None
+        return (self._rules_path, mtime(self._rules_path), seed_path, mtime(seed_path))
+
+    def _analyse_svg(self):
+        if not self._rules_path:
+            self._status_lbl.setText("Load a rules SVG first.")
+            return
+        seed_path = self._seed_path if self._rb_seed.isChecked() else None
+        key = self._cache_key(seed_path)
+        if key == self._built_key and self._built_tile is not None:
+            built = self._built_tile
+        else:
+            try:
+                from ..ink2tile import inkTile
+                stem = os.path.splitext(self._rules_path)[0]
+                kwargs = {'gen': 0, 'tile': stem}
+                if seed_path:
+                    kwargs['seed'] = os.path.splitext(seed_path)[0]
+                built = inkTile(**kwargs)
+            except Exception as e:
+                self._status_lbl.setText(f"Load error: {e}")
+                return
+            self._built_tile = built
+            self._built_key = key
+
+        if self._analyse_window is not None:
+            self._analyse_window.close()
+        self._analyse_window = AnalyseSvgWindow(self, built)
+
+    # ------------------------------------------------------------------
+    # perpendicular space
+    # ------------------------------------------------------------------
+
+    def _perp_space_args(self):
+        """(start_actual, seed_path, gen, key) for the perp space build
+        that matches the panel's current settings, or None if incomplete."""
+        if not self._rules_path:
+            return None
+        if self._rb_type.isChecked() and not self._seed_combo.currentText():
+            return None
+        if self._rb_seed.isChecked() and not self._seed_path:
+            return None
+        display = self._seed_combo.currentText() if self._rb_type.isChecked() else None
+        start_actual = self._actual_start_keys.get(display) if display else None
+        seed_path = self._seed_path if self._rb_seed.isChecked() else None
+        gen = self._gen_spin.value()
+        key = self._cache_key(seed_path) + (gen, start_actual)
+        return start_actual, seed_path, gen, key
+
+    def _show_perp_space(self):
+        if not self._rules_path:
+            self._status_lbl.setText("Load a rules SVG first.")
+            return
+        if self._rb_type.isChecked() and not self._seed_combo.currentText():
+            self._status_lbl.setText("No tile types found.")
+            return
+        if self._rb_seed.isChecked() and not self._seed_path:
+            self._status_lbl.setText("Choose a seed SVG.")
+            return
+        if self._perp_window is not None:
+            self._perp_window.close()
+        self._perp_window = PerpSpaceWindow(self)
+        self._refresh_perp_space()
+
+    def _refresh_perp_space(self):
+        """(Re-)populate the perp-space window, if one is open, from the
+        panel's current settings - reusing the cached build/vertex-type
+        analysis if nothing relevant has changed, otherwise rebuilding in
+        the background without closing/recreating the window. Called both
+        by _show_perp_space() and automatically after a new generation."""
+        if self._perp_window is None:
+            return
+        args = self._perp_space_args()
+        if args is None:
+            return
+        start_actual, seed_path, gen, key = args
+
+        if self._perp_cache is not None and self._perp_cache[0] == key:
+            _, it, vert_canon, all_perp = self._perp_cache
+            self._perp_window.build_display(it, vert_canon, all_perp)
+            return
+
+        if self._perp_worker is not None and self._perp_worker.isRunning():
+            return
+        self._perp_window._show_loading()
+        self._perp_worker = _PerpSpaceWorker(
+            self._rules_path, start_actual, seed_path, gen)
+        self._perp_worker.finished.connect(lambda it: self._on_perp_done(it, key))
+        self._perp_worker.error.connect(self._on_perp_error)
+        self._perp_worker.start()
+
+    def _on_perp_done(self, it, key):
+        self._perp_cache = (key, it, None, None)
+        if self._perp_window is not None:
+            self._perp_window.build_display(it)
+
+    def _on_perp_error(self, msg):
+        self._perp_cache = None
+        if self._perp_window is not None:
+            self._perp_window.close()
+            self._perp_window = None
+        QtWidgets.QMessageBox.warning(self, "Perpendicular space failed", msg)
+
+    # ------------------------------------------------------------------
     # generation
     # ------------------------------------------------------------------
 
@@ -507,7 +626,7 @@ class SubstitutionWindow(QtWidgets.QWidget):
         quality = _quality_for_count(est)
         _apply_quality(self._plot, quality)
 
-        self._gen_btn.setEnabled(False)
+        self._gen_btn.setText("Cancel")
         self._progress.setVisible(True)
 
         if est > 10000:
@@ -520,16 +639,44 @@ class SubstitutionWindow(QtWidgets.QWidget):
         start_actual = self._actual_start_keys.get(display) if display else None
         seed_path = self._seed_path if self._rb_seed.isChecked() else None
 
+        # the expensive part (parsing + correcting the rules SVG) only
+        # depends on (rules_path, seed_path) and their file contents - reuse
+        # the already-built inkTile across repeat clicks that just change
+        # gen/start, instead of redoing correction from scratch every time,
+        # but still pick up an edit-and-save of the SVG (mtime is part of
+        # the key) without having to switch files and back.
+        key = self._cache_key(seed_path)
+        built = self._built_tile if key == self._built_key else None
+        self._built_key = key
+
         self._worker = _SubstitutionWorker(
-            self._rules_path, start_actual, seed_path, gen)
+            self._rules_path, start_actual, seed_path, gen, built=built)
         self._worker.finished.connect(self._on_done)
         self._worker.error.connect(self._on_error)
         self._worker.start()
 
-    def _on_done(self, final_tiles):
-        self._gen_btn.setEnabled(True)
+    def _on_gen_btn_clicked(self):
+        if self._worker is not None and self._worker.isRunning():
+            self._cancel_generate()
+        else:
+            self._generate()
+
+    def _cancel_generate(self):
+        """Last-resort kill switch for a stalled/too-large generation -
+        forcibly terminates the worker thread rather than waiting for a
+        cooperative cancellation point (substitution has none)."""
+        if self._worker is not None and self._worker.isRunning():
+            self._worker.terminate()
+            self._worker.wait(2000)
+        self._gen_btn.setText("Generate")
+        self._progress.setVisible(False)
+        self._status_lbl.setText("Cancelled.")
+
+    def _on_done(self, final_tiles, built):
+        self._gen_btn.setText("Generate")
         self._progress.setVisible(False)
         self._final_tiles = final_tiles
+        self._built_tile = built
         self._needs_autorange = True
 
         self._style_widget.setVisible(True)
@@ -546,8 +693,13 @@ class SubstitutionWindow(QtWidgets.QWidget):
         if vw_open or nw_open:
             self._show_vertices(silent=not vw_open)
 
+        if self._perp_window is not None and self._perp_window.isVisible():
+            self._refresh_perp_space()
+
     def _on_error(self, msg):
-        self._gen_btn.setEnabled(True)
+        self._gen_btn.setText("Generate")
         self._progress.setVisible(False)
         self._status_lbl.setText("Generation failed.")
+        self._built_tile = None
+        self._built_key = None
         QtWidgets.QMessageBox.warning(self, "Substitution failed", msg)

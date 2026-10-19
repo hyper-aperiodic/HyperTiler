@@ -48,7 +48,7 @@ class Grids:
 
 
 class TileMaker:
-    def __init__(self, vector_data, grid_len):
+    def __init__(self, vector_data, grid_len, dedupe=True):
         """Build a de Bruijn dual-grid tiling from a set of grid vectors.
 
         Parameters
@@ -61,6 +61,18 @@ class TileMaker:
         grid_len : int
             Number of lines each grid family contains - controls the
             physical size/density of the resulting tiling.
+        dedupe : bool, default True
+            Collapse grid vectors that describe the same infinite line
+            family twice (see `_dedupe_vectors`). This only compares grid
+            geometry (angle + shift), not `tile_length` - so if two
+            "duplicate" vectors were deliberately given different
+            `tile_length`s, dedup keeps whichever has the lower index and
+            silently discards the other's tile_length along with it. Pass
+            False while a vector set is being hand-edited (e.g. the
+            Advanced panel is open) so every row the user typed stays a
+            genuinely independent vector, at the cost of the degenerate
+            zero-area tiles dedup normally exists to avoid for exact
+            duplicates.
 
         Attributes
         ----------
@@ -79,14 +91,129 @@ class TileMaker:
             The underlying grid-line construction (line endpoints, indices,
             midpoints) this tiling was built from.
         """
-        grid, tile_vectors = self.build_grid(vector_data, grid_len)
+        grid, tile_vectors = self.build_grid(vector_data, grid_len, dedupe=dedupe)
         self.grid = grid
         ##send everything off to create out tiles!
         self.points, self.p_points, self.poly_areas, self.ngon_areas = \
             self._make_tile(grid, tile_vectors)
 
+        # cut-and-project perpendicular-space embedding, for PerpSpaceWindow -
+        # mirrors inkTile's self.basis/self.perp/self.r/self.d, but simpler:
+        # no symmetry-group alignment or contraction eigenvalue (dual-grid
+        # tilings have no inflation to align to). Built lazily (see the
+        # properties below) - every ordinary "Tile!"/live-edit regenerate
+        # goes through this constructor, including transient, half-edited
+        # vector sets while the user is still typing, and this computation
+        # can legitimately fail on a degenerate set; it must never be able
+        # to break normal tiling generation just because nothing asked for
+        # perp space yet.
+        self.tile_vectors = tile_vectors
+        self._perp_built = False
+        self.contraction = None
+
+    def _ensure_perp(self):
+        if self._perp_built:
+            return
+        self._r = self.tile_vectors.shape[0]
+        self._basis = self.tile_vectors.T                # (2, r)
+        self._d = self._r - 2
+        self._perp = self._build_perp(self._basis)        # (d, r)
+        self._perp_built = True
+
+    @property
+    def r(self):
+        self._ensure_perp()
+        return self._r
+
+    @property
+    def d(self):
+        self._ensure_perp()
+        return self._d
+
+    @property
+    def basis(self):
+        self._ensure_perp()
+        return self._basis
+
+    @property
+    def perp(self):
+        self._ensure_perp()
+        return self._perp
+
+    @staticmethod
+    def _build_perp(basis):
+        """Perpendicular-space embedding, cut-and-project literature
+        convention: physical space uses frequency m=1 (each grid vector at
+        its own angle); perp space uses the *other* rotation harmonics
+        m=2,3,... of those same vectors (same magnitude, just rotated to m
+        times the angle). A harmonic m only gives a genuine, non-degenerate
+        rotated copy of the full star when gcd(m, r) == 1 (a true
+        automorphism of the index cycle - e.g. for the octagonal case
+        r=8, m=3 retraces all 8 points; m=2 does not: cos/sin(2*theta_k)
+        repeats every 4 steps, so it only ever traces a square, the same
+        4 points twice over) - those are tried first, so the first two
+        rows (what the "basis vectors" inset plots) are always a clean,
+        representative rotated star. Only once genuine conjugates run out
+        does the sweep fall back to the remaining (necessarily degenerate
+        for a cyclic index of composite order) harmonics, and finally the
+        1-D leftovers (m=0's constant direction, and m=r/2's alternating
+        +/- direction when r is even) needed to fill out the full rank
+        d = r - 2. Gram-Schmidt against basis and previously accepted rows
+        only drops dependent candidates (e.g. m and r-m give the same real
+        row space, and the m=0 sine row is identically zero) and fixes up
+        rounding, never blends frequencies together."""
+        r = basis.shape[1]
+        d = r - 2
+        if d <= 0:
+            return np.zeros((0, r))
+        mags = np.linalg.norm(basis, axis=0)
+        angles = np.arctan2(basis[1], basis[0])
+
+        refs = [row / np.linalg.norm(row) for row in basis]
+        perp_rows = []
+
+        def _try_accept(cand):
+            if len(perp_rows) >= d:
+                return
+            for ref in refs:
+                cand = cand - (cand @ ref) * ref
+            n = np.linalg.norm(cand)
+            if n > 1e-9:
+                cand = cand / n
+                perp_rows.append(cand)
+                refs.append(cand)
+
+        from math import gcd
+        harmonics = sorted(range(2, r), key=lambda m: (gcd(m, r) != 1, m))
+        for m in harmonics:
+            if len(perp_rows) >= d:
+                break
+            _try_accept(mags * np.cos(m * angles))
+            _try_accept(mags * np.sin(m * angles))
+
+        for m in (0, r / 2 if r % 2 == 0 else None):
+            if m is None or len(perp_rows) >= d:
+                continue
+            _try_accept(mags * np.cos(m * angles))
+            _try_accept(mags * np.sin(m * angles))
+        if len(perp_rows) < d:
+            raise ValueError(
+                "could not build a perpendicular-space basis for this "
+                "vector set (degenerate grid vectors?)")
+        return np.array(perp_rows)
+
+    def perp_coords(self):
+        """Perpendicular-space coordinates of every tile vertex, one (n, d)
+        array per tile - same layout/order as self.points + self.p_points,
+        mirroring inkTile.perp_coords()."""
+        n_polys = len(self.points)
+        tiles = list(self.raw_indices[:n_polys])
+        if len(self.raw_indices) > n_polys:
+            tiles += list(self.raw_indices[n_polys])
+        return [np.asarray(t) @ self.perp.T for t in tiles]
+
     @classmethod
-    def build_grid(cls, vector_data, grid_len):
+    def build_grid(cls, vector_data, grid_len, dedupe=True):
         """Just the grid-line construction (dedupe + sort + Grids), with no
         tile/intersection computation at all. """
         tile_vectors, grid_vectors, shifts = [], [], []
@@ -96,8 +223,9 @@ class TileMaker:
             grid_vectors.append((row[1] * np.cos(angle_rad), row[1] * np.sin(angle_rad)))
             shifts.append(row[3])
 
-        grid_vectors, tile_vectors, shifts = cls._dedupe_vectors(
-            grid_vectors, tile_vectors, shifts)
+        if dedupe:
+            grid_vectors, tile_vectors, shifts = cls._dedupe_vectors(
+                grid_vectors, tile_vectors, shifts)
 
         ang = [math.atan2(v[1], v[0]) for v in grid_vectors]
         val = (np.round(ang, 2) >= 0).sum()
@@ -105,7 +233,7 @@ class TileMaker:
         order = np.argsort(ang)
         grid_vectors = np.array(grid_vectors)[order]
         tile_vectors = np.array(tile_vectors)[order]
-        return Grids(grid_vectors, 100, grid_len, shifts, val), tile_vectors
+        return Grids(grid_vectors, 1000, grid_len, shifts, val), tile_vectors
 
     @staticmethod
     def _dedupe_vectors(grid_vectors, tile_vectors, shifts, tol=1e-6):

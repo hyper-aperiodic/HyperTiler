@@ -6,19 +6,21 @@ import colorsys
 import json
 from ..workers import _VertexWorker
 from ..widgets import LockedViewBox, center_on_screen
-from ..graphics import linkPlot
+from ..config import make_app_icon
 
 ###a self-contained little thing which allows the creation, visualisation, and
 ##exportation of a network of connected sites
 ##TODO: must double triple check on the dedup-ing of sites!!
-
+##TODO: update the export options to give the option between json and csv
 class NetworkBuilderWindow(QtWidgets.QMainWindow):
     """Spatial network from selected vertex types — build, visualise, export."""
 
     def __init__(self, parent_ui, skip_worker=False):
-        super().__init__(parent_ui._main_window)
+
+        super().__init__(None)
         self.ui = parent_ui
         self.setWindowTitle("Network builder")
+        self.setWindowIcon(make_app_icon())
         self._vertices = None
         self._type_idxs = None
         self._edges = None
@@ -366,7 +368,13 @@ class NetworkBuilderWindow(QtWidgets.QMainWindow):
             return
 
         if len(self._edges) > 0:
-            self._plot.addItem(linkPlot(verts, self._edges))
+            xs, ys = [], []
+            for i, j in self._edges:
+                xs += [verts[i, 0], verts[j, 0], float('nan')]
+                ys += [verts[i, 1], verts[j, 1], float('nan')]
+            self._plot.addItem(pg.PlotDataItem(
+                x=xs, y=ys, connect='finite',
+                pen=pg.mkPen((120, 120, 120, 160), width=1)))
 
         for tidx in np.unique(self._type_idxs):
             mask = self._type_idxs == tidx

@@ -5,13 +5,15 @@ import math
 import colorsys
 from ..workers import _VertexWorker, group_mirror_types
 from ..widgets import center_on_screen
+from ..config import make_app_icon
 
 
 class VertexFinderWindow(QtWidgets.QMainWindow):
     def __init__(self, parent_ui):
-        super().__init__(parent_ui._main_window)
+        super().__init__(None)
         self.ui = parent_ui
         self.setWindowTitle("Vertex Types")
+        self.setWindowIcon(make_app_icon())
         self.highlight_items = {}
         self._group_mirrors = False
         self._raw_type_map = {}
@@ -67,9 +69,9 @@ class VertexFinderWindow(QtWidgets.QMainWindow):
 
     def _on_group_mirrors_toggled(self, checked):
         self._group_mirrors = checked
-        plot = self.ui._active_plot_widget()
-        for item in self.highlight_items.values():
-            plot.removeItem(item)
+        for items in self.highlight_items.values():
+            for plot, scatter in items:
+                plot.removeItem(scatter)
         self.highlight_items.clear()
         self._rebuild_ui()
         nw = getattr(self.ui, 'network_window', None)
@@ -198,29 +200,50 @@ class VertexFinderWindow(QtWidgets.QMainWindow):
         self.resize(cols * 190 + 20, min(n_rows * 260 + 20, 600))
         self.show()
 
+    def _target_plots(self):
+        """Every plot a highlight should be drawn on - normally just
+        whichever is active (main tiling, or substitution's), but also
+        the dual tiling window's own plot when that's open: its vertex
+        types are built from a _DualAdapter whose vertices are the
+        original tiling's tile centroids, so the same positions are
+        meaningful on both plots at once, and both should show the
+        highlight together rather than only whichever plot this window
+        happened to be opened against."""
+        ui = self.ui
+        plots = [ui._active_plot_widget()]
+        dual_win = getattr(ui, 'dual_window', None)
+        if dual_win is not None and dual_win.isVisible() and dual_win._plot not in plots:
+            plots.append(dual_win._plot)
+        return plots
+
     def _toggle_highlight(self, checked, key, vert_keys, type_idx):
         ui = self.ui
         if checked:
             verts = np.array([self.idx_to_vert[k] for k in vert_keys])
             h = (type_idx * 0.618) % 1.0
             r, g, b = colorsys.hsv_to_rgb(h, 0.9, 1)
-            scatter = pg.ScatterPlotItem(
-                x=verts[:, 0], y=verts[:, 1],
-                size=ui.point_radius * 2, pen=pg.mkPen(None),
-                brush=pg.mkBrush(int(r*255), int(g*255), int(b*255), 255),
-                pxMode=False)
-            scatter.setZValue(10)
-            plot = ui._active_plot_widget()
-            plot.addItem(scatter)
-            plot.viewport().update()
-            self.highlight_items[key] = scatter
+            brush = pg.mkBrush(int(r*255), int(g*255), int(b*255), 255)
+            items = []
+            for plot in self._target_plots():
+                scatter = pg.ScatterPlotItem(
+                    x=verts[:, 0], y=verts[:, 1],
+                    size=ui.point_radius * 2, pen=pg.mkPen(None),
+                    brush=brush, pxMode=False)
+                scatter.setZValue(10)
+                plot.addItem(scatter)
+                plot.viewport().update()
+                items.append((plot, scatter))
+            self.highlight_items[key] = items
         else:
-            if key in self.highlight_items:
-                ui._active_plot_widget().removeItem(self.highlight_items.pop(key))
+            for plot, scatter in self.highlight_items.pop(key, []):
+                plot.removeItem(scatter)
 
     def closeEvent(self, event):
-        plot = self.ui._active_plot_widget()
-        for item in self.highlight_items.values():
-            plot.removeItem(item)
+        for items in self.highlight_items.values():
+            for plot, scatter in items:
+                try:
+                    plot.removeItem(scatter)
+                except Exception:
+                    pass
         self.highlight_items.clear()
         super().closeEvent(event)

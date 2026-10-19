@@ -195,6 +195,24 @@ QCheckBox::indicator:checked {
     background-color: #4a6fa5;
     border-color: #4a6fa5;
 }
+QToolBar {
+    background-color: #f0f2f5;
+    border: none;
+    border-bottom: 1px solid #dde1e7;
+    padding: 3px;
+    spacing: 4px;
+}
+QToolButton {
+    background-color: #4a6fa5;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+}
+QToolButton:hover { background-color: #3a5a8c; }
+QToolButton:pressed { background-color: #2d4a74; }
+QToolButton:checked { background-color: #1e6641; }
+QToolButton:disabled { background-color: #b0b8c1; color: #7f8c8d; }
 """
 
 ## a daft idea, but change the icon of the gui to different polygons on startup

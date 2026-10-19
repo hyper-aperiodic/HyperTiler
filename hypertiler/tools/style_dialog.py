@@ -9,20 +9,19 @@ from ..widgets import TileSwatchButton
 ##separated by golden-mean related angles. This set of classes allows customisation
 ##across the board, because sometimes colour theory looks aesthetically...bad.
 
-class StyleDialog(QtWidgets.QDialog):
-    def __init__(self, parent_ui, mode):
+class StyleWidget(QtWidgets.QWidget):
+    """Inline tiling-style panel, embedded in the main window's sidebar
+    below the Tile! button. Always
+    present once a tiling exists; refresh(mode) is called whenever the
+    view mode (tile/grid/point) changes, or the tiling itself regenerates,
+    so it always reflects whatever's currently on screen."""
+
+    def __init__(self, parent_ui):
         super().__init__()
         self.ui = parent_ui
-        self.mode = mode
-        self.setWindowTitle("Edit style")
-        self.setModal(False)
-
+        self.mode = None
         self.root_layout = QtWidgets.QVBoxLayout(self)
-
-        self.close_btn = QtWidgets.QPushButton("Close")
-        self.close_btn.clicked.connect(self.close)
-
-        self._build(mode)
+        self.root_layout.setContentsMargins(0, 6, 0, 0)
 
     def _build(self, mode):
         if hasattr(self, '_intersect_scatter') and self._intersect_scatter is not None:
@@ -34,7 +33,7 @@ class StyleDialog(QtWidgets.QDialog):
 
         while self.root_layout.count():
             item = self.root_layout.takeAt(0)
-            if item.widget() and item.widget() is not self.close_btn:
+            if item.widget():
                 item.widget().deleteLater()
             elif item.layout():
                 self._clear_layout(item.layout())
@@ -45,17 +44,6 @@ class StyleDialog(QtWidgets.QDialog):
             self._setup_grid(self.root_layout)
         else:
             self._setup_point(self.root_layout)
-
-        self.root_layout.addWidget(self.close_btn)
-
-    def closeEvent(self, event):
-        if hasattr(self, '_intersect_scatter') and self._intersect_scatter is not None:
-            try:
-                self.ui.tilingPlot.removeItem(self._intersect_scatter)
-            except Exception:
-                pass
-            self._intersect_scatter = None
-        super().closeEvent(event)
 
     def _clear_layout(self, layout):
         while layout.count():
@@ -105,11 +93,11 @@ class StyleDialog(QtWidgets.QDialog):
 
         scroll = QtWidgets.QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setFixedHeight(300)
         container = QtWidgets.QWidget()
         self.swatch_layout = QtWidgets.QGridLayout(container)
         self.swatch_layout.setSpacing(8)
         scroll.setWidget(container)
+        self._swatch_scroll = scroll
         root.addWidget(scroll)
 
         self._build_swatches()
@@ -154,6 +142,8 @@ class StyleDialog(QtWidgets.QDialog):
         ui = self.ui
         n_types = len(ui.poly_unq) + len(ui.ngon_unq)
         cols = 4
+        rows = max(1, -(-max(n_types, 1) // cols))
+        self._swatch_scroll.setFixedHeight(min(300, rows * 88 + 16))
 
         for idx in range(n_types):
             if idx < len(ui.poly_unq):
