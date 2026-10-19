@@ -6,19 +6,21 @@ import colorsys
 import json
 from ..workers import _VertexWorker
 from ..widgets import LockedViewBox, center_on_screen
+from ..config import make_app_icon
 
 ###a self-contained little thing which allows the creation, visualisation, and
 ##exportation of a network of connected sites
 ##TODO: must double triple check on the dedup-ing of sites!!
-##TODO: update the export options to give the option between json and 
-##TODO: prevent always on top
+##TODO: update the export options to give the option between json and csv
 class NetworkBuilderWindow(QtWidgets.QMainWindow):
     """Spatial network from selected vertex types — build, visualise, export."""
 
     def __init__(self, parent_ui, skip_worker=False):
-        super().__init__(parent_ui._main_window)
+
+        super().__init__(None)
         self.ui = parent_ui
         self.setWindowTitle("Network builder")
+        self.setWindowIcon(make_app_icon())
         self._vertices = None
         self._type_idxs = None
         self._edges = None

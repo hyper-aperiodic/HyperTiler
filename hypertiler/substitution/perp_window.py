@@ -13,17 +13,24 @@ class PerpSpaceWindow(QtWidgets.QMainWindow):
     vertex in the current substitution tiling - see inkTile.perp_coords().
     """
 
-    def __init__(self, sub_win):
-        parent = None
-        if sub_win._ui is not None:
-            parent = getattr(sub_win._ui, '_main_window', None)
+    def __init__(self, host, vertex_worker_cls=None):
+        # `host` is either a SubstitutionWindow (has _ui/_plot) or the main
+        # Ui_MainWindow (has _main_window/tilingPlot directly) - this window
+        # is shared between substitution mode and dual-grid mode.
+        parent = getattr(host, '_main_window', None)
+        if parent is None:
+            ui = getattr(host, '_ui', None)
+            parent = getattr(ui, '_main_window', None) if ui is not None else None
+        plot = getattr(host, '_plot', None) or getattr(host, 'tilingPlot', None)
         super().__init__(parent)
-        self._sub_win = sub_win
+        self._host = host
+        self._vertex_worker_cls = vertex_worker_cls or _PerpVertexTypesWorker
         self._it = None
         self._by_default = None       # cached (pos, brush) scatter data
         self._vertex_scatters = []    # [(ScatterPlotItem, label), ...] per vertex type
         self._legend = None
         self._vertex_worker = None
+        self._vertex_worker_it = None  # which `it` the running worker was started against
         self._insets = []
         self.setWindowTitle("Perpendicular Space")
 
@@ -45,7 +52,7 @@ class PerpSpaceWindow(QtWidgets.QMainWindow):
 
         self._show_loading()
         self.resize(480, 480)
-        center_on_screen(self, sub_win._plot)
+        center_on_screen(self, plot)
         self.show()
 
     def _show_loading(self):
@@ -84,15 +91,25 @@ class PerpSpaceWindow(QtWidgets.QMainWindow):
             self._loading_timer = None
         self._it = it
 
+
+        was_coloured = self._colour_action.isChecked()
+        self._vertex_scatters = []
+        self._legend = None
+        self._vertex_worker_it = None
+        self._colour_action.blockSignals(True)
+        self._colour_action.setChecked(False)
+        self._colour_action.setText("Colour by vertex type")
+        self._colour_action.blockSignals(False)
+
         if it.d == 0:
             msg = QtWidgets.QLabel(
                 "This tiling's vertex module has rank 2 (hyperspace = physical "
-                "space): it's periodic, so there's no perpendicular space.")
+                "space), so there's no perpendicular space.")
             msg.setWordWrap(True)
             msg.setAlignment(QtCore.Qt.AlignCenter)
             msg.setContentsMargins(20, 20, 20, 20)
             self.setCentralWidget(msg)
-            self.setWindowTitle("Perpendicular Space — none (periodic tiling)")
+            self.setWindowTitle("Perpendicular Space — none")
             return
 
         container = QtWidgets.QWidget()
@@ -130,11 +147,16 @@ class PerpSpaceWindow(QtWidgets.QMainWindow):
         self._vectors_action.setEnabled(True)
         if vert_canon is not None and all_perp is not None:
             self._apply_vertex_types(vert_canon, all_perp)
+            if was_coloured:
+                self._colour_action.setChecked(True)
+        elif was_coloured:
+            self._colour_action.setChecked(True)
 
         extra = f" (showing 2 of {it.d})" if it.d > 2 else ""
+        contraction_str = f"{it.contraction:.4f}" if it.contraction is not None else "n/a"
         self.setWindowTitle(
             f"Perpendicular Space — hyperspace rank {it.r}, "
-            f"perp dim {it.d}{extra}, contraction {it.contraction:.4f}")
+            f"perp dim {it.d}{extra}, contraction {contraction_str}")
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -190,7 +212,8 @@ class PerpSpaceWindow(QtWidgets.QMainWindow):
             return
         self._colour_action.setEnabled(False)
         self._colour_action.setText("Analysing vertex types…")
-        self._vertex_worker = _PerpVertexTypesWorker(self._it)
+        self._vertex_worker_it = self._it
+        self._vertex_worker = self._vertex_worker_cls(self._it)
         self._vertex_worker.finished.connect(self._on_vertex_types_done)
         self._vertex_worker.error.connect(self._on_vertex_types_error)
         self._vertex_worker.start()
@@ -247,16 +270,25 @@ class PerpSpaceWindow(QtWidgets.QMainWindow):
             self._show_vertex_type_view()
 
     def _on_vertex_types_done(self, result):
+        if self._vertex_worker_it is not self._it:
+            # build_display() rebuilt the plot (new tiling) while this
+            # worker was still running against the old one - its result is
+            # for a plot that no longer exists; drop it instead of handing
+            # stale positions/canon keys to the new one.
+            return
         vert_canon, all_perp = result
         self._apply_vertex_types(vert_canon, all_perp)
         self._colour_action.setEnabled(True)
-        # cache onto the substitution window so reopening this window
-        # without changing rules/seed/gen/start doesn't recompute
-        cache = getattr(self._sub_win, '_perp_cache', None)
+        # cache onto the host (substitution window or main Ui_MainWindow) so
+        # reopening this window without changing rules/seed/gen/start (or,
+        # for dual-grid, without regenerating) doesn't recompute
+        cache = getattr(self._host, '_perp_cache', None)
         if cache is not None and cache[1] is self._it:
-            self._sub_win._perp_cache = (cache[0], cache[1], vert_canon, all_perp)
+            self._host._perp_cache = (cache[0], cache[1], vert_canon, all_perp)
 
     def _on_vertex_types_error(self, msg):
+        if self._vertex_worker_it is not self._it:
+            return
         self._colour_action.setEnabled(True)
         self._colour_action.setText("Colour by vertex type")
         self._colour_action.setChecked(False)

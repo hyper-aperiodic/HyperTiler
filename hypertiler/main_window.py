@@ -19,7 +19,7 @@ from .helpers import regular_vectors, classify_areas, make_colors, _make_shifts
 from .graphics import tilePlot, pointPlot, vectorPlotting, edgePlot, gridPlot
 from .widgets import LockedViewBox, DecimalDelegate, TableModel, TileSwatchButton, center_on_screen
 from .workers import _VertexWorker
-from .tools.style_dialog import StyleDialog
+from .tools.style_dialog import StyleWidget
 from .tools.vertex_finder import VertexFinderWindow
 from .tools.network import NetworkBuilderWindow
 from .tools.dual_tiling import DualTilingWindow, _DualAdapter
@@ -70,8 +70,8 @@ class createAdvancedWindow(QtWidgets.QWidget):
         form = QtWidgets.QFormLayout()
         labels = ["Tile scale:", "Grid scale:", "Angle:", "Grid shift:"]
         validators = [
-            QDoubleValidator(-1e10, 1e10, 3),
-            QDoubleValidator(-1e10, 1e10, 3),
+            QDoubleValidator(0, 1e10, 3),
+            QDoubleValidator(0, 1e10, 3),
             QDoubleValidator(0.0, 360.0, 2),
             QDoubleValidator(-1e10, 1e10, 3),
         ]
@@ -147,14 +147,15 @@ class createAdvancedWindow(QtWidgets.QWidget):
         # after this call and the view is left holding a dangling pointer to
         # it, which segfaults on the next paint/layout pass.
         self._column_delegates = [
-            DecimalDelegate(decimals=3, minimum=-1e10, maximum=1e10, step=0.1,
+            DecimalDelegate(decimals=3, minimum=0.01, maximum=1e10, step=0.1,
                             live_callback=self.on_live_vector_change),
-            DecimalDelegate(decimals=3, minimum=-1e10, maximum=1e10, step=0.1,
+            DecimalDelegate(decimals=3, minimum=0.01, maximum=1e10, step=0.1,
                             live_callback=self.on_live_vector_change),
-            DecimalDelegate(decimals=2, minimum=0.0, maximum=360.0, step=1.0,
-                            live_callback=self.on_live_vector_change),
-            DecimalDelegate(decimals=3, minimum=-1e10, maximum=1e10, step=0.1,
-                            live_callback=self.on_live_vector_change),
+
+            DecimalDelegate(decimals=3, display_decimals=2, minimum=0.0, maximum=360.0,
+                            step=1.0, live_callback=self.on_live_vector_change),
+            DecimalDelegate(decimals=5, display_decimals=3, minimum=-1e10, maximum=1e10,
+                            step=0.1, live_callback=self.on_live_vector_change),
         ]
         for col, delegate in enumerate(self._column_delegates):
             self.tableView.setItemDelegateForColumn(col, delegate)
@@ -175,7 +176,7 @@ class createAdvancedWindow(QtWidgets.QWidget):
 
         ui = self._ui
         if ui.plotted and ui.gridView.isChecked():
-            grid, _ = TileMaker.build_grid(ui.vector_data, ui.sizeValue.value())
+            grid, _ = TileMaker.build_grid(ui.vector_data, ui.sizeValue.value(), dedupe=False)
             was_visible = ui.gridItem.isVisible()
             ui.tilingPlot.removeItem(ui.gridItem)
             ui.gridItem = gridPlot(grid, ui.grid_color, ui.grid_width)
@@ -193,31 +194,29 @@ class createAdvancedWindow(QtWidgets.QWidget):
 
     def _fill_edits(self, row_data):
         for le, val in zip(self.lineEdits, row_data):
-            le.setText(val)
+            le.setText(str(round(float(val), 3)))
 
     def on_row_header_clicked(self, idx):
         self.current_row = idx
-        row_data = [self.model.data(self.model.index(idx, c), Qt.DisplayRole)
+        row_data = [self.model.data(self.model.index(idx, c), Qt.EditRole)
                     for c in range(self.model.columnCount())]
         self._fill_edits(row_data)
 
     def on_col_header_clicked(self, idx):
-        col_data = [self.model.data(self.model.index(r, idx), Qt.DisplayRole)
+        col_data = [self.model.data(self.model.index(r, idx), Qt.EditRole)
                     for r in range(self.model.rowCount())]
         self._fill_edits(col_data)
 
     def on_cell_clicked(self, index):
-        row_data = [self.model.data(self.model.index(index.row(), c), Qt.DisplayRole)
+        row_data = [self.model.data(self.model.index(index.row(), c), Qt.EditRole)
                     for c in range(self.model.columnCount())]
         self._fill_edits(row_data)
 
     def on_cell_edited(self, index):
-        row_data = [self.model.data(self.model.index(index.row(), c), Qt.DisplayRole)
+
+        row_data = [self.model.data(self.model.index(index.row(), c), Qt.EditRole)
                     for c in range(self.model.columnCount())]
-        for col, (le, val) in enumerate(zip(self.lineEdits, row_data)):
-            v = round(float(val), 3)
-            le.setText(str(v))
-            self._ui.vector_data[index.row()][col] = v
+        self._fill_edits(row_data)
         self._ui.editVector(self._ui.vector_data)
 
     def on_line_edit_finished(self, col, le):
@@ -287,7 +286,10 @@ class Ui_MainWindow(object):
         self.gridItem = None
         self.edge_was_checked = False
         self._dual_active = False
+        self._pre_dual_tiling_state = None
         self._in_sub_mode = False
+        self.perp_window = None
+        self._perp_cache = None
         self.edge_color = (0, 0, 0)
         self.edge_width = 2.0
         self.point_color = (0, 0, 0)
@@ -372,6 +374,11 @@ class Ui_MainWindow(object):
 
         self.tileButton = QtWidgets.QPushButton("Tile!")
         left_v.addWidget(self.tileButton)
+
+        self.style_widget = StyleWidget(self)
+        left_v.addWidget(self.style_widget)
+        self.style_widget.setVisible(False)
+
         left_v.addItem(QtWidgets.QSpacerItem(20, 240, QtWidgets.QSizePolicy.Minimum,
                                              QtWidgets.QSizePolicy.Expanding))
 
@@ -445,19 +452,16 @@ class Ui_MainWindow(object):
             plot.scene().contextMenuEvent = lambda e: None
 
         btn_h = QtWidgets.QHBoxLayout()
-        btn_h.addItem(QtWidgets.QSpacerItem(170, 20, QtWidgets.QSizePolicy.Fixed,
-                                            QtWidgets.QSizePolicy.Minimum))
+        btn_h.addStretch()
         self.gridView = QtWidgets.QPushButton("Grid view")
         self.gridView.setCheckable(True)
         self.gridView.clicked.connect(self.gridViewButton)
         self.pointView = QtWidgets.QPushButton("Point view")
         self.pointView.setCheckable(True)
         self.pointView.clicked.connect(self.pointViewButton)
-        self.editStyle = QtWidgets.QPushButton("Edit style...")
-        self.editStyle.clicked.connect(self.editTilingStyle)
         self.saveAs = QtWidgets.QPushButton("Save as...")
         self.saveAs.clicked.connect(self.saveAsTiling)
-        for btn in (self.gridView, self.pointView, self.editStyle, self.saveAs):
+        for btn in (self.gridView, self.pointView, self.saveAs):
             btn_h.addWidget(btn)
         btn_h.addStretch()
         self.qualityLabel = QtWidgets.QLabel("")
@@ -491,21 +495,27 @@ class Ui_MainWindow(object):
         MainWindow.setWindowIcon(make_app_icon())
         QtWidgets.QApplication.instance().setStyleSheet(APP_STYLESHEET)
 
-        self.tileButton.clicked.connect(self.generateTiling)
+        self.tileButton.clicked.connect(lambda: self.generateTiling())
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
         self.fftAction = QtWidgets.QAction("Compute FFT", MainWindow)
         self.fftAction.triggered.connect(self.computeFFT)
         self.menuTools.addAction(self.fftAction)
 
+        self.perpSpaceAction = QtWidgets.QAction("Perpendicular space", MainWindow)
+        self.perpSpaceAction.triggered.connect(self.computePerpSpace)
+        self.menuTools.addAction(self.perpSpaceAction)
+
         self.vertexAction = QtWidgets.QAction("Vertex types", MainWindow)
         self.vertexAction.triggered.connect(self.computeVertexTypes)
         self.menuTools.addAction(self.vertexAction)
 
+        self.menuTools.addSeparator()
+
         self.networkAction = QtWidgets.QAction("Network builder", MainWindow)
         self.networkAction.triggered.connect(self.computeNetworkBuilder)
         self.menuTools.addAction(self.networkAction)
-
+        
         self.dualTiling = QtWidgets.QAction("Dual tiling", MainWindow)
         self.dualTiling.triggered.connect(self.computeDualTiling)
         self.menuTools.addAction(self.dualTiling)
@@ -515,10 +525,7 @@ class Ui_MainWindow(object):
         self.analyseSvgAction.setVisible(False)
         self.menuTools.addAction(self.analyseSvgAction)
 
-        self.perpSpaceAction = QtWidgets.QAction("Perpendicular space…", MainWindow)
-        self.perpSpaceAction.triggered.connect(self.computePerpSpace)
-        self.perpSpaceAction.setVisible(False)
-        self.menuTools.addAction(self.perpSpaceAction)
+        
 
         self.saveParamsAction = QtWidgets.QAction("Save parameters...", MainWindow)
         self.saveParamsAction.setShortcut("Ctrl+S")
@@ -556,6 +563,7 @@ class Ui_MainWindow(object):
             self._main_window.resize(self._main_window.width() + dock_w,
                                      self._main_window.height())
 
+
     def closeAdvancedDock(self, event):
         new_w = self._dock_closed_width()
         self._main_window.resize(new_w, self._main_window.height())
@@ -573,8 +581,9 @@ class Ui_MainWindow(object):
         if vw is None or not vw.isVisible() or not vw.highlight_items:
             return
         visible = not self.gridView.isChecked()
-        for item in vw.highlight_items.values():
-            item.setVisible(visible)
+        for items in vw.highlight_items.values():
+            for _plot, scatter in items:
+                scatter.setVisible(visible)
 
     def gridViewButton(self, checked):
         if not self.plotted:
@@ -586,19 +595,17 @@ class Ui_MainWindow(object):
             self.pointView.setText("Point view")
             self.pointView.blockSignals(False)
             self.tileItem.hide()
+            self.gridView.setText("Tile view")
             self.vertItem.hide()
             if self.edgeItem is not None:
                 self.edgeItem.hide()
             self.gridItem.show()
         else:
+            self.gridView.setText("Grid view")
             self.gridItem.hide()
             self.tileItem.show()
         self._sync_highlight_visibility()
-        if hasattr(self, 'style_dialog') and self.style_dialog is not None and \
-                self.style_dialog.isVisible():
-            mode = self._current_view_mode()
-            self.style_dialog.refresh(mode)
-            self.style_dialog.adjustSize()
+        self.style_widget.refresh(self._current_view_mode())
 
     def computeVertexTypes(self):
         if self._in_sub_mode:
@@ -618,14 +625,21 @@ class Ui_MainWindow(object):
         if hasattr(self, 'vertex_window') and self.vertex_window is not None:
             self.vertex_window.close()
         self.vertex_window = VertexFinderWindow(self)
+        self.windows_open['vertex_window'] = True
+        self.vertex_window.destroyed.connect(lambda: self.updateWindowState('vertex_window'))
         self.vertex_window.show()
 
     def computeDualTiling(self):
         if self._in_sub_mode:
             if not self._populate_from_substitution():
                 return
-        elif not self.plotted:
-            return
+        else:
+            if not self.plotted:
+                return
+            # computing a second dual tiling (without having closed the
+            # first) would otherwise dualise the previous dual instead of
+            # the real grid tiling, since nothing else un-swaps self.tiling
+            self._restore_pre_dual_tiling()
         if hasattr(self, 'dual_window') and self.dual_window is not None:
             self.dual_window.close()
         self.dual_window = DualTilingWindow(self)
@@ -657,6 +671,9 @@ class Ui_MainWindow(object):
                     if hasattr(self, 'network_window') and self.network_window is not None:
                         self.network_window.close()
                     self.network_window = NetworkBuilderWindow(self, skip_worker=True)
+                    self.windows_open['network_window'] = True
+                    self.network_window.destroyed.connect(
+                        lambda: self.updateWindowState('network_window'))
                     sub_win._show_vertices(silent=True)
                 return
         elif not self.plotted:
@@ -672,6 +689,9 @@ class Ui_MainWindow(object):
         if hasattr(self, 'network_window') and self.network_window is not None:
             self.network_window.close()
         self.network_window = NetworkBuilderWindow(self)
+        self.windows_open['network_window'] = True
+        self.network_window.destroyed.connect(
+            lambda: self.updateWindowState('network_window'))
 
     def computeSubstitution(self):
         if self._in_sub_mode:
@@ -690,7 +710,6 @@ class Ui_MainWindow(object):
             self._dual_active = False
             self.subAction.setText("Substitution Mode")
             self.analyseSvgAction.setVisible(False)
-            self.perpSpaceAction.setVisible(False)
             self._main_window.setWindowTitle("HyperTiler")
             if not isinstance(getattr(self, 'tiling', None), TileMaker):
                 self.generateTiling()
@@ -706,15 +725,17 @@ class Ui_MainWindow(object):
             if self._view_stack.count() < 2:
                 self.substitution_window = SubstitutionWindow(self)
                 self._view_stack.addWidget(self.substitution_window)
-            self._pre_sub_size = self._main_window.size()
             self._adv_was_visible = self.advancedDock.isVisible()
             if self._adv_was_visible:
+                pre_width = self._dock_closed_width()
                 self.advancedDock.hide()
+            else:
+                pre_width = self._main_window.width()
+            self._pre_sub_size = QtCore.QSize(pre_width, self._main_window.height())
             self._view_stack.setCurrentIndex(1)
             self._in_sub_mode = True
             self.subAction.setText("Grid Mode")
             self.analyseSvgAction.setVisible(True)
-            self.perpSpaceAction.setVisible(True)
             self._main_window.setWindowTitle("HyperTiler — Substitution mode")
 
     def computeAnalyseSvg(self):
@@ -724,6 +745,25 @@ class Ui_MainWindow(object):
     def computePerpSpace(self):
         if self._in_sub_mode and hasattr(self, 'substitution_window'):
             self.substitution_window._show_perp_space()
+            return
+        if not self.plotted or not isinstance(self.tiling, TileMaker):
+            return
+        self._show_dual_perp_space()
+
+    def _show_dual_perp_space(self):
+        from .substitution.perp_window import PerpSpaceWindow
+        from .substitution.worker import _DualPerpVertexTypesWorker
+        if self.perp_window is not None:
+            self.perp_window.close()
+        self.perp_window = PerpSpaceWindow(
+            self, vertex_worker_cls=_DualPerpVertexTypesWorker)
+        try:
+            self.perp_window.build_display(self.tiling)
+        except ValueError as e:
+            self.perp_window.close()
+            self.perp_window = None
+            QtWidgets.QMessageBox.warning(
+                self._main_window, "Perpendicular space unavailable", str(e))
 
     # ------------------------------------------------------------------
     # substitution ↔ tool bridge
@@ -777,7 +817,21 @@ class Ui_MainWindow(object):
         same way _populate_from_substitution() does for substitution output -
         FFT/Network builder/Vertex types/Edit style read self.tiling/
         self.poly_areas/self.current_colors/self.vertices generically and
-        don't need to know a swap happened."""
+        don't need to know a swap happened.
+
+        In grid mode, remember the real tiling the first time this runs so
+        _restore_pre_dual_tiling() can put it back later - otherwise a
+        second "Dual tiling" click (or a tool used after the dual window
+        closes) would operate on the dual of the dual, since nothing else
+        here ever un-swaps self.tiling. Substitution mode doesn't need
+        this: _populate_from_substitution() already repopulates self.tiling
+        fresh on every sub-mode tool open, and leaving sub mode already
+        falls back to generateTiling() if self.tiling isn't a TileMaker."""
+        if not self._in_sub_mode and self._pre_dual_tiling_state is None:
+            self._pre_dual_tiling_state = (
+                self.tiling, self.poly_areas, self.ngon_areas, self.current_colors,
+                self.poly_unq, self.ngon_unq, self.vertices)
+
         if faces:
             areas = [TileMaker._polygon_area(f[:, 0], f[:, 1]) for f in faces]
             type_idx, unique_areas = classify_areas(areas)
@@ -796,8 +850,20 @@ class Ui_MainWindow(object):
         self.vertices = centroids
         self.plotted = True
         self._dual_active = True
-        self._main_window.setWindowTitle("HyperTiler — Dual tiling active")
-        
+
+    def _restore_pre_dual_tiling(self):
+        """Undo _activate_dual_tiling()'s swap, back to the real tiling it
+        snapshotted - called when the dual tiling window closes, and from
+        computeDualTiling() before computing a new dual, so a repeat
+        "Dual tiling" click dualises the real tiling again instead of the
+        previous dual. """
+        if self._in_sub_mode or self._pre_dual_tiling_state is None:
+            return
+        (self.tiling, self.poly_areas, self.ngon_areas, self.current_colors,
+         self.poly_unq, self.ngon_unq, self.vertices) = self._pre_dual_tiling_state
+        self._pre_dual_tiling_state = None
+        self._dual_active = False
+
     # ------------------------------------------------------------------
     # vector helpers
     # ------------------------------------------------------------------
@@ -852,22 +918,26 @@ class Ui_MainWindow(object):
     def _classifyAreas(areas):
         return classify_areas(areas)
 
-    def _tiling_hash(self):
+    def _tiling_hash(self, dedupe=True):
         return (tuple(self.vector_data.flatten()),
                 self.sizeValue.value(),
-                self.shiftSelect.currentIndex())
+                self.shiftSelect.currentIndex(),
+                dedupe)
 
     # ------------------------------------------------------------------
     # main actions
     # ------------------------------------------------------------------
 
-    def generateTiling(self):
+    def generateTiling(self, dedupe=None):
+        if dedupe is None:
+            dedupe = not (hasattr(self, 'advancedDock') and self.advancedDock.isVisible())
         if not isinstance(getattr(self, 'tiling', None), TileMaker):
 
             self._dual_active = False
+            self._pre_dual_tiling_state = None
             self._main_window.setWindowTitle("HyperTiler")
         elif self.shiftSelect.currentIndex() not in (2, 3):
-            current_hash = self._tiling_hash()
+            current_hash = self._tiling_hash(dedupe)
             if hasattr(self, '_last_tiling_hash') and current_hash == self._last_tiling_hash:
                 return
 
@@ -875,7 +945,7 @@ class Ui_MainWindow(object):
             self.updateShift()
             self.advancedWindow.dataGrab()
 
-        self._last_tiling_hash = self._tiling_hash()
+        self._last_tiling_hash = self._tiling_hash(dedupe)
 
         if hasattr(self, 'vertex_window') and self.vertex_window is not None \
                 and self.vertex_window.isVisible():
@@ -893,9 +963,15 @@ class Ui_MainWindow(object):
         self.edgeItem = None
         self.gridItem = None
 
-        self.tiling = TileMaker(self.vector_data, self.sizeValue.value())
+        self.tiling = TileMaker(self.vector_data, self.sizeValue.value(), dedupe=dedupe)
         self.vertices = (np.vstack(self.tiling.points) if len(self.tiling.points) > 0
                          else np.vstack(self.tiling.p_points))
+
+        if self.perp_window is not None and self.perp_window.isVisible():
+            try:
+                self.perp_window.build_display(self.tiling)
+            except ValueError:
+                pass
 
         max_coord = np.max(np.abs(self.vertices)) * 1.1
         self.tilingPlot.enableAutoRange(False)
@@ -918,10 +994,10 @@ class Ui_MainWindow(object):
         if hasattr(self, '_pending_colors') and len(self._pending_colors) == n_types:
             self.current_colors = self._pending_colors
             del self._pending_colors
-        elif (hasattr(self, 'style_dialog') and self.style_dialog is not None
-              and self.shiftSelect.currentIndex() in (2, 3)
+        elif (self.shiftSelect.currentIndex() in (2, 3)
+              and hasattr(self, 'current_colors')
               and len(self.current_colors) == n_types):
-            pass  # keep self.current_colors as-is
+            pass  # keep self.current_colors as-is - may have been hand-customised
         else:
             self.current_colors = self._makeColors(n_types)
 
@@ -962,24 +1038,16 @@ class Ui_MainWindow(object):
             self.vertItem.hide()
             self.gridItem.hide()
 
-        if hasattr(self, 'style_dialog') and self.style_dialog is not None and \
-                self.style_dialog.isVisible():
-            if hasattr(self.style_dialog, '_intersect_scatter'):
-                self.style_dialog._intersect_scatter = None
-            mode = self._current_view_mode()
-            self.style_dialog.refresh(mode)
+        if hasattr(self.style_widget, '_intersect_scatter'):
+            self.style_widget._intersect_scatter = None
+        self.style_widget.refresh(self._current_view_mode())
+        self.style_widget.setVisible(True)
 
         if self.pointView.isChecked() and self.edge_was_checked:
-            if hasattr(self, 'style_dialog') and self.style_dialog is not None and \
-                    self.style_dialog.isVisible():
-                self.style_dialog._edge_color = self.edge_color
-                self.style_dialog._set_btn_color(self.edge_color)
-                self.style_dialog.width_spin.setValue(self.edge_width)
-                self.style_dialog.edge_check.setChecked(True)
-            else:
-                self.edgeItem = edgePlot(self.tiling, self.edge_color, self.edge_width)
-                self.tilingPlot.addItem(self.edgeItem)
-                self.edgeItem.setZValue(self.vertItem.zValue() - 1)
+            self.style_widget._edge_color = self.edge_color
+            self.style_widget._set_btn_color(self.edge_color)
+            self.style_widget.width_spin.setValue(self.edge_width)
+            self.style_widget.edge_check.setChecked(True)
 
         if hasattr(self, 'vertex_window') and self.vertex_window is not None \
                 and self.vertex_window.isVisible():
@@ -1005,23 +1073,6 @@ class Ui_MainWindow(object):
         if hide_tiles:
             self.tileItem.hide()
 
-    def editTilingStyle(self):
-        if not self.plotted:
-            return
-        if hasattr(self, 'style_dialog') and self.style_dialog is not None and \
-                self.style_dialog.isVisible():
-            self.style_dialog.raise_()
-            self.style_dialog.activateWindow()
-            return
-        mode = self._current_view_mode()
-        self.style_dialog = StyleDialog(self, mode)
-        self.style_dialog.setMinimumWidth(380)
-        self.style_dialog.setParent(self._main_window, QtCore.Qt.Window)
-        top_right = self.tilingPlot.mapToGlobal(
-            QtCore.QPoint(self.tilingPlot.width() + 10, 0))
-        self.style_dialog.move(top_right)
-        self.style_dialog.show()
-
     def pointViewButton(self, checked):
         if not self.plotted:
             self.pointView.setChecked(False)
@@ -1043,11 +1094,7 @@ class Ui_MainWindow(object):
             if self.edgeItem is not None:
                 self.edgeItem.hide()
         self._sync_highlight_visibility()
-        if hasattr(self, 'style_dialog') and self.style_dialog is not None and \
-                self.style_dialog.isVisible():
-            mode = self._current_view_mode()
-            self.style_dialog.refresh(mode)
-            self.style_dialog.adjustSize()
+        self.style_widget.refresh(self._current_view_mode())
 
     def openPreferences(self):
         dlg = PreferencesDialog(self._main_window)
@@ -1114,8 +1161,9 @@ class Ui_MainWindow(object):
         fft_shift = np.fft.fftshift(fft)
         magnitude = np.log1p(np.abs(fft_shift))
 
-        self.fft_window = QtWidgets.QMainWindow(self._main_window)
+        self.fft_window = QtWidgets.QMainWindow(None)
         self.fft_window.setWindowTitle("FFT")
+        self.fft_window.setWindowIcon(make_app_icon())
 
         plot = pg.PlotWidget(viewBox=LockedViewBox())
         plot.setBackground('k')
@@ -1138,6 +1186,8 @@ class Ui_MainWindow(object):
         self.fft_window.setFixedSize(600, 600)
         ref = self._active_plot_widget()
         center_on_screen(self.fft_window, ref)
+        self.windows_open['fft_window'] = True
+        self.fft_window.destroyed.connect(lambda: self.updateWindowState('fft_window'))
         self.fft_window.show()
 
     # ------------------------------------------------------------------

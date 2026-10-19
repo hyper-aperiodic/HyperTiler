@@ -350,3 +350,41 @@ class _PerpVertexTypesWorker(QtCore.QThread):
             self.finished.emit((vert_canon, all_perp))
         except Exception:
             self.error.emit(traceback.format_exc())
+
+
+class _DualPerpVertexTypesWorker(QtCore.QThread):
+    """Dual-grid counterpart of _PerpVertexTypesWorker: vertex-type analysis
+    for a TileMaker instance, paired with each vertex's perpendicular-space
+    coordinate. Delegates the actual type-finding to
+    hypertiler.workers.dual_vertex_type_map - the exact same function the
+    main "Vertex types" tool window's _VertexWorker calls - so this can
+    never silently disagree with it about what counts as a type or which
+    vertices are interior (an earlier version had its own, divergent
+    boundary filter here, which turned out to fail badly - sometimes
+    finding zero interior vertices at all - for tilings with non-uniform
+    tile density, e.g. an asymmetric/mixed-tile-scale hex)."""
+    finished = QtCore.pyqtSignal(object)   # emits (vert_canon, all_perp)
+    error = QtCore.pyqtSignal(str)
+
+    def __init__(self, tiling):
+        super().__init__()
+        self._tiling = tiling
+
+    def run(self):
+        try:
+            from ..workers import dual_vertex_type_map
+            tm = self._tiling
+            type_map, _, _ = dual_vertex_type_map(tm)
+
+            vert_canon, all_perp_rows = {}, []
+            row = 0
+            for canon, keys in type_map.items():
+                for key in keys:
+                    vert_canon[row] = canon
+                    all_perp_rows.append(np.asarray(key) @ tm.perp.T)
+                    row += 1
+            all_perp = (np.array(all_perp_rows) if all_perp_rows
+                        else np.zeros((0, tm.d)))
+            self.finished.emit((vert_canon, all_perp))
+        except Exception:
+            self.error.emit(traceback.format_exc())

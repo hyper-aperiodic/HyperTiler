@@ -7,9 +7,9 @@ import pyqtgraph as pg
 
 from ..widgets import LockedViewBox
 from ..graphics import coloredPointPlot, linkPlot, tilePlot
+from ..config import make_app_icon
 
 
-#TODO: 
 
 def _compute_dual(tiling, poly_areas, ngon_areas, current_colors):
     """Compute the dual graph of a tiling: one point per tile (its
@@ -109,13 +109,7 @@ def _compute_dual_faces(tiling, centroids):
 # vertex-configuration key from _VertexWorker's type_map) the vertex they
 # surround belongs to, instead of by raw polygon area - more robust than
 # area (distinguishes faces that happen to have the same area but come
-# from topologically different vertices). Blocked on _VertexWorker's
-# coverage: it only classifies vertices within 80% of the bounding radius
-# (workers.py:79 `radius = norms.max() * 0.8`, applied by the
-# `set_a_keys` filter at workers.py:81-85), so ~20% of vertices near the
-# tiling boundary never get a canonical type - update that filter/logic
-# before wiring this in, or faces near the edge will have no colour to
-# fall back on.
+# from topologically different vertices). 
 def _color_faces_by_vertex_type(faces, vertex_keys, type_map):
     raise NotImplementedError
 
@@ -156,11 +150,21 @@ class DualTilingWindow(QtWidgets.QMainWindow):
         super().__init__(None)
         self.ui = parent_ui
         self.setWindowTitle("Dual tiling")
+        self.setWindowIcon(make_app_icon())  # no Qt parent above, so it
+        # won't inherit the main window's icon automatically
         self._centroids = None
         self._faces = None
         self._face_tile_ids = None
         self._setup_ui()
         self._compute_and_show()
+
+    def closeEvent(self, event):
+        # this window's faces are self.tiling for as long as it's open -
+        # drop that swap on close so FFT/Network builder/Vertex types from
+        # the main window go back to operating on the real grid tiling
+        # instead of a dual tiling that's no longer visible.
+        self.ui._restore_pre_dual_tiling()
+        super().closeEvent(event)
 
     def _setup_ui(self):
         central = QtWidgets.QWidget()
@@ -235,6 +239,17 @@ class DualTilingWindow(QtWidgets.QMainWindow):
         if self._centroids is not None:
             self.ui._activate_dual_tiling(self._centroids, self._faces, self._face_tile_ids)
 
+    def _raise_after(self, show_window):
+        # the tool windows these open (VertexFinderWindow, NetworkBuilder-
+        # Window, ...) are parented to the main window, so Windows' owned-
+        # window z-order rule keeps them above it - which brings the main
+        # window forward as a group and buries this (deliberately
+        # parentless, see __init__) window behind both of them. Pop back
+        # to the front afterward so it isn't left looking closed.
+        show_window()
+        self.raise_()
+        self.activateWindow()
+
     def _run_fft(self):
         # call the _show_*_window() cores directly, not the public
         # compute*() menu actions - those branch on _in_sub_mode first
@@ -242,12 +257,12 @@ class DualTilingWindow(QtWidgets.QMainWindow):
         # was computed while in substitution mode), undoing the
         # _activate() call above and running on the wrong tiling
         self._activate()
-        self.ui._show_fft_window()
+        self._raise_after(self.ui._show_fft_window)
 
     def _run_vertex_types(self):
         self._activate()
-        self.ui._show_vertex_types_window()
+        self._raise_after(self.ui._show_vertex_types_window)
 
     def _run_network_builder(self):
         self._activate()
-        self.ui._show_network_builder_window()
+        self._raise_after(self.ui._show_network_builder_window)
