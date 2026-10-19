@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hypertiler"
-version = "1.0.0"
+version = "1.1.0"
 description = "A friendly low/no-code tool for generating quasiperiodic tilings"
 readme = "README.md"
 requires-python = ">=3.12"
