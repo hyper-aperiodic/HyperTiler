@@ -12,13 +12,14 @@ class VertexFinderWindow(QtWidgets.QMainWindow):
     def __init__(self, parent_ui):
         super().__init__(None)
         self.ui = parent_ui
+        self._scale = getattr(parent_ui, 'scale', 1.0)
         self.setWindowTitle("Vertex Types")
         self.setWindowIcon(make_app_icon())
         self.highlight_items = {}
         self._group_mirrors = False
         self._raw_type_map = {}
         self._show_loading()
-        self.resize(400, 150)
+        self.resize(int(400 * self._scale), int(150 * self._scale))
         ref = self.ui._active_plot_widget()
         center_on_screen(self, ref)
         self.show()
@@ -106,7 +107,7 @@ class VertexFinderWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(central)
 
         cols = 3
-        PREVIEW_SIZE = 150
+        PREVIEW_SIZE = int(150 * self._scale)
 
         for idx, (key, vert_keys) in enumerate(
                 sorted(type_map.items(), key=lambda x: -len(x[1]))):
@@ -197,7 +198,7 @@ class VertexFinderWindow(QtWidgets.QMainWindow):
             grid.addWidget(cell, row, col)
 
         n_rows = math.ceil(len(type_map) / cols)
-        self.resize(cols * 190 + 20, min(n_rows * 260 + 20, 600))
+        self.resize(int(cols * 190 * self._scale + 20), int(min(n_rows * 260 * self._scale + 20, 600 * self._scale)))
         self.show()
 
     def _target_plots(self):

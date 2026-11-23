@@ -149,6 +149,7 @@ class DualTilingWindow(QtWidgets.QMainWindow):
         # windows_open/destroyed for cleanup instead of parent ownership.
         super().__init__(None)
         self.ui = parent_ui
+        self._scale = getattr(parent_ui, 'scale', 1.0)
         self.setWindowTitle("Dual tiling")
         self.setWindowIcon(make_app_icon())  # no Qt parent above, so it
         # won't inherit the main window's icon automatically
@@ -197,7 +198,7 @@ class DualTilingWindow(QtWidgets.QMainWindow):
         v.addWidget(self._status_lbl)
 
         self.setCentralWidget(central)
-        self.setFixedSize(700, 650)
+        self.setFixedSize(int(700 * self._scale), int(650 * self._scale))
 
         # offset next to the active tiling plot rather than centering on
         # screen, which would otherwise land this window directly on top

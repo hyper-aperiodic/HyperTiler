@@ -23,6 +23,7 @@ class SubstitutionWindow(QtWidgets.QWidget):
     def __init__(self, parent_ui):
         super().__init__()
         self._ui = parent_ui
+        self._scale = parent_ui.scale
         self._rules_path = None
         self._seed_path = None
         self._type_colors = {}
@@ -52,7 +53,7 @@ class SubstitutionWindow(QtWidgets.QWidget):
         h.setSpacing(8)
 
         left = QtWidgets.QWidget()
-        left.setFixedWidth(250)
+        left.setFixedWidth(int(250 * self._scale))
         lv = QtWidgets.QVBoxLayout(left)
         lv.setContentsMargins(0, 0, 0, 0)
         lv.setSpacing(4)
@@ -63,7 +64,7 @@ class SubstitutionWindow(QtWidgets.QWidget):
         self._rules_lbl.setStyleSheet("color:#888; font-size:8pt;")
         self._rules_lbl.setWordWrap(True)
         btn_rules = QtWidgets.QPushButton("Browse…")
-        btn_rules.setFixedWidth(80)
+        btn_rules.setFixedWidth(int(80 * self._scale))
         btn_rules.clicked.connect(self._browse_rules)
         rules_h.addWidget(self._rules_lbl, 1)
         rules_h.addWidget(btn_rules)
@@ -72,7 +73,7 @@ class SubstitutionWindow(QtWidgets.QWidget):
         self._preview_area = QtWidgets.QScrollArea()
         self._preview_area.setWidgetResizable(True)
         self._preview_area.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self._preview_area.setFixedHeight(330)
+        self._preview_area.setFixedHeight(int(330 * self._scale))
         pw = QtWidgets.QWidget()
         self._preview_grid = QtWidgets.QGridLayout(pw)
         self._preview_grid.setSpacing(8)
@@ -100,7 +101,7 @@ class SubstitutionWindow(QtWidgets.QWidget):
         self._seed_svg_lbl = QtWidgets.QLabel("(none)")
         self._seed_svg_lbl.setStyleSheet("color:#888; font-size:8pt;")
         btn_seed = QtWidgets.QPushButton("Browse…")
-        btn_seed.setFixedWidth(80)
+        btn_seed.setFixedWidth(int(80 * self._scale))
         btn_seed.clicked.connect(self._browse_seed)
         seed_svg_h.addWidget(self._seed_svg_lbl, 1)
         seed_svg_h.addWidget(btn_seed)
@@ -138,7 +139,7 @@ class SubstitutionWindow(QtWidgets.QWidget):
         self._colour_area = QtWidgets.QScrollArea()
         self._colour_area.setWidgetResizable(True)
         self._colour_area.setFrameShape(QtWidgets.QFrame.NoFrame)
-        self._colour_area.setFixedHeight(80)
+        self._colour_area.setFixedHeight(int(80 * self._scale))
         cw = QtWidgets.QWidget()
         self._colour_h = QtWidgets.QHBoxLayout(cw)
         self._colour_h.setSpacing(6)
@@ -170,7 +171,7 @@ class SubstitutionWindow(QtWidgets.QWidget):
         self._progress = QtWidgets.QProgressBar()
         self._progress.setRange(0, 0)
         self._progress.setTextVisible(False)
-        self._progress.setFixedHeight(6)
+        self._progress.setFixedHeight(int(6 * self._scale))
         self._progress.setVisible(False)
         lv.addWidget(self._progress)
 
@@ -275,7 +276,7 @@ class SubstitutionWindow(QtWidgets.QWidget):
             if item.widget():
                 item.widget().deleteLater()
 
-        SZ = 100
+        SZ = int(100 * self._scale)
         for idx, (t, coords) in enumerate(sorted(self._supertile_coords.items())):
 
             if chnge:
@@ -340,7 +341,7 @@ class SubstitutionWindow(QtWidgets.QWidget):
             wl.setContentsMargins(2, 2, 2, 2)
             wl.setSpacing(1)
             btn = QtWidgets.QPushButton()
-            btn.setFixedSize(26, 26)
+            btn.setFixedSize(int(26 * self._scale), int(26 * self._scale))
             qc = QtGui.QColor(color_str)
             btn.setStyleSheet(
                 f"background:{qc.name()}; border:1px solid #555; border-radius:3px;")

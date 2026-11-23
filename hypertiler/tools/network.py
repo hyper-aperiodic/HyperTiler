@@ -19,6 +19,7 @@ class NetworkBuilderWindow(QtWidgets.QMainWindow):
 
         super().__init__(None)
         self.ui = parent_ui
+        self._scale = getattr(parent_ui, 'scale', 1.0)
         self.setWindowTitle("Network builder")
         self.setWindowIcon(make_app_icon())
         self._vertices = None
@@ -112,7 +113,7 @@ class NetworkBuilderWindow(QtWidgets.QMainWindow):
         lbl = QtWidgets.QLabel("Computing vertex types…")
         lbl.setAlignment(Qt.AlignCenter)
         self.setCentralWidget(lbl)
-        self.setFixedSize(900, 80)
+        self.setFixedSize(int(900 * self._scale), int(80 * self._scale))
 
     def _setup_ui(self):
         central = QtWidgets.QWidget()
@@ -121,7 +122,7 @@ class NetworkBuilderWindow(QtWidgets.QMainWindow):
         h.setSpacing(8)
 
         left = QtWidgets.QWidget()
-        left.setFixedWidth(230)
+        left.setFixedWidth(int(230 * self._scale))
         lv = QtWidgets.QVBoxLayout(left)
         lv.setContentsMargins(0, 0, 0, 0)
         lv.setSpacing(4)
@@ -182,7 +183,7 @@ class NetworkBuilderWindow(QtWidgets.QMainWindow):
         self._rmin_spin.valueChanged.connect(lambda v: self._rmax_spin.setMinimum(v))
         self._rmax_spin.valueChanged.connect(lambda v: self._rmin_spin.setMaximum(v))
         btn_auto = QtWidgets.QPushButton("Auto")
-        btn_auto.setFixedWidth(48)
+        btn_auto.setFixedWidth(int(48 * self._scale))
         btn_auto.clicked.connect(self._auto_radius)
         rad_grid.addWidget(btn_auto, 0, 2, 2, 1)
         lv.addLayout(rad_grid)
@@ -232,7 +233,7 @@ class NetworkBuilderWindow(QtWidgets.QMainWindow):
         h.addWidget(self._plot)
 
         self.setCentralWidget(central)
-        self.setFixedSize(900, 650)
+        self.setFixedSize(int(900 * self._scale), int(650 * self._scale))
 
     def _reposition(self):
         ref = self.ui._active_plot_widget()

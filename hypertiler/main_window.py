@@ -34,6 +34,7 @@ class createAdvancedWindow(QtWidgets.QWidget):
     def __init__(self, ui_ref):
         super().__init__()
         self._ui = ui_ref
+        self._scale = ui_ref.scale
         # debounced full tiling regeneration while live-editing vectors -
         # a full rebuild can run from tens of ms to well over half a second
         # depending on fold/grid_len, so regenerating on every scroll tick
@@ -55,7 +56,7 @@ class createAdvancedWindow(QtWidgets.QWidget):
     def _setup(self):
         font = QFont()
         font.setPointSize(8)
-        self.resize(596, 418)
+        self.resize(int(596 * self._scale), int(418 * self._scale))
         self.setSizePolicy(QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed))
 
@@ -87,10 +88,10 @@ class createAdvancedWindow(QtWidgets.QWidget):
         top.addWidget(cust)
 
         gvp = QtWidgets.QGroupBox("Grid vectors")
-        gvp.setFixedSize(310, 320)
+        gvp.setFixedSize(int(310 * self._scale), int(320 * self._scale))
         gvp_lay = QtWidgets.QVBoxLayout(gvp)
         self.gridVectorPlot = pg.PlotWidget()
-        self.gridVectorPlot.setFixedSize(288, 288)
+        self.gridVectorPlot.setFixedSize(int(288 * self._scale), int(288 * self._scale))
         self.gridVectorPlot.setBackground('w')
         self.gridVectorPlot.getPlotItem().hideAxis('bottom')
         self.gridVectorPlot.getPlotItem().hideAxis('left')
@@ -258,20 +259,17 @@ class createAdvancedWindow(QtWidgets.QWidget):
 
 class Ui_MainWindow(object):
 
-    def setupUi(self, MainWindow):
+    def setupUi(self, MainWindow, scale=1.0):
         self._main_window = MainWindow
+        self.scale = scale
 
         MainWindow.setObjectName("HyperTiler")
 
-        # base design size (1050x800) was tuned for a ~1920x1080 display;
-        # scale it up on higher-resolution screens so the window isn't
-        # tiny on e.g. a 4K monitor
         screen = QtWidgets.QApplication.primaryScreen().availableGeometry()
-        scale = max(1.0, min(screen.width() / 1920, screen.height() / 1080, 2.5))
         init_w = min(int(1050 * scale), screen.width() - 100)
         init_h = min(int(800 * scale), screen.height() - 100)
         MainWindow.resize(init_w, init_h)
-        MainWindow.setMinimumSize(850, 650)
+        MainWindow.setMinimumSize(int(850 * scale), int(650 * scale))
 
         MainWindow.move(screen.x() + (screen.width() - init_w) // 2 - int(200 * scale),
                         screen.y() + (screen.height() - init_h) // 3)
@@ -309,7 +307,7 @@ class Ui_MainWindow(object):
         left_v.setContentsMargins(-1, 10, -1, -1)
 
         self.vectorPlot = pg.PlotWidget()
-        self.vectorPlot.setFixedSize(288, 288)
+        self.vectorPlot.setFixedSize(int(288 * scale), int(288 * scale))
         self.vectorPlot.setBackground('w')
         self.vectorPlot.getPlotItem().hideAxis('bottom')
         self.vectorPlot.getPlotItem().hideAxis('left')
@@ -342,7 +340,7 @@ class Ui_MainWindow(object):
         sym_h = QtWidgets.QHBoxLayout()
         self.symmetryLabel = QtWidgets.QLabel("No. of vectors:")
         self.symmetryValue = QtWidgets.QSpinBox()
-        self.symmetryValue.setFixedSize(60, 20)
+        self.symmetryValue.setFixedSize(int(60 * self.scale), int(20 * self.scale))
         self.symmetryValue.setMinimum(3)
         sym_h.addWidget(self.symmetryLabel)
         sym_h.addWidget(self.symmetryValue)
@@ -354,7 +352,7 @@ class Ui_MainWindow(object):
         size_h = QtWidgets.QHBoxLayout()
         self.sizeLabel = QtWidgets.QLabel("No. of grids:")
         self.sizeValue = QtWidgets.QSpinBox()
-        self.sizeValue.setFixedSize(60, 20)
+        self.sizeValue.setFixedSize(int(60 * self.scale), int(20 * self.scale))
         self.sizeValue.setValue(10)
         size_h.addWidget(self.sizeLabel)
         size_h.addWidget(self.sizeValue)
@@ -423,7 +421,7 @@ class Ui_MainWindow(object):
         right_v.setContentsMargins(7, 0, -1, 0)
 
         self.tilingPlot = pg.PlotWidget(self.plotArea, viewBox=LockedViewBox())
-        self.tilingPlot.setMinimumSize(400, 400)
+        self.tilingPlot.setMinimumSize(int(400 * scale), int(400 * scale))
         self.tilingPlot.setSizePolicy(
             QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         self.tilingPlot.setBackground('w')
@@ -1097,7 +1095,7 @@ class Ui_MainWindow(object):
         self.style_widget.refresh(self._current_view_mode())
 
     def openPreferences(self):
-        dlg = PreferencesDialog(self._main_window)
+        dlg = PreferencesDialog(self._main_window, scale=self.scale)
         dlg.exec_()
 
     def saveAsTiling(self):
@@ -1183,7 +1181,7 @@ class Ui_MainWindow(object):
 
         plot.addItem(img)
         self.fft_window.setCentralWidget(plot)
-        self.fft_window.setFixedSize(600, 600)
+        self.fft_window.setFixedSize(int(600 * self.scale), int(600 * self.scale))
         ref = self._active_plot_widget()
         center_on_screen(self.fft_window, ref)
         self.windows_open['fft_window'] = True

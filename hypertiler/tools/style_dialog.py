@@ -18,6 +18,7 @@ class StyleWidget(QtWidgets.QWidget):
 
     def __init__(self, parent_ui):
         super().__init__()
+        self._scale = getattr(parent_ui, 'scale', 1.0)
         self.ui = parent_ui
         self.mode = None
         self.root_layout = QtWidgets.QVBoxLayout(self)
@@ -64,7 +65,7 @@ class StyleWidget(QtWidgets.QWidget):
         edge_h = QtWidgets.QHBoxLayout()
         edge_h.addWidget(QtWidgets.QLabel("Tile edge colour:"))
         self.tile_edge_color_btn = QtWidgets.QPushButton()
-        self.tile_edge_color_btn.setFixedSize(40, 24)
+        self.tile_edge_color_btn.setFixedSize(int(40 * self._scale), int(24 * self._scale))
         self._set_tile_edge_btn_color(self._tile_edge_color)
         self.tile_edge_color_btn.clicked.connect(self._pick_tile_edge_color)
         edge_h.addWidget(self.tile_edge_color_btn)
@@ -143,7 +144,7 @@ class StyleWidget(QtWidgets.QWidget):
         n_types = len(ui.poly_unq) + len(ui.ngon_unq)
         cols = 4
         rows = max(1, -(-max(n_types, 1) // cols))
-        self._swatch_scroll.setFixedHeight(min(300, rows * 88 + 16))
+        self._swatch_scroll.setFixedHeight(min(int(300 * self._scale), int(rows * 88 * self._scale + 16)))
 
         for idx in range(n_types):
             if idx < len(ui.poly_unq):
@@ -155,7 +156,7 @@ class StyleWidget(QtWidgets.QWidget):
                          for i, a in enumerate(ui.ngon_areas) if a == ngon_idx]
 
             color = ui.current_colors[idx]
-            btn = TileSwatchButton(idx, tiles[0] if tiles else None, color)
+            btn = TileSwatchButton(idx, tiles[0] if tiles else None, color, self._scale)
             btn.clicked_with_idx.connect(self._on_swatch_clicked)
             row, col = divmod(idx, cols)
             self.swatch_layout.addWidget(btn, row, col)
@@ -208,7 +209,7 @@ class StyleWidget(QtWidgets.QWidget):
         color_h = QtWidgets.QHBoxLayout()
         color_h.addWidget(QtWidgets.QLabel("Edge colour:"))
         self.color_btn = QtWidgets.QPushButton()
-        self.color_btn.setFixedSize(40, 24)
+        self.color_btn.setFixedSize(int(40 * self._scale), int(24 * self._scale))
         self._set_btn_color(self._edge_color)
         self.color_btn.clicked.connect(self._pick_edge_color)
         color_h.addWidget(self.color_btn)
@@ -238,7 +239,7 @@ class StyleWidget(QtWidgets.QWidget):
         point_h = QtWidgets.QHBoxLayout()
         point_h.addWidget(QtWidgets.QLabel("Point colour:"))
         self.point_color_btn = QtWidgets.QPushButton()
-        self.point_color_btn.setFixedSize(40, 24)
+        self.point_color_btn.setFixedSize(int(40 * self._scale), int(24 * self._scale))
         self._set_point_btn_color(self._point_color)
         self.point_color_btn.clicked.connect(self._pick_point_color)
         point_h.addWidget(self.point_color_btn)
@@ -294,7 +295,7 @@ class StyleWidget(QtWidgets.QWidget):
         color_h = QtWidgets.QHBoxLayout()
         color_h.addWidget(QtWidgets.QLabel("Grid line colour:"))
         self.grid_color_btn = QtWidgets.QPushButton()
-        self.grid_color_btn.setFixedSize(40, 24)
+        self.grid_color_btn.setFixedSize(int(40 * self._scale), int(24 * self._scale))
         self._set_grid_btn_color(self._grid_color)
         self.grid_color_btn.clicked.connect(self._pick_grid_color)
         color_h.addWidget(self.grid_color_btn)
@@ -321,7 +322,7 @@ class StyleWidget(QtWidgets.QWidget):
 
         info_h = QtWidgets.QHBoxLayout()
         self.tile_preview = QtWidgets.QLabel()
-        self.tile_preview.setFixedSize(120, 120)
+        self.tile_preview.setFixedSize(int(120 * self._scale), int(120 * self._scale))
         self.tile_preview.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.tile_preview.setAlignment(QtCore.Qt.AlignCenter)
         self.tile_preview.setText("—")

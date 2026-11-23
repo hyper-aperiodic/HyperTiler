@@ -248,11 +248,12 @@ def make_app_icon():
 
 
 class PreferencesDialog(QtWidgets.QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, scale=1.0):
         super().__init__(parent)
+        self._scale = scale
         self.setWindowTitle("Preferences")
         self.setModal(True)
-        self.setFixedWidth(360)
+        self.setFixedWidth(int(360 * self._scale))
         layout = QtWidgets.QVBoxLayout(self)
 
         render_grp = QtWidgets.QGroupBox("Rendering")
@@ -310,7 +311,7 @@ class PreferencesDialog(QtWidgets.QDialog):
         self._tonal_base_color = _PREFS['tonal_base_color']
         self.base_colour_btn = QtWidgets.QPushButton("Base colour…")
         self.base_colour_swatch = QtWidgets.QLabel()
-        self.base_colour_swatch.setFixedSize(22, 22)
+        self.base_colour_swatch.setFixedSize(int(22 * self._scale), int(22 * self._scale))
         self._update_swatch()
         self.base_colour_btn.clicked.connect(self._pick_base_colour)
         base_h.addWidget(self.base_colour_btn)

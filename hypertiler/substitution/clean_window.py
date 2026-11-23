@@ -133,10 +133,11 @@ class AnalyseSvgWindow(QtWidgets.QMainWindow):
         super().__init__(parent)
         self._sub_win = sub_win
         self._built = built
+        self._scale = getattr(sub_win._ui, 'scale', 1.0) if hasattr(sub_win._ui, 'scale') else 1.0
         self._per_child = {}
         self._fixed = False
         self.setWindowTitle("Analyse SVG")
-        self.resize(560, 460)
+        self.resize(int(560 * self._scale), int(460 * self._scale))
         center_on_screen(self, sub_win._plot)
         self._show_loading("Checking for decoration conflicts…")
         self.show()

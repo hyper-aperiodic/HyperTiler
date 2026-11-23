@@ -22,9 +22,14 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
     _load_prefs()
 
+    # Detect DPI for high-DPI displays
+    screen = app.primaryScreen()
+    dpi = screen.logicalDotsPerInch()
+    scale = max(1.0, dpi / 96.0)
+
     main_win = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
-    ui.setupUi(main_win)
+    ui.setupUi(main_win, scale)
 
     def close_all_windows(event):
         for name, is_open in ui.windows_open.items():

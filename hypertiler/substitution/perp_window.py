@@ -24,6 +24,7 @@ class PerpSpaceWindow(QtWidgets.QMainWindow):
         plot = getattr(host, '_plot', None) or getattr(host, 'tilingPlot', None)
         super().__init__(parent)
         self._host = host
+        self._scale = getattr(host, 'scale', getattr(host, '_scale', 1.0))
         self._vertex_worker_cls = vertex_worker_cls or _PerpVertexTypesWorker
         self._it = None
         self._by_default = None       # cached (pos, brush) scatter data
@@ -51,7 +52,7 @@ class PerpSpaceWindow(QtWidgets.QMainWindow):
         tb.addAction(self._vectors_action)
 
         self._show_loading()
-        self.resize(480, 480)
+        self.resize(int(480 * self._scale), int(480 * self._scale))
         center_on_screen(self, plot)
         self.show()
 
@@ -127,6 +128,8 @@ class PerpSpaceWindow(QtWidgets.QMainWindow):
         label_style = {'font-size': '14pt'}
         plot.setLabel('bottom', 'E<sub>⊥,x</sub>', **label_style)
         plot.setLabel('left', 'E<sub>⊥,y</sub>', **label_style)
+        plot.getAxis('bottom').hide()
+        plot.getAxis('left').hide()
         self._scatter = pg.ScatterPlotItem(size=4, pen=None)
         plot.addItem(self._scatter)
 
@@ -134,10 +137,10 @@ class PerpSpaceWindow(QtWidgets.QMainWindow):
         self._set_scatter(self._by_default)
 
         self._insets = [
-            _VectorInset(it.basis, "E∥", self._plot_widget, side='left'),
+            _VectorInset(it.basis, "E∥", self._plot_widget, side='left', scale=self._scale),
             _VectorInset(it.perp[:2] if it.perp.shape[0] >= 2
                         else np.vstack([it.perp, np.zeros((2 - it.perp.shape[0], it.r))]),
-                        "E⊥", self._plot_widget, side='right'),
+                        "E⊥", self._plot_widget, side='right', scale=self._scale),
         ]
         for inset in self._insets:
             inset.set_visible(self._vectors_action.isChecked())
@@ -338,11 +341,12 @@ class _VectorInset:
 
     SIZE = 120
 
-    def __init__(self, vecs, label, host_widget, side='left'):
+    def __init__(self, vecs, label, host_widget, side='left', scale=1.0):
         self.host = host_widget
+        self._scale = scale
         self.side = side
         self.widget = pg.PlotWidget(host_widget)
-        self.widget.setFixedSize(self.SIZE, self.SIZE)
+        self.widget.setFixedSize(int(120 * self._scale), int(120 * self._scale))
         self.widget.setBackground(pg.mkColor(255, 255, 255, 235))
         plot = self.widget.getPlotItem()
         plot.setAspectLocked(True)
@@ -380,6 +384,7 @@ class _VectorInset:
         if self.side == 'left':
             x = margin
         else:
-            x = self.host.width() - self.SIZE - margin
+            w = self.widget.width()
+            x = self.host.width() - w - margin
         self.widget.move(max(x, 0), y)
         self.widget.raise_()

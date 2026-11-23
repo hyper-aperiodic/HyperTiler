@@ -144,12 +144,12 @@ class TileSwatchButton(QtWidgets.QPushButton):
 
     clicked_with_idx = QtCore.pyqtSignal(int)
 
-    def __init__(self, idx, tile_verts, color):
+    def __init__(self, idx, tile_verts, color, scale=1.0):
         super().__init__()
         self.idx = idx
         self.tile_verts = tile_verts
         self.color = color
-        self.setFixedSize(80, 80)
+        self.setFixedSize(int(80 * scale), int(80 * scale))
         self.clicked.connect(lambda: self.clicked_with_idx.emit(self.idx))
 
     def paintEvent(self, event):

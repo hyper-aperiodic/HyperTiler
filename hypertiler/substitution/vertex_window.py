@@ -18,6 +18,7 @@ class SubstitutionVertexWindow(QtWidgets.QMainWindow):
             parent = getattr(sub_win._ui, '_main_window', None)
         super().__init__(parent)
         self._sub_win = sub_win
+        self._scale = getattr(sub_win._ui, 'scale', 1.0) if hasattr(sub_win._ui, 'scale') else 1.0
         self._highlight_items = {}
         self._all_verts = None
         self._vert_type = None
@@ -26,7 +27,7 @@ class SubstitutionVertexWindow(QtWidgets.QMainWindow):
         self._group_mirrors = False
         self.setWindowTitle("Vertex Types — Substitution")
         self._show_loading()
-        self.resize(400, 150)
+        self.resize(int(400 * self._scale), int(150 * self._scale))
         center_on_screen(self, sub_win._plot)
         self.show()
 
@@ -122,7 +123,7 @@ class SubstitutionVertexWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(central)
 
         cols = 3
-        PREVIEW_SIZE = 150
+        PREVIEW_SIZE = int(150 * self._scale)
         tile_colors = self._sub_win._current_colors()
 
         for idx, (canon, vert_indices) in enumerate(
@@ -171,7 +172,7 @@ class SubstitutionVertexWindow(QtWidgets.QMainWindow):
             grid.addWidget(cell, row, col)
 
         n_rows = math.ceil(len(canon_to_indices) / cols)
-        self.resize(cols * 190 + 20, min(n_rows * 260 + 20, 600))
+        self.resize(int(cols * 190 * self._scale + 20), int(min(n_rows * 260 * self._scale + 20, 600 * self._scale)))
         self.show()
 
     def _make_preview(self, rep_i, vert_type, all_verts, tile_colors, size):
