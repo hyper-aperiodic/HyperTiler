@@ -213,10 +213,10 @@ The perpendicular-space window caches its results. Reopening with nothing
 changed is instant. If the window is open and you generate a new tiling, it
 auto-refreshes to match.
 
-> [!NOTE]
-> This window is unavailable for rank-2 / periodic tilings, since those
-> have no perpendicular dimension to plot.
-
+```{note}
+This window is unavailable for rank-2 / periodic tilings, since those
+have no perpendicular dimension to plot.
+```
 ## Generate button - cancel
 
 While a tiling is generating, the Generate button doubles as a kill switch.
