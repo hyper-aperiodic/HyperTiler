@@ -1,7 +1,5 @@
 # Substitution tiling
 
-**28/08/26: Currently updating, will be finished by next week!**
-
 ## Rules SVG, seed, and generations
 
 Substitution tiling is driven entirely by an SVG file you prepare in
@@ -155,6 +153,76 @@ between tiles at each vertex, since substitution tiles don't carry the
 integer-lattice structure grid tilings do, but the results are presented
 identically, including the mirror-symmetric grouping option (see
 {doc}`vertex_types`).
+
+## Automatic correction pipeline
+
+When you load a rules SVG, HyperTiler now runs an automatic correction
+pipeline before generating any tiling:
+
+1. **Symmetry detection** - identifies the rotation/reflection symmetry
+   group of the drawing
+2. **Edge-length matching** - cleans templates so shared edges close with
+   exactly matching lengths (the old float geometric-overlap heuristic is
+   gone)
+3. **Child rebuild** - rebuilds every child tile exactly against the
+   corrected templates
+4. **Inflation fitting** - fits the inflation factor by least-squares
+
+This runs silently on every load. If you want to see what was corrected or
+save a fixed copy, use the **Analyse SVG** workflow below.
+
+## Analyse SVG
+
+Open it via **Tools → Analyse SVG…** (substitution mode only). This window
+gives you a three-step workflow for diagnosing and repairing decoration
+conflicts.
+
+### Step 1: Analyse
+
+Automatic and read-only. HyperTiler scans the rules file for conflicts -
+cases where two instances of the same tile type occupy the same vertex set
+under different labels. Conflicting children are highlighted in the preview
+panel.
+
+### Step 2: Attempt to fix
+
+Runs `fix_decorations` to resolve the detected conflicts. You can click
+this button again after each attempt to see if more conflicts remain.
+
+### Step 3: Save fixed SVG…
+
+Writes a corrected copy of the rules file via a file dialog. The original
+file is left untouched.
+
+## Perpendicular space
+
+Open it via **Tools → Perpendicular space…** (substitution mode only). This
+window shows a scatter plot of the perpendicular-space coordinates
+(`E⊥,x` / `E⊥,y`) for every tile in the current tiling.
+
+### Toolbar actions
+
+- **Colour by vertex type** - colours the scatter points by their vertex
+  type, adds a legend. Each type gets its own `ScatterPlotItem`.
+- **Basis vectors** - toggles two `_VectorInset` insets that show the E∥
+  and E⊥ basis vectors as labelled black arrows.
+
+### Caching
+
+The perpendicular-space window caches its results. Reopening with nothing
+changed is instant. If the window is open and you generate a new tiling, it
+auto-refreshes to match.
+
+> [!NOTE]
+> This window is unavailable for rank-2 / periodic tilings, since those
+> have no perpendicular dimension to plot.
+
+## Generate button - cancel
+
+While a tiling is generating, the Generate button doubles as a kill switch.
+Click it again to read "Cancel" - the worker thread reads this flag and
+terminates forcibly. See `_on_gen_btn_clicked` and `_cancel_generate` in
+`hypertiler/substitution/window.py`.
 
 ## Doing the same thing from Python
 
