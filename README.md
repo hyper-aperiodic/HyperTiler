@@ -4,7 +4,7 @@ HyperTiler makes creating patches of quasiperiodic tilings easy!
 
 [![GitHub release](https://img.shields.io/github/v/release/hyper-aperiodic/HyperTiler)](https://github.com/hyper-aperiodic/HyperTiler/releases/latest)
 
-[![Documentation Status](https://readthedocs.org/projects/hypertiler/badge/?version=latest)](https://hypertiler.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/hypertiler/badge)](https://hypertiler.readthedocs.io/en/latest/)
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22133798.svg)](https://doi.org/10.5281/zenodo.22133798)
 
