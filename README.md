@@ -4,7 +4,7 @@ HyperTiler makes creating patches of quasiperiodic tilings easy!
 
 [![GitHub release](https://img.shields.io/github/v/release/hyper-aperiodic/HyperTiler)](https://github.com/hyper-aperiodic/HyperTiler/releases/latest)
 
-[![Documentation Status](https://readthedocs.org/projects/hypertiler/badge)](https://hypertiler.readthedocs.io/en/main/)
+[![Documentation Status](https://readthedocs.org/projects/hypertiler/badge/?version=main)](https://hypertiler.readthedocs.io/en/main/)
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22133798.svg)](https://doi.org/10.5281/zenodo.22133798)
 
@@ -27,7 +27,7 @@ You can make tilings one of two ways: the dual-grid method, or by substitution r
 
 ## 🚀 Usage
 
-**Recommended:** Read the docs: [![Documentation Status](https://readthedocs.org/projects/hypertiler/badge)](https://hypertiler.readthedocs.io/en/main/)
+**Recommended:** Read the docs: [![Documentation Status](https://readthedocs.org/projects/hypertiler/badge/?version=main)](https://hypertiler.readthedocs.io/en/main/)
 
 ### Dual-grid mode
 
