@@ -63,3 +63,35 @@ routes to a Penrose tiling are different constructions of the *same*
 underlying structure). In HyperTiler, that rule is whatever subdivision you
 draw in the rules SVG (see {doc}`user_guide/substitution`) - the app reads
 off the geometry, it doesn't need to know the rule algebraically.
+
+### Hyperspace index (cut-and-project construction)
+
+Every substitution tiling can also be understood as a cut-and-project
+procedure, just like the dual-grid method. The vertex module (the lattice of
+tile corners) is found via **LLL lattice reduction** on the drawing's own
+edge vectors - no assumed lattice needed. The algorithm works for any
+detected symmetry order and any inflation factor.
+
+Once the lattice is found, it's split into two subspaces:
+
+- **Physical** (E∥) - recovers the actual tile positions in 2D space
+- **Perpendicular** (E⊥) - controls which tile type goes where, encoding
+  the decoration/labeling
+
+You can visualise the perpendicular-space coordinates in the
+**Perpendicular space** window (**Tools → Perpendicular space…** in
+substitution mode). This window isn't available for rank-2 / periodic
+tilings, since those have no perpendicular dimension.
+
+### Decoration conflicts
+
+A substitution rule is *self-contradictory* if two instances of the same
+tile type occupy the same vertex set under different labels. This is the
+exact definition of a decoration conflict - it means the rule can't produce
+a well-defined tiling, no matter how many generations you inflate.
+
+HyperTiler now includes an automatic correction pipeline that detects and
+resolves these conflicts on every load (symmetry detection, edge-length
+matching, inflation fitting by least-squares). You can also run the
+**Analyse SVG** workflow manually (**Tools → Analyse SVG…**) to diagnose
+conflicts, attempt a fix, and save a corrected copy of the rules file.

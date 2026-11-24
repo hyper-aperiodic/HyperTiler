@@ -107,6 +107,34 @@ class inkTile:
             The substitution rule extracted from the rules SVG: for each
             supertile type, the exact placement of every subtile found
             inside it.
+        r : int
+            Rank of the hyperspace lattice (number of basis vectors). For
+            periodic tilings this equals 2; for quasiperiodic tilings it
+            equals the symmetry order.
+        d : int
+            Dimension of the perpendicular subspace (r - 2). Zero for
+            periodic tilings.
+        basis : ndarray, shape (2, r)
+            The physical (E∥) basis matrix, used to project hyper-space
+            coordinates back to physical space.
+        perp : ndarray, shape (d, r)
+            The perpendicular (E⊥) basis matrix. Zero rows for periodic
+            tilings.
+        hyper : list of (str, ndarray)
+            The hyper-space tiling before projection - one entry per tile
+            with its type and hyper-space coordinates.
+        stab : dict
+            Stability group for each tile type - the subgroup of the
+            symmetry group that leaves that type invariant.
+        decorated : dict
+            For each tile type, a tuple of (shape_stab_size, stab_size)
+            describing the decoration constraints.
+        relabelled : dict
+            The corrected tile-type labels after resolving decoration
+            conflicts. Keys are (type, index) pairs.
+        relabel_overlaps : int
+            Number of decoration conflicts that were detected and
+            corrected during relabelling.
         """
         if tile is not None:
             svg_file = f"{tile}.svg"

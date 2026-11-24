@@ -22,7 +22,9 @@ right, with a menu bar above both. HyperTiler starts in grid tiling mode, and yo
 | Tools | Compute FFT | Fourier-transforms the current tiling's vertex points. |
 | | Vertex types | Opens the Vertex Types window ({doc}`vertex_types`). |
 | | Network builder | Opens the Network Builder window ({doc}`network_builder`). |
-| | Substitution tiling... | Switches the whole window into Substitution mode <br>({doc}`substitution`). The label changes to "Grid tiling..." <br>so you can switch back. |
+| | Substitution Mode | Switches the whole window into Substitution mode <br>({doc}`user_guide/substitution`). The label changes to <br>"Grid tiling..." so you can switch back. |
+| | Analyse SVG… | Opens the Analyse SVG window for diagnosing and <br>repairing decoration conflicts (substitution mode only). |
+| | Perpendicular space… | Opens the perpendicular space window, showing a <br>scatter plot of E⊥ coordinates (substitution mode only). |
 
 ## Grid (multigrid) tilings
 

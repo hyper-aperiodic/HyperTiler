@@ -123,5 +123,8 @@ colors = [colors_by_type[t] for t, _ in tiles]
 write_svg("substitution.svg", polys, colors)
 ```
 
+> [!NOTE]
+> Once an `inkTile` instance is built, you can call `it.generate(gen=5, start=None)` again without re-parsing or re-correcting the SVG. Pass a pre-built instance via `built=inkTile("my_rules")` to skip correction entirely on a cache hit.
+
 See the {doc}`api/index` for the full parameter list of every function
 used here.
