@@ -19,10 +19,3 @@ useful when you don't care about handedness and just want distinct local
 environments. Toggling it clears any active highlights and, if a Network
 Builder window is open, refreshes it to match the new grouping.
 
-```{note}
-Vertices near the edge of the tiling are excluded from classification
-(their surrounding tiles are cut off, which would distort the result), so
-counts reflect only the interior of the tiling.
-
-**Because the underlying logic of this cut off is lazy, it will give some bad results on substitution tiles if the initial seed isn't sufficiently isotropic**
-```
